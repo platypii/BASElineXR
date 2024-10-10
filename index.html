@@ -11,21 +11,16 @@
   </head>
   <body>
     <div id="overlay">
-      <header>
-        <details open>
-          <summary>BASEline Flight Computer WebXR</summary>
-          <p>
-            Pass-through AR using the WebXR Device API.
-            <a class="back" href="./index.html">Back</a>
-          </p>
-          <div id="session-info"></div>
-          <div id="pose"></div>
-          <div id="warning-zone"></div>
-          <button id="xr-button" class="barebones-button" disabled>XR not found</button>
-        </details>
-      </header>
+      <h1>BASEline Flight Computer VR</h1>
+      <p>
+        Pass-through AR using the WebXR Device API. Open with a WebXR-compatible browser on a device with a camera (Quest etc).
+      </p>
+      <div id="session-info"></div>
+      <div id="pose"></div>
+      <div id="warning-zone"></div>
+      <button id="xr-button" disabled>XR not found</button>
     </div>
-    <main style='text-align: center'>
+    <main>
       <p>Click 'Enter AR' to see content</p>
     </main>
     <script type="module" src="baseline-xr.js"></script>

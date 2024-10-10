@@ -83,15 +83,19 @@ function onXRFrame(t, frame) {
 
   gl.bindFramebuffer(gl.FRAMEBUFFER, session.renderState.baseLayer.framebuffer)
 
-  // Update the clear color so that we can observe the color in the
-  // headset changing over time. Use a scissor rectangle to keep the AR
-  // scene visible.
   const width = session.renderState.baseLayer.framebufferWidth
   const height = session.renderState.baseLayer.framebufferHeight
+
+  // Clear the entire view to green first to create the border
+  gl.disable(gl.SCISSOR_TEST) // Disable scissor test to clear the whole view
+  gl.clearColor(0, 1, 0, 1) // Green color for the border
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+  // Now enable scissor test to draw the AR scene within the center
   gl.enable(gl.SCISSOR_TEST)
-  gl.scissor(width / 4, height / 4, width / 2, height / 2)
+  gl.scissor(width / 4, height / 4, width / 2, height / 2) // AR scene in the center
   let time = Date.now()
-  gl.clearColor(Math.cos(time / 2000), Math.cos(time / 4000), Math.cos(time / 6000), 0.5)
+  gl.clearColor(Math.cos(time / 2000), Math.cos(time / 4000), Math.cos(time / 6000), 0.5) // Color-changing AR content
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
   let pose = frame.getViewerPose(xrRefSpace)
