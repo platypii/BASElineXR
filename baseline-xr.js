@@ -85,19 +85,36 @@ function onXRFrame(t, frame) {
 
   const width = session.renderState.baseLayer.framebufferWidth
   const height = session.renderState.baseLayer.framebufferHeight
+  const lineThickness = 5 // Set the grid line thickness in pixels
+  const gridSpacing = 50 // Set the spacing between grid lines
+  const transparency = 0.5 // Set the transparency of the grid lines
 
-  // Clear the entire view to green first to create the border
-  gl.disable(gl.SCISSOR_TEST) // Disable scissor test to clear the whole view
-  gl.clearColor(0, 1, 0, 1) // Green color for the border
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
-  // Now enable scissor test to draw the AR scene within the center
+  // Enable scissor test to draw the grid lines
   gl.enable(gl.SCISSOR_TEST)
-  gl.scissor(width / 4, height / 4, width / 2, height / 2) // AR scene in the center
+
+  // Draw vertical grid lines
+  for (let x = 0; x < width; x += gridSpacing) {
+    gl.scissor(x, 0, lineThickness, height)
+    gl.clearColor(0, 1, 0, transparency) // Semi-transparent green color
+    gl.clear(gl.COLOR_BUFFER_BIT)
+  }
+
+  // Draw horizontal grid lines
+  for (let y = 0; y < height; y += gridSpacing) {
+    gl.scissor(0, y, width, lineThickness)
+    gl.clear(gl.COLOR_BUFFER_BIT)
+  }
+
+  // Now draw the AR scene in the center (without the grid covering it)
+  gl.scissor(0, 0, width, height) // Reset scissor to cover the entire viewport
   let time = Date.now()
   gl.clearColor(Math.cos(time / 2000), Math.cos(time / 4000), Math.cos(time / 6000), 0.5) // Color-changing AR content
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
+  // Disable scissor test after rendering
+  gl.disable(gl.SCISSOR_TEST)
+
+  // Display the viewer's pose
   let pose = frame.getViewerPose(xrRefSpace)
   if (pose) {
     const p = pose.transform.position
