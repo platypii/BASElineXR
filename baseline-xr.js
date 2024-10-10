@@ -3,6 +3,9 @@ let xrSession = null
 let xrRefSpace = null
 let gl = null // webgl scene
 let userLocation = null // To store user's location
+let textTexture = null // Texture for rendering text
+let textCanvas = null // Canvas for drawing text
+let textCanvasCtx = null // Canvas context for drawing text
 
 function checkSupportedState() {
   navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
@@ -20,6 +23,13 @@ function initXR() {
   if (!window.isSecureContext) {
     let message = "WebXR unavailable due to insecure context"
     document.getElementById("warning-zone").innerText = message
+  }
+
+  // Request user's location on page load
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(onLocationReceived, onLocationError)
+  } else {
+    console.error("Geolocation is not supported by this browser.")
   }
 
   if (navigator.xr) {
@@ -93,6 +103,73 @@ function onSessionEnded(event) {
   gl = null
 }
 
+function updateTextCanvas() {
+  if (!textCanvasCtx) return
+
+  // Clear the canvas
+  textCanvasCtx.clearRect(0, 0, textCanvas.width, textCanvas.height)
+
+  // Set text properties
+  textCanvasCtx.font = '48px sans-serif'
+  textCanvasCtx.fillStyle = 'white'
+  textCanvasCtx.textAlign = 'center'
+  textCanvasCtx.textBaseline = 'middle'
+
+  // Draw the latitude and longitude
+  let text = `Lat: ${userLocation.latitude.toFixed(6)}\nLon: ${userLocation.longitude.toFixed(6)}`
+  let lines = text.split('\n')
+  for (let i = 0; i < lines.length; i++) {
+    textCanvasCtx.fillText(lines[i], textCanvas.width / 2, textCanvas.height / 2 + i * 50)
+  }
+
+  // Update the texture with the new text
+  gl.bindTexture(gl.TEXTURE_2D, textTexture)
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textCanvas)
+}
+
+function drawTextTexture() {
+  // Set up the viewport and orthographic projection
+  gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight)
+  gl.matrixMode(gl.PROJECTION)
+  gl.loadIdentity()
+  gl.ortho(0, gl.drawingBufferWidth, 0, gl.drawingBufferHeight, -1, 1)
+  gl.matrixMode(gl.MODELVIEW)
+  gl.loadIdentity()
+
+  // Enable blending for transparency
+  gl.enable(gl.BLEND)
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
+  // Bind the text texture
+  gl.bindTexture(gl.TEXTURE_2D, textTexture)
+  gl.enable(gl.TEXTURE_2D)
+
+  // Update the texture in case the text has changed
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textCanvas)
+
+  // Draw a quad with the text texture
+  gl.begin(gl.QUADS)
+
+  // Set texture coordinates and vertex positions
+  gl.texCoord2f(0.0, 1.0)
+  gl.vertex2f(50, 50)
+
+  gl.texCoord2f(1.0, 1.0)
+  gl.vertex2f(450, 50)
+
+  gl.texCoord2f(1.0, 0.0)
+  gl.vertex2f(450, 250)
+
+  gl.texCoord2f(0.0, 0.0)
+  gl.vertex2f(50, 250)
+
+  gl.end()
+
+  // Disable textures and blending
+  gl.disable(gl.TEXTURE_2D)
+  gl.disable(gl.BLEND)
+}
+
 function onXRFrame(t, frame) {
   let session = frame.session
   session.requestAnimationFrame(onXRFrame)
@@ -123,6 +200,11 @@ function onXRFrame(t, frame) {
 
   // Disable scissor test after rendering
   gl.disable(gl.SCISSOR_TEST)
+
+  // Draw the text texture
+  if (textTexture && userLocation) {
+    drawTextTexture()
+  }
 
   // Display the viewer's pose
   let pose = frame.getViewerPose(xrRefSpace)
