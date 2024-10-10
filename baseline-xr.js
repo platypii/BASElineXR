@@ -106,10 +106,10 @@ function onXRFrame(t, frame) {
   }
 
   // Now draw the AR scene in the center (without the grid covering it)
-  gl.scissor(0, 0, width, height) // Reset scissor to cover the entire viewport
-  let time = Date.now()
-  gl.clearColor(Math.cos(time / 2000), Math.cos(time / 4000), Math.cos(time / 6000), 0.5) // Color-changing AR content
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+  // gl.scissor(0, 0, width, height) // Reset scissor to cover the entire viewport
+  // let time = Date.now()
+  // gl.clearColor(Math.cos(time / 2000), Math.cos(time / 4000), Math.cos(time / 6000), 0.5) // Color-changing AR content
+  // gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
   // Disable scissor test after rendering
   gl.disable(gl.SCISSOR_TEST)
