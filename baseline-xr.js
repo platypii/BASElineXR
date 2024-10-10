@@ -2,6 +2,7 @@ let xrButton = document.getElementById('xr-button')
 let xrSession = null
 let xrRefSpace = null
 let gl = null // webgl scene
+let userLocation = null // To store user's location
 
 function checkSupportedState() {
   navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
@@ -49,6 +50,13 @@ function onSessionStarted(session) {
     document.getElementById('session-info').innerHTML = 'DOM Overlay type: ' + session.domOverlayState.type
   }
 
+  // Request user's location
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(onLocationReceived, onLocationError)
+  } else {
+    console.error("Geolocation is not supported by this browser.")
+  }
+
   session.addEventListener('end', onSessionEnded)
   let canvas = document.createElement('canvas')
   gl = canvas.getContext('webgl', {
@@ -59,6 +67,14 @@ function onSessionStarted(session) {
     xrRefSpace = refSpace
     session.requestAnimationFrame(onXRFrame)
   })
+}
+
+function onLocationReceived(position) {
+  userLocation = position.coords
+}
+
+function onLocationError(error) {
+  console.error("Error getting location:", error)
 }
 
 function onRequestSessionError(ex) {
@@ -105,12 +121,6 @@ function onXRFrame(t, frame) {
     gl.clear(gl.COLOR_BUFFER_BIT)
   }
 
-  // Now draw the AR scene in the center (without the grid covering it)
-  // gl.scissor(0, 0, width, height) // Reset scissor to cover the entire viewport
-  // let time = Date.now()
-  // gl.clearColor(Math.cos(time / 2000), Math.cos(time / 4000), Math.cos(time / 6000), 0.5) // Color-changing AR content
-  // gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
   // Disable scissor test after rendering
   gl.disable(gl.SCISSOR_TEST)
 
@@ -122,6 +132,14 @@ function onXRFrame(t, frame) {
       p.x.toFixed(3) + ", " + p.y.toFixed(3) + ", " + p.z.toFixed(3)
   } else {
     document.getElementById('pose').innerText = "Position: (null pose)"
+  }
+
+  // Display the user's location
+  if (userLocation) {
+    document.getElementById('location').innerText = "Location: Latitude " +
+        userLocation.latitude.toFixed(6) + ", Longitude " + userLocation.longitude.toFixed(6)
+  } else {
+    document.getElementById('location').innerText = "Location: (unknown)"
   }
 }
 
