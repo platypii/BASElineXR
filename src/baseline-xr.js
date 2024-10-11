@@ -1,4 +1,4 @@
-let xrButton = document.getElementById('xr-button')
+let xrButton = /** @type {HTMLButtonElement} */ (document.getElementById('xr-button'))
 let xrSession = null
 let xrRefSpace = null
 let gl = null // WebGL context
