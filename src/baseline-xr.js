@@ -1,3 +1,4 @@
+import { initBluetooth } from './bt.js'
 import { drawTextTexture, updateTextCanvas } from './canvas.js'
 
 let xrButton = /** @type {HTMLButtonElement} */ (document.getElementById('xr-button'))
@@ -30,6 +31,9 @@ function initXR() {
   } else {
     console.error("Geolocation is not supported by this browser.")
   }
+
+  // Init bluetooth
+  initBluetooth()
 
   if (navigator.xr) {
     xrButton.addEventListener('click', onButtonClicked)
@@ -108,7 +112,7 @@ function onXRFrame(t, frame) {
   const width = session.renderState.baseLayer.framebufferWidth
   const height = session.renderState.baseLayer.framebufferHeight
   const lineThickness = 2 // Set the grid line thickness in pixels
-  const gridSpacing = 200 // Set the spacing between grid lines
+  const gridSpacing = 250 // Set the spacing between grid lines
   const transparency = 0.4 // Set the transparency of the grid lines
 
   // Enable scissor test to draw the grid lines

@@ -4,6 +4,7 @@
     "start": "http-server"
   },
   "devDependencies": {
+    "@types/web-bluetooth": "0.0.20",
     "@types/webxr": "0.5.20",
     "http-server": "14.1.1",
     "typescript": "5.6.3"
