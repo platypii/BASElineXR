@@ -15,7 +15,7 @@ export function initTextRendering(gl) {
   // Create a canvas to draw the text
   textCanvas = document.createElement('canvas')
   textCanvas.width = 1024
-  textCanvas.height = 256
+  textCanvas.height = 1024
   textCanvasCtx = textCanvas.getContext('2d')
 
   // Create a texture for the text
@@ -124,10 +124,26 @@ export function drawTextTexture(gl, width, height) {
   gl.enable(gl.BLEND)
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
-  // Set up the vertex positions
+  // Calculate dimensions for the centered, larger quad
+  const halfWidth = width / 2
+  const halfHeight = height / 2
+  const quadSize = Math.max(width, height) * 0.9 // 80% of the smaller dimension
+
+  // Define vertex positions for a larger, centered quad
+  const positions = new Float32Array([
+    halfWidth - quadSize / 2, halfHeight + quadSize / 2, // Bottom-left corner
+    halfWidth + quadSize / 2, halfHeight + quadSize / 2, // Bottom-right corner
+    halfWidth + quadSize / 2, halfHeight - quadSize / 2, // Top-right corner
+    halfWidth - quadSize / 2, halfHeight - quadSize / 2, // Top-left corner
+  ])
+
+  // Update the position buffer with new positions
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
+  gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW)
+
+  // Enable the position attribute
   const positionLocation = gl.getAttribLocation(textProgram, 'a_position')
   gl.enableVertexAttribArray(positionLocation)
-  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
   gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0)
 
   // Set up the texture coordinates
