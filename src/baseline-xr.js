@@ -24,11 +24,13 @@ function initXR() {
     document.getElementById("warning-zone").innerText = message
   }
 
-  // Request user's location on page load
   if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(onLocationReceived, onLocationError)
+    // Fetch user's location once per second
+    setInterval(() => {
+      navigator.geolocation.getCurrentPosition(onLocationReceived, onLocationError)
+    }, 1000)
   } else {
-    console.error("Geolocation is not supported by this browser.")
+    console.error("Geolocation is not supported by this browser.");
   }
 
   if (navigator.xr) {
