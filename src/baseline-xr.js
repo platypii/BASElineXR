@@ -107,9 +107,9 @@ function onXRFrame(t, frame) {
 
   const width = session.renderState.baseLayer.framebufferWidth
   const height = session.renderState.baseLayer.framebufferHeight
-  const lineThickness = 2 // Set the grid line thickness in pixels
-  const gridSpacing = 200 // Set the spacing between grid lines
-  const transparency = 0.4 // Set the transparency of the grid lines
+  const lineThickness = 1 // Set the grid line thickness in pixels
+  const gridSpacing = 500 // Set the spacing between grid lines
+  const transparency = 0.3 // Set the transparency of the grid lines
 
   // Enable scissor test to draw the grid lines
   gl.enable(gl.SCISSOR_TEST)
