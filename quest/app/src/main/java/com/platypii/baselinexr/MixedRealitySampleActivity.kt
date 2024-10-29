@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-package com.meta.spatial.samples.mixedrealitysample
+package com.platypii.baselinexr
 
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -26,6 +26,8 @@ import com.meta.spatial.mruk.MRUKLoadDeviceResult
 import com.meta.spatial.mruk.MRUKSystem
 import com.meta.spatial.physics.PhysicsFeature
 import com.meta.spatial.physics.PhysicsOutOfBoundsSystem
+import com.platypii.baselinexr.BuildConfig
+import com.platypii.baselinexr.R
 import com.meta.spatial.toolkit.AppSystemActivity
 import com.meta.spatial.toolkit.Mesh
 import com.meta.spatial.toolkit.PanelRegistration
@@ -141,7 +143,8 @@ class MixedRealitySampleActivity : AppSystemActivity() {
   ) {
     if (requestCode == REQUEST_CODE_PERMISSION_USE_SCENE &&
         permissions.size == 1 &&
-        permissions[0] == PERMISSION_USE_SCENE) {
+        permissions[0] == PERMISSION_USE_SCENE
+    ) {
       val granted = grantResults[0] == PackageManager.PERMISSION_GRANTED
       if (granted) {
         log("Use scene permission has been granted")
@@ -193,7 +196,8 @@ class MixedRealitySampleActivity : AppSystemActivity() {
       glXFManager.inflateGLXF(
           Uri.parse("apk:///scenes/Composition.glxf"),
           rootEntity = gltfxEntity!!,
-          keyName = GLXF_SCENE)
+          keyName = GLXF_SCENE
+      )
     }
   }
 

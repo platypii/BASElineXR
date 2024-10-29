@@ -14,11 +14,11 @@ plugins {
 }
 
 android {
-  namespace = "com.meta.spatial.samples.mixedrealitysample"
+  namespace = "com.platypii.baselinexr"
   compileSdk = 34
 
   defaultConfig {
-    applicationId = "com.meta.spatial.samples.mixedrealitysample"
+    applicationId = "com.platypii.baselinexr"
     minSdk = 28
     targetSdk = 34
     versionCode = 1
