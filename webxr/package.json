@@ -1,7 +1,7 @@
 {
   "name": "baseline-xr",
   "scripts": {
-    "start": "http-server"
+    "start": "http-server .."
   },
   "devDependencies": {
     "@types/webxr": "0.5.20",

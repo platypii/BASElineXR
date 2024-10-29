@@ -9,4 +9,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: npm i
+        working-directory: webxr
       - run: tsc
+        working-directory: webxr
