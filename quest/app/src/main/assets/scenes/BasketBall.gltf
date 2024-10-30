@@ -67,17 +67,17 @@
       "name": "BasketBall",
       "doubleSided": true,
       "normalTexture": {
-        "index": 0
+        "index": 1
       },
       "occlusionTexture": {
-        "index": 1
+        "index": 0
       },
       "pbrMetallicRoughness": {
         "baseColorTexture": {
           "index": 2
         },
         "metallicRoughnessTexture": {
-          "index": 1
+          "index": 0
         }
       }
     }
@@ -115,12 +115,12 @@
   ],
   "textures": [
     {
-      "source": 0,
-      "name": "texture1"
-    },
-    {
       "source": 1,
       "name": "texture2"
+    },
+    {
+      "source": 0,
+      "name": "texture1"
     },
     {
       "source": 2,
