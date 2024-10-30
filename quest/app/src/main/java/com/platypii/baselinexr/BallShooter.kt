@@ -26,7 +26,7 @@ class BallShooter(private val mesh: Mesh) : SystemBase() {
   public var enabled = true
 
   private fun shootBall(transform: Pose) {
-    val speed = 6f
+    val speed = 16f
     val meshCopy = Mesh(mesh.mesh)
     val pose = Transform(transform)
     val physics =

@@ -24,7 +24,7 @@ class UiPanelUpdateSystem() : SystemBase() {
   override fun execute() {
     val activity = SpatialActivityManager.getVrActivity<MixedRealitySampleActivity>()
     // Keep trying until HMD orientation is available
-    if (!panelIsRepositioned && activity.glxfLoaded)
+    if (activity.glxfLoaded)
         panelIsRepositioned = updateUiPanelPosition(activity)
   }
 

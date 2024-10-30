@@ -1,59 +1,54 @@
-<LinearLayout
-  xmlns:android="http://schemas.android.com/apk/res/android"
-  xmlns:app="http://schemas.android.com/apk/res-auto"
-  android:orientation="vertical"
-  android:layout_width="match_parent"
-  android:layout_height="match_parent"
-  android:gravity="left"
-  android:background="@drawable/layout_bg"
-  android:clipToOutline="true"
->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/layout_bg"
+    android:clipToOutline="true"
+    android:gravity="left"
+    android:orientation="vertical">
 
   <!--Header Image-->
   <ImageView
-    android:gravity="center"
-    android:src="@drawable/cover"
-    android:layout_width="match_parent"
-    android:layout_height="250dp"
-    android:scaleType="centerCrop"
-  />
+      android:layout_width="match_parent"
+      android:layout_height="250dp"
+      android:gravity="center"
+      android:scaleType="centerCrop"
+      android:src="@drawable/cover" />
 
   <!--Body text-->
   <TextView
-    android:gravity="center"
-    android:layout_height="wrap_content"
-    android:layout_width="match_parent"
-    android:text="This sample shows how to use the mixed reality utility kit to create a physics collision mesh of your room in MR. Once your room is set up in the Quest settings, you can run the app and fire basketballs around and have them bounce off your table, walls and floor.\n\nPress the trigger button to shoot basketballs!"
-    android:padding="12dp"
-    android:textSize="12dp"
-    android:lineHeight="18dp"
-    android:textColor="#cccccc"
-  />
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:gravity="center"
+      android:lineHeight="18dp"
+      android:padding="12dp"
+      android:text="BASEline XR"
+      android:textColor="#cccccc"
+      android:textSize="12dp" />
 
   <LinearLayout
-    android:orientation="horizontal"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:gravity="center"
-    android:layout_marginTop="16dp"
-  >
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="16dp"
+      android:gravity="center"
+      android:orientation="horizontal">
+
     <Button
-      android:id="@+id/configure_button"
-      android:layout_height="36dp"
-      android:layout_width="120dp"
-      android:text="Configure Room"
-      android:background="@drawable/button_bg"
-      android:textColor="#ffffff"
-      android:layout_marginEnd="16dp"
-    />
+        android:id="@+id/configure_button"
+        android:layout_width="120dp"
+        android:layout_height="36dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/button_bg"
+        android:text="Configure Room"
+        android:textColor="#ffffff" />
+
     <Button
-      android:id="@+id/toggle_debug"
-      android:layout_height="36dp"
-      android:layout_width="120dp"
-      android:layout_gravity="center"
-      android:text="Toggle Debug"
-      android:background="@drawable/button_bg"
-      android:textColor="#ffffff"
-    />
+        android:id="@+id/toggle_debug"
+        android:layout_width="120dp"
+        android:layout_height="36dp"
+        android:layout_gravity="center"
+        android:background="@drawable/button_bg"
+        android:text="Toggle Debug"
+        android:textColor="#ffffff" />
   </LinearLayout>
 </LinearLayout>

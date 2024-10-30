@@ -86,6 +86,13 @@ dependencies {
   implementation("com.meta.spatial:meta-spatial-sdk-mruk:$metaSpatialSdkVersion")
   implementation("com.meta.spatial:meta-spatial-sdk-castinputforward:$metaSpatialSdkVersion")
 
+  // Baseline deps
+  implementation("com.github.weliem:blessed-android:2.5.0")
+  implementation("com.squareup.retrofit2:retrofit:2.9.0")
+  implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+  implementation("com.google.code.gson:gson:2.11.0")
+  implementation("org.greenrobot:eventbus:3.3.1")
+
   androidTestImplementation(platform("androidx.compose:compose-bom:2024.09.03"))
   androidTestImplementation("androidx.compose.ui:ui-test-junit4")
   debugImplementation("androidx.compose.ui:ui-tooling")
