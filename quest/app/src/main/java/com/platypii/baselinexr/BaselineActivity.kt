@@ -26,9 +26,6 @@ import com.meta.spatial.mruk.MRUKLoadDeviceResult
 import com.meta.spatial.mruk.MRUKSystem
 import com.meta.spatial.physics.PhysicsFeature
 import com.meta.spatial.physics.PhysicsOutOfBoundsSystem
-import com.meta.spatial.runtime.VrService
-import com.platypii.baselinexr.BuildConfig
-import com.platypii.baselinexr.R
 import com.meta.spatial.toolkit.AppSystemActivity
 import com.meta.spatial.toolkit.Mesh
 import com.meta.spatial.toolkit.PanelRegistration
