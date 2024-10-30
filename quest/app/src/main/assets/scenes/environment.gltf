@@ -362,11 +362,11 @@
   ],
   "textures": [
     {
-      "source": 0,
+      "source": 1,
       "name": "texture3"
     },
     {
-      "source": 1,
+      "source": 0,
       "name": "texture2"
     },
     {
@@ -402,12 +402,12 @@
   ],
   "images": [
     {
-      "uri": "391c375e819ad25f777dfca867d8da1e.jpg",
-      "name": "floorScreenBake_beauty"
-    },
-    {
       "uri": "fd7a877aa22c9400029fa59d9e4c8375.jpg",
       "name": "ceilingBake_beauty"
+    },
+    {
+      "uri": "391c375e819ad25f777dfca867d8da1e.jpg",
+      "name": "floorScreenBake_beauty"
     },
     {
       "uri": "f09e4c82bace718286bde03926cdf80b.jpg",

@@ -26,6 +26,7 @@ import com.meta.spatial.mruk.MRUKLoadDeviceResult
 import com.meta.spatial.mruk.MRUKSystem
 import com.meta.spatial.physics.PhysicsFeature
 import com.meta.spatial.physics.PhysicsOutOfBoundsSystem
+import com.meta.spatial.runtime.VrService
 import com.platypii.baselinexr.BuildConfig
 import com.platypii.baselinexr.R
 import com.meta.spatial.toolkit.AppSystemActivity
@@ -51,7 +52,10 @@ class MixedRealitySampleActivity : AppSystemActivity() {
   override fun registerFeatures(): List<SpatialFeature> {
     val features =
         mutableListOf<SpatialFeature>(
-            PhysicsFeature(spatial), VRFeature(this), MRUKFeature(this, systemManager))
+          PhysicsFeature(spatial),
+          VRFeature(this),
+          MRUKFeature(this, systemManager)
+        )
     if (BuildConfig.DEBUG) {
       features.add(CastInputForwardFeature(this))
     }
@@ -75,9 +79,9 @@ class MixedRealitySampleActivity : AppSystemActivity() {
             mrukSystem,
             mapOf(
                 MRUKLabel.FLOOR to AnchorProceduralMeshConfig(null, true),
-                MRUKLabel.WALL_FACE to AnchorProceduralMeshConfig(null, true),
+//                MRUKLabel.WALL_FACE to AnchorProceduralMeshConfig(null, true),
                 MRUKLabel.CEILING to AnchorProceduralMeshConfig(null, true),
-                MRUKLabel.TABLE to AnchorProceduralMeshConfig(null, true),
+//                MRUKLabel.TABLE to AnchorProceduralMeshConfig(null, true),
                 MRUKLabel.OTHER to AnchorProceduralMeshConfig(null, true)))
 
     // Enable MR mode

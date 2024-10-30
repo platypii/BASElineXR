@@ -30,6 +30,10 @@
     android:name="com.oculus.feature.PASSTHROUGH"
     android:required="false"
   />
+  <!-- Boundaryless -->
+  <uses-feature
+      android:name="com.oculus.feature.BOUNDARYLESS_APP"
+      android:required="true"/>
   <!-- Tell the system this app uses the virtual keyboard extensions -->
   <uses-feature
     android:name="com.oculus.feature.VIRTUAL_KEYBOARD"
