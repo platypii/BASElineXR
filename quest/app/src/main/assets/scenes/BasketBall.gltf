@@ -115,11 +115,11 @@
   ],
   "textures": [
     {
-      "source": 1,
+      "source": 0,
       "name": "texture1"
     },
     {
-      "source": 0,
+      "source": 1,
       "name": "texture2"
     },
     {
@@ -139,12 +139,12 @@
   ],
   "images": [
     {
-      "uri": "8f0aa2c719556e8ddfff5a21a0b7a125.png",
-      "name": "BasketBall_ORM"
-    },
-    {
       "uri": "e15bb4b1fad78660bd8613c38d10723c.png",
       "name": "BasketBall_Normal"
+    },
+    {
+      "uri": "8f0aa2c719556e8ddfff5a21a0b7a125.png",
+      "name": "BasketBall_ORM"
     },
     {
       "uri": "c2810ed5e72470d4661b8b6812657d12.png",

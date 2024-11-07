@@ -1,10 +1,3 @@
-/*
- * Copyright (c) Meta Platforms, Inc. and affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- */
-
 package com.platypii.baselinexr
 
 import com.meta.spatial.core.Entity
@@ -22,20 +15,20 @@ class UiPanelUpdateSystem() : SystemBase() {
   private var panelIsRepositioned = false
 
   override fun execute() {
-    val activity = SpatialActivityManager.getVrActivity<MixedRealitySampleActivity>()
+    val activity = SpatialActivityManager.getVrActivity<BaselineActivity>()
     // Keep trying until HMD orientation is available
     if (activity.glxfLoaded)
         panelIsRepositioned = updateUiPanelPosition(activity)
   }
 
-  private fun updateUiPanelPosition(activity: MixedRealitySampleActivity): Boolean {
+  private fun updateUiPanelPosition(activity: BaselineActivity): Boolean {
     var head = getHmd()
     if (head == null) return false
 
     var headPose = head.tryGetComponent<Transform>()?.transform
     if (headPose == null || headPose == Pose()) return false
 
-    val composition = activity.glXFManager.getGLXFInfo(MixedRealitySampleActivity.GLXF_SCENE)
+    val composition = activity.glXFManager.getGLXFInfo(BaselineActivity.GLXF_SCENE)
     val panel = composition.tryGetNodeByName("Panel")
     if (panel?.entity == null) return false
 

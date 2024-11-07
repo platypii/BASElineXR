@@ -5,6 +5,7 @@ entities:
           {}
         com.meta.components.Scene:
           nodes:
+            - ref:ring
             - ref:ring-gold
             - ref:jscad1
             - ref:jscad
@@ -34,8 +35,8 @@ entities:
             - 1.10000002
             - -1.70000005
         com.meta.spatial.toolkit.Grabbable:
-          type: 0
           enabled: true
+          type: 0
         com.meta.spatial.toolkit.Panel:
           panel: "@layout/about"
         com.meta.spatial.toolkit.PanelDimensions:
@@ -77,13 +78,13 @@ entities:
             - -0.0500000007
             - 0
         com.meta.spatial.physics.Physics:
-          shape: box
-          restitution: 0.80000000000000004
-          state: 0
           dimensions:
             - 10
             - 0.00999999978
             - 10
+          state: 0
+          restitution: 0.80000000000000004
+          shape: box
         com.meta.spatial.toolkit.Visible:
           isVisible: false
       tag: defaultFloor
@@ -130,7 +131,7 @@ entities:
           {}
         com.meta.components.DocumentReference:
           transformType: None
-          documentReference: projref:ring-gold/Main.metaspatialobj
+          documentReference: ""
         com.meta.components.Name:
           name: ring-gold
         com.meta.components.SceneNode:
@@ -144,5 +145,24 @@ entities:
             - 1
             - 0
       tag: ring-gold
+    - components:
+        com.meta.components.Animatable:
+          {}
+        com.meta.components.DocumentReference:
+          transformType: None
+          documentReference: projref:ring/Main.metaspatialobj
+        com.meta.components.Name:
+          name: ring
+        com.meta.components.SceneNode:
+          rotation.format: Euler
+          scale:
+            - 2
+            - 2
+            - 2
+          translation:
+            - 0
+            - 1
+            - 0
+      tag: ring
 metadata:
   version: 1.0

@@ -1,10 +1,3 @@
-/*
- * Copyright (c) Meta Platforms, Inc. and affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- */
-
 package com.platypii.baselinexr
 
 import android.content.pm.PackageManager
@@ -36,7 +29,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-class MixedRealitySampleActivity : AppSystemActivity() {
+class BaselineActivity : AppSystemActivity() {
 
   var glxfLoaded = false
   private val activityScope = CoroutineScope(Dispatchers.Main)
@@ -61,6 +54,8 @@ class MixedRealitySampleActivity : AppSystemActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+
+    Services.create(this)
 
     // Add a system to remove objects that fall 100 meters below the floor
     systemManager.registerSystem(
@@ -107,6 +102,16 @@ class MixedRealitySampleActivity : AppSystemActivity() {
         loadSceneFromDevice()
       }
     }
+  }
+
+  override fun onStart() {
+    super.onStart()
+    Services.start(this)
+  }
+
+  override fun onStop() {
+    super.onStop()
+    Services.stop()
   }
 
   private fun loadSceneFromDevice() {
@@ -203,7 +208,7 @@ class MixedRealitySampleActivity : AppSystemActivity() {
   }
 
   companion object {
-    const val TAG = "MixedRealitySampleActivityDebug"
+    const val TAG = "BaselineActivityDebug"
     const val PERMISSION_USE_SCENE: String = "com.oculus.permission.USE_SCENE"
     const val REQUEST_CODE_PERMISSION_USE_SCENE: Int = 1
     const val GLXF_SCENE = "GLXF_SCENE"
@@ -211,5 +216,5 @@ class MixedRealitySampleActivity : AppSystemActivity() {
 }
 
 fun log(msg: String) {
-  Log.d(MixedRealitySampleActivity.TAG, msg)
+  Log.d(BaselineActivity.TAG, msg)
 }

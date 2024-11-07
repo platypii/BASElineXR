@@ -10,7 +10,6 @@ import com.platypii.baselinexr.Services;
 import com.platypii.baselinexr.cloud.AuthState;
 import com.platypii.baselinexr.cloud.RetrofitClient;
 import com.platypii.baselinexr.events.SyncEvent;
-import com.platypii.baselinexr.tracks.cloud.DeleteTask;
 import com.platypii.baselinexr.tracks.cloud.TrackApi;
 import com.platypii.baselinexr.util.Exceptions;
 
@@ -109,10 +108,6 @@ public class Tracks {
             }
         }
         return starred;
-    }
-
-    public void deleteTrack(@NonNull Context context, @NonNull TrackMetadata track) {
-        new Thread(new DeleteTask(context, track)).start();
     }
 
     /**

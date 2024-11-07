@@ -8,8 +8,6 @@ import androidx.annotation.NonNull;
 import com.platypii.baselinexr.Services;
 import com.platypii.baselinexr.cloud.tasks.TaskType;
 
-import org.greenrobot.eventbus.EventBus;
-
 import java.util.List;
 
 /**
@@ -20,8 +18,6 @@ class SyncManager {
     private static final String TAG = "UploadManager";
 
     public void start(@NonNull Context context) {
-        // Listen for track logging stops
-        EventBus.getDefault().register(this);
         // Queue tracks for upload and download
         new Handler().postDelayed(() -> {
             downloadAll(context);
@@ -44,7 +40,6 @@ class SyncManager {
     }
 
     public void stop() {
-        EventBus.getDefault().unregister(this);
     }
 
 }

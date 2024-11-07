@@ -39,7 +39,6 @@ public class BluetoothService {
 
     // BLE subsystem
     public final BleService ble = new BleService(
-            new MohawkProtocol(locationUpdates),
             new Flysight2Protocol(locationUpdates)
     );
 

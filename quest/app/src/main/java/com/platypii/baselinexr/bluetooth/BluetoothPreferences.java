@@ -15,18 +15,18 @@ public class BluetoothPreferences {
     private static final String PREF_BT_BLE = "bluetooth_ble";
 
     // Android shared preferences for bluetooth
-    public boolean preferenceEnabled = false;
+    public boolean preferenceEnabled = true;
     @Nullable
     public String preferenceDeviceId = null;
     @Nullable
     public String preferenceDeviceName = null;
-    public boolean preferenceBle = false;
+    public boolean preferenceBle = true;
 
     public void load(@NonNull SharedPreferences prefs) {
         preferenceEnabled = prefs.getBoolean(PREF_BT_ENABLED, preferenceEnabled);
         preferenceDeviceId = prefs.getString(PREF_BT_DEVICE_ID, preferenceDeviceId);
         preferenceDeviceName = prefs.getString(PREF_BT_DEVICE_NAME, preferenceDeviceName);
-        preferenceBle = prefs.getBoolean(PREF_BT_BLE, false);
+        preferenceBle = prefs.getBoolean(PREF_BT_BLE, true);
     }
 
     public void save(@NonNull Context context, boolean enabled, String deviceId, String deviceName, boolean ble) {

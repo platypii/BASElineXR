@@ -74,7 +74,7 @@
     />
 
     <activity
-      android:name="com.platypii.baselinexr.MixedRealitySampleActivity"
+      android:name="com.platypii.baselinexr.BaselineActivity"
       android:launchMode="singleTask"
       android:excludeFromRecents="false"
       android:screenOrientation="landscape"
