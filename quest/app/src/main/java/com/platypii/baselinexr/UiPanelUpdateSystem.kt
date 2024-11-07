@@ -5,56 +5,69 @@ import com.meta.spatial.core.Pose
 import com.meta.spatial.core.Quaternion
 import com.meta.spatial.core.SystemBase
 import com.meta.spatial.core.Vector3
-import com.meta.spatial.physics.Physics
 import com.meta.spatial.toolkit.PlayerBodyAttachmentSystem
 import com.meta.spatial.toolkit.SpatialActivityManager
 import com.meta.spatial.toolkit.Transform
 
-class UiPanelUpdateSystem() : SystemBase() {
-
-  private var panelIsRepositioned = false
+class UiPanelUpdateSystem : SystemBase() {
+  private var initialized = false
+  private var panelEntity: Entity? = null
+  private val panelOffset = Vector3(0f, 0f, 2f) // Panel will be 2 meters in front
 
   override fun execute() {
     val activity = SpatialActivityManager.getVrActivity<BaselineActivity>()
-    // Keep trying until HMD orientation is available
-    if (activity.glxfLoaded)
-        panelIsRepositioned = updateUiPanelPosition(activity)
+    if (!activity.glxfLoaded) return
+
+    if (!initialized) {
+      initializePanel(activity)
+    }
+
+    updatePanelPosition()
   }
 
-  private fun updateUiPanelPosition(activity: BaselineActivity): Boolean {
-    var head = getHmd()
-    if (head == null) return false
-
-    var headPose = head.tryGetComponent<Transform>()?.transform
-    if (headPose == null || headPose == Pose()) return false
-
+  private fun initializePanel(activity: BaselineActivity) {
     val composition = activity.glXFManager.getGLXFInfo(BaselineActivity.GLXF_SCENE)
     val panel = composition.tryGetNodeByName("Panel")
-    if (panel?.entity == null) return false
+    if (panel?.entity != null) {
+      panelEntity = panel.entity
+      initialized = true
+    }
+  }
 
-    var forward = headPose.q * Vector3(0f, 0f, 1f)
-    val panelPose = Pose(Vector3(0f, 0f, 0f), Quaternion(1f, 0f, 0f, 0f))
+  private fun updatePanelPosition() {
+    if (!initialized || panelEntity == null) return
 
-    // Position in front of HMD
-    panelPose.t = headPose.t + forward * 2.5f
-    // Lock y position
-    panelPose.t.y = 1.1f
-    // Rotate y axis to face HMD
-    panelPose.q = Quaternion.lookRotationAroundY(forward)
+    val head = getHmd() ?: return
+    val headTransform = head.tryGetComponent<Transform>() ?: return
+    val headPose = headTransform.transform
+    if (headPose == Pose()) return
 
-    panel.entity.setComponent(Transform(panelPose))
+    // Calculate the forward vector from the head's rotation
+    val forward = headPose.q * Vector3(0f, 0f, 1f)
 
-    // set physics on panel after position is set (otherwise physics interferes with position)
-    panel.entity.setComponent(
-        Physics("box", dimensions = Vector3(1.0f, 0.75f, 0f), restitution = 0.9f))
+    val targetPose = Pose()
 
-    return true
+    // Position the panel directly in front of the head, including vertical movement
+    targetPose.t = headPose.t + (forward * panelOffset.z)
+
+    // Use look rotation to create the rotation quaternion
+    // Calculate the direction from the panel to the head position
+    val toHead = headPose.t - targetPose.t
+    val forwardVec = toHead.normalize()
+    // Use the head's up vector to maintain consistent orientation
+    val upVec = headPose.q * Vector3(0f, 1f, 0f)
+    // Use look rotation to create the rotation quaternion
+    val rotation = Quaternion.lookRotation(forwardVec, upVec)
+    targetPose.q = rotation
+
+    // Update panel transform directly
+    panelEntity?.setComponent(Transform(targetPose))
   }
 
   private fun getHmd(): Entity? {
     return systemManager
-        .tryFindSystem<PlayerBodyAttachmentSystem>()
-        ?.tryGetLocalPlayerAvatarBody()
-        ?.head
+      .tryFindSystem<PlayerBodyAttachmentSystem>()
+      ?.tryGetLocalPlayerAvatarBody()
+      ?.head
   }
 }
