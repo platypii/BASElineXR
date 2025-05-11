@@ -83,14 +83,14 @@
   ],
   "nodes": [
     {
-      "mesh": 0,
-      "name": "default"
-    },
-    {
       "name": "jscad_root",
       "children": [
-        0
+        1
       ]
+    },
+    {
+      "mesh": 0,
+      "name": "default"
     },
     {
       "scale": [
@@ -100,7 +100,7 @@
       ],
       "name": "RootNode",
       "children": [
-        1
+        0
       ]
     }
   ],

@@ -218,7 +218,7 @@
         "metallicFactor": 0.0,
         "roughnessFactor": 0.5,
         "baseColorTexture": {
-          "index": 0,
+          "index": 1,
           "texCoord": 1
         }
       }
@@ -230,7 +230,7 @@
         "metallicFactor": 0.0,
         "roughnessFactor": 0.5,
         "baseColorTexture": {
-          "index": 1,
+          "index": 0,
           "texCoord": 1
         }
       }
@@ -311,8 +311,8 @@
         0.010000000707805157,
         0.010000000707805157
       ],
-      "mesh": 0,
-      "name": "floorBase_geo.002"
+      "mesh": 1,
+      "name": "ceiling_geo.002"
     },
     {
       "rotation": [
@@ -326,8 +326,8 @@
         0.010000000707805157,
         0.010000000707805157
       ],
-      "mesh": 1,
-      "name": "ceiling_geo.002"
+      "mesh": 0,
+      "name": "floorBase_geo.002"
     },
     {
       "translation": [
@@ -355,19 +355,19 @@
     {
       "nodes": [
         2,
-        1,
-        0
+        0,
+        1
       ]
     }
   ],
   "textures": [
     {
       "source": 1,
-      "name": "texture3"
+      "name": "texture2"
     },
     {
       "source": 0,
-      "name": "texture2"
+      "name": "texture3"
     },
     {
       "source": 2,
@@ -402,12 +402,12 @@
   ],
   "images": [
     {
-      "uri": "fd7a877aa22c9400029fa59d9e4c8375.jpg",
-      "name": "ceilingBake_beauty"
-    },
-    {
       "uri": "391c375e819ad25f777dfca867d8da1e.jpg",
       "name": "floorScreenBake_beauty"
+    },
+    {
+      "uri": "fd7a877aa22c9400029fa59d9e4c8375.jpg",
+      "name": "ceilingBake_beauty"
     },
     {
       "uri": "f09e4c82bace718286bde03926cdf80b.jpg",

@@ -34,21 +34,22 @@
       android:orientation="horizontal">
 
     <Button
-        android:id="@+id/configure_button"
-        android:layout_width="120dp"
-        android:layout_height="36dp"
-        android:layout_marginEnd="16dp"
-        android:background="@drawable/button_bg"
-        android:text="Configure Room"
-        android:textColor="#ffffff" />
-
-    <Button
         android:id="@+id/toggle_debug"
         android:layout_width="120dp"
         android:layout_height="36dp"
         android:layout_gravity="center"
+        android:layout_marginEnd="16dp"
         android:background="@drawable/button_bg"
         android:text="Toggle Debug"
+        android:textColor="#ffffff" />
+
+    <Button
+        android:id="@+id/exit_button"
+        android:layout_width="120dp"
+        android:layout_height="36dp"
+        android:layout_gravity="center"
+        android:background="@drawable/button_bg"
+        android:text="Exit"
         android:textColor="#ffffff" />
   </LinearLayout>
 </LinearLayout>
