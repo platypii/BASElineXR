@@ -6,8 +6,6 @@
   android:installLocation="auto"
 >
 
-  <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="33" />
-
   <!-- Tell the system this app works in either 3dof or 6dof mode -->
   <uses-feature
     android:name="android.hardware.vr.headtracking"

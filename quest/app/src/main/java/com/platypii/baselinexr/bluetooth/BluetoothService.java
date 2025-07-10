@@ -52,10 +52,6 @@ public class BluetoothService {
     @Nullable
     private Thread bluetoothThread;
 
-    // Bluetooth device battery level
-    public float powerLevel = Float.NaN;
-    public boolean charging = false;
-
     public void start(@NonNull Activity activity) {
         if (BluetoothState.started(getState())) {
             Exceptions.report(new IllegalStateException("Bluetooth started twice " + BT_STATES[getState()]));

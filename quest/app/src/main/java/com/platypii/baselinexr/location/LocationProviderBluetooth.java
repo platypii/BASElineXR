@@ -33,23 +33,6 @@ public class LocationProviderBluetooth extends LocationProviderNMEA {
     }
 
     /**
-     * Listen for GPPWR command
-     */
-    @Override
-    public void apply(@NonNull NMEA nmea) {
-        // Parse PWR command
-        if (nmea.sentence.startsWith("$GPPWR")) {
-            final String[] split = NMEA.splitNmea(nmea.sentence);
-            bluetooth.powerLevel = NMEA.parsePowerLevel(split);
-            bluetooth.charging = Numbers.parseInt(split[5], 0) == 1;
-        } else if (nmea.sentence.startsWith("$")) {
-            super.apply(nmea);
-        } else {
-            Log.w(TAG, "Unexpected bluetooth message: " + nmea);
-        }
-    }
-
-    /**
      * Start location updates
      *
      * @param context The Application context

@@ -25,6 +25,16 @@
       android:text="BASEline XR"
       android:textColor="#cccccc"
       android:textSize="12dp" />
+  <TextView
+      android:id="@+id/sub_title"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:gravity="center"
+      android:lineHeight="18dp"
+      android:padding="12dp"
+      android:text=""
+      android:textColor="#cccccc"
+      android:textSize="12dp" />
 
   <LinearLayout
       android:layout_width="match_parent"

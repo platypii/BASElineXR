@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
+import android.widget.TextView
 import com.meta.spatial.castinputforward.CastInputForwardFeature
 import com.meta.spatial.core.Entity
 import com.meta.spatial.core.SpatialFeature
@@ -18,6 +19,8 @@ import com.meta.spatial.mruk.AnchorProceduralMeshConfig
 import com.meta.spatial.mruk.MRUKFeature
 import com.meta.spatial.mruk.MRUKLabel
 import com.meta.spatial.mruk.MRUKLoadDeviceResult
+import com.meta.spatial.mruk.MRUKRoom
+import com.meta.spatial.mruk.MRUKSceneEventListener
 import com.meta.spatial.mruk.MRUKSystem
 import com.meta.spatial.ovrmetrics.OVRMetricsDataModel
 import com.meta.spatial.ovrmetrics.OVRMetricsFeature
@@ -43,13 +46,15 @@ class BaselineActivity : AppSystemActivity() {
   private var gotAllAnchors = false
   private var debug = false
   private lateinit var procMeshSpawner: AnchorProceduralMesh
+  private lateinit var mrukFeature: MRUKFeature
 
   override fun registerFeatures(): List<SpatialFeature> {
+    mrukFeature = MRUKFeature(this, systemManager)
     val features =
         mutableListOf<SpatialFeature>(
           PhysicsFeature(spatial),
           VRFeature(this),
-          MRUKFeature(this, systemManager)
+          mrukFeature
         )
     if (BuildConfig.DEBUG) {
       features.add(CastInputForwardFeature(this))
@@ -76,7 +81,7 @@ class BaselineActivity : AppSystemActivity() {
     //       It is also possible to spawn procedural meshes for volumes
     procMeshSpawner =
         AnchorProceduralMesh(
-            mrukSystem,
+            mrukFeature,
             mapOf(
                 MRUKLabel.FLOOR to AnchorProceduralMeshConfig(null, true),
 //                MRUKLabel.WALL_FACE to AnchorProceduralMeshConfig(null, true),
@@ -96,11 +101,13 @@ class BaselineActivity : AppSystemActivity() {
       ballShooter = BallShooter(mesh)
       systemManager.registerSystem(ballShooter!!)
 
-      mrukSystem.addOnRoomAddedListener { room ->
-        // If a room exists, it has a floor. Remove the default floor.
-        val floor = composition.tryGetNodeByName("defaultFloor")
-        floor!!.entity.destroy()
-      }
+      mrukFeature.addSceneEventListener(object : MRUKSceneEventListener {
+        override fun onRoomAdded(room: MRUKRoom) {
+          // If a room exists, it has a floor. Remove the default floor.
+          val floor = composition.tryGetNodeByName("defaultFloor")
+          floor!!.entity.destroy()
+        }
+      })
 
       if (checkSelfPermission(PERMISSION_USE_SCENE) != PackageManager.PERMISSION_GRANTED) {
         log("Scene permission has not been granted, requesting " + PERMISSION_USE_SCENE)
@@ -123,9 +130,8 @@ class BaselineActivity : AppSystemActivity() {
   }
 
   private fun loadSceneFromDevice() {
-    val mrukSystem = systemManager.findSystem<MRUKSystem>()
     log("Loading scene from device...")
-    mrukSystem.loadSceneFromDevice().whenComplete { result: MRUKLoadDeviceResult, _ ->
+    mrukFeature.loadSceneFromDevice().whenComplete { result: MRUKLoadDeviceResult, _ ->
       if (result != MRUKLoadDeviceResult.SUCCESS) {
         log("Error loading scene from device: ${result}")
       } else {
@@ -190,6 +196,14 @@ class BaselineActivity : AppSystemActivity() {
             exitButton?.setOnClickListener({
               finish()
             })
+
+            val subtitle = rootView?.findViewById<TextView>(R.id.sub_title)
+            subtitle?.text = Services.location.dataSource()
+            Services.location.locationUpdates.subscribe { loc ->
+              val provider = Services.location.dataSource()
+              subtitle?.text = provider + " " + loc.toString()
+            }
+            // TODO: unsubscribe later
           }
         })
   }
