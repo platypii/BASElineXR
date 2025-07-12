@@ -28,7 +28,7 @@ import java.util.zip.GZIPInputStream;
 /**
  * Parse location data from track file
  */
-class TrackFileReader {
+public class TrackFileReader {
     private static final String TAG = "TrackFileReader";
 
     @NonNull
@@ -66,7 +66,7 @@ class TrackFileReader {
     }
 
     @NonNull
-    private List<MLocation> parse(@NonNull BufferedReader br) throws IOException {
+    public static List<MLocation> parse(@NonNull BufferedReader br) throws IOException {
         // Reset initial state
         // State used while scanning track file
         final Filter baroAltitudeFilter = new FilterKalman();
