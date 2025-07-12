@@ -74,6 +74,8 @@ class BaselineActivity : AppSystemActivity() {
     systemManager.registerSystem(
         PhysicsOutOfBoundsSystem(spatial).apply { setBounds(minY = -100.0f) })
     systemManager.registerSystem(UiPanelUpdateSystem())
+    val flightPathSystem = FlightPathTrailSystem(this)
+    systemManager.registerSystem(flightPathSystem)
 
     val mrukSystem = systemManager.findSystem<MRUKSystem>()
 
@@ -100,6 +102,9 @@ class BaselineActivity : AppSystemActivity() {
       val mesh = bball.getComponent<Mesh>()
       ballShooter = BallShooter(mesh)
       systemManager.registerSystem(ballShooter!!)
+      
+      // Set mesh for flight path trail
+      flightPathSystem.setSphereMesh(mesh)
 
       mrukFeature.addSceneEventListener(object : MRUKSceneEventListener {
         override fun onRoomAdded(room: MRUKRoom) {

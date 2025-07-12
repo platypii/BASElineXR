@@ -63,7 +63,7 @@ public class MockLocationProvider extends LocationProvider {
         }).start();
     }
 
-    private List<MLocation> loadData(Context context) {
+    public static List<MLocation> loadData(Context context) {
         try (BufferedReader br = new BufferedReader(new InputStreamReader(context.getAssets().open("eiger.csv"), StandardCharsets.UTF_8))) {
             return TrackFileReader.parse(br);
         } catch (IOException e) {
