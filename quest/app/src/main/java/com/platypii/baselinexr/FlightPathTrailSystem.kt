@@ -9,7 +9,6 @@ import com.meta.spatial.core.SystemBase
 import com.meta.spatial.core.Vector3
 import com.meta.spatial.toolkit.Mesh
 import com.meta.spatial.toolkit.Transform
-import com.platypii.baselinexr.location.GpsToWorldTransform
 import com.platypii.baselinexr.location.MockLocationProvider
 import com.platypii.baselinexr.measurements.MLocation
 
@@ -23,6 +22,7 @@ class FlightPathTrailSystem(private val context: Context) : SystemBase() {
     private var trackData: List<MLocation>? = null
     private var initialized = false
     private var sphereMesh: Mesh? = null
+    private var previousOriginDelta = Vector3(0f, 0f, 0f)
     
     fun setSphereMesh(mesh: Mesh) {
         sphereMesh = mesh
@@ -90,5 +90,59 @@ class FlightPathTrailSystem(private val context: Context) : SystemBase() {
         trailEntities.forEach { it.destroy() }
         trailEntities.clear()
         super.delete(entity)
+    }
+    
+    /**
+     * Update the origin based on the latest GPS location.
+     * This will shift all trail entities by the delta between the old and new origin.
+     */
+    fun onLocationUpdate(location: MLocation) {
+        if (!initialized) {
+            return
+        }
+        
+        // Update the origin to the latest GPS location
+        gpsTransform.setOrigin(location)
+        
+        // Calculate the new origin delta
+        val newOriginDelta = gpsTransform.getOriginDelta()
+        
+        // Calculate how much to shift the trail entities
+        // When origin moves forward, trail needs to move backward (negative shift)
+        val shift = Vector3(
+            -(newOriginDelta.x - previousOriginDelta.x),
+            -(newOriginDelta.y - previousOriginDelta.y),
+            -(newOriginDelta.z - previousOriginDelta.z)
+        )
+        
+        // Shift all trail entities
+        trailEntities.forEachIndexed { index, entity ->
+            val transform = entity.getComponent<Transform>()
+            val currentPose = transform.transform
+            val currentPos = currentPose.t
+            val newPos = Vector3(
+                currentPos.x + shift.x,
+                currentPos.y + shift.y,
+                currentPos.z + shift.z
+            )
+            
+            // Create new pose with updated position
+            val newPose = Pose(newPos, currentPose.q)
+            
+            // IMPORTANT: Set the component back on the entity for changes to take effect
+            entity.setComponent(Transform(newPose))
+            
+            // Log first entity position for debugging
+            if (index == 0) {
+                Log.i(TAG, "First entity moved from (${currentPos.x}, ${currentPos.y}, ${currentPos.z}) to (${newPos.x}, ${newPos.y}, ${newPos.z})")
+            }
+        }
+        
+        // Update the previous delta for next time
+        previousOriginDelta = newOriginDelta
+        
+//        Log.i(TAG, "Updated origin to: ${location.latitude}, ${location.longitude}, ${location.altitude_gps}")
+//        Log.i(TAG, "Origin delta: (${newOriginDelta.x}, ${newOriginDelta.y}, ${newOriginDelta.z})")
+//        Log.i(TAG, "Trail shifted by: ${shift.x}, ${shift.y}, ${shift.z}")
     }
 }

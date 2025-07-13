@@ -207,6 +207,10 @@ class BaselineActivity : AppSystemActivity() {
             Services.location.locationUpdates.subscribe { loc ->
               val provider = Services.location.dataSource()
               subtitle?.text = provider + " " + loc.toStringSimple()
+              
+              // Update the flight path system with the new location
+              val flightPathSystem = systemManager.findSystem<FlightPathTrailSystem>()
+              flightPathSystem?.onLocationUpdate(loc)
             }
             // TODO: unsubscribe later
           }

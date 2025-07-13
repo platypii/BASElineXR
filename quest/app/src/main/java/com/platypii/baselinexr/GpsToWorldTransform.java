@@ -1,4 +1,4 @@
-package com.platypii.baselinexr.location;
+package com.platypii.baselinexr;
 
 import com.meta.spatial.core.Vector3;
 import com.platypii.baselinexr.measurements.MLocation;
@@ -12,7 +12,21 @@ public class GpsToWorldTransform {
     private double originAlt;
     private boolean originSet = false;
     
+    // Track the initial origin for calculating deltas
+    private double initialOriginLat;
+    private double initialOriginLon;
+    private double initialOriginAlt;
+    private boolean initialOriginSet = false;
+    
     public void setOrigin(double lat, double lon, double alt) {
+        // Store initial origin on first call
+        if (!initialOriginSet) {
+            this.initialOriginLat = lat;
+            this.initialOriginLon = lon;
+            this.initialOriginAlt = alt;
+            this.initialOriginSet = true;
+        }
+        
         this.originLat = lat;
         this.originLon = lon;
         this.originAlt = alt;
@@ -45,5 +59,31 @@ public class GpsToWorldTransform {
     
     public Vector3 toWorldCoordinates(MLocation location) {
         return toWorldCoordinates(location.latitude, location.longitude, location.altitude_gps);
+    }
+    
+    /**
+     * Calculate the world space offset between the initial origin and the current origin.
+     * This can be used to shift trail positions when the origin is updated.
+     */
+    public Vector3 getOriginDelta() {
+        if (!initialOriginSet || !originSet) {
+            return new Vector3(0, 0, 0);
+        }
+        
+        // Calculate the difference between current origin and initial origin
+        double latRad = Math.toRadians(originLat);
+        double lonRad = Math.toRadians(originLon);
+        double initialLatRad = Math.toRadians(initialOriginLat);
+        double initialLonRad = Math.toRadians(initialOriginLon);
+        
+        double deltaLat = latRad - initialLatRad;
+        double deltaLon = lonRad - initialLonRad;
+        
+        // Use initial origin latitude for consistency with coordinate conversion
+        double north = deltaLat * EARTH_RADIUS_METERS;
+        double east = deltaLon * EARTH_RADIUS_METERS * Math.cos(initialLatRad);
+        double up = originAlt - initialOriginAlt;
+        
+        return new Vector3((float)east, (float)up, (float)north);
     }
 }
