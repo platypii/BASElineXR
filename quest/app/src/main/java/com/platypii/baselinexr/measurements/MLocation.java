@@ -8,6 +8,7 @@ import com.platypii.baselinexr.location.Geo;
 import com.platypii.baselinexr.location.LatLng;
 import com.platypii.baselinexr.location.LocationCheck;
 import com.platypii.baselinexr.location.NMEAException;
+import com.platypii.baselinexr.util.Convert;
 import com.platypii.baselinexr.util.Exceptions;
 import com.platypii.baselinexr.util.Numbers;
 
@@ -167,6 +168,11 @@ public class MLocation extends Measurement implements Comparable<MLocation> {
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
         final String date = sdf.format(new Date(millis));
         return String.format(Locale.US, "MLocation(%s,%.6f,%.6f,%.1f,%.0f,%.0f)", date, latitude, longitude, altitude_gps, vN, vE);
+    }
+
+    public String toStringSimple() {
+        return String.format(Locale.US, "%.6f,%.6f %.0fm", latitude, longitude, altitude_gps);
+//        return String.format(Locale.US, "%.6f,%.6f %.0fm\nGroundspeed: %s, Fallrate: %s", latitude, longitude, altitude_gps, Convert.speed(groundSpeed()), Convert.speed(-climb));
     }
 
     /**

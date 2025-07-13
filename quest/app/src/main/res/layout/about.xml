@@ -2,18 +2,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/layout_bg"
     android:clipToOutline="true"
     android:gravity="left"
     android:orientation="vertical">
-
-  <!--Header Image-->
-  <ImageView
-      android:layout_width="match_parent"
-      android:layout_height="250dp"
-      android:gravity="center"
-      android:scaleType="centerCrop"
-      android:src="@drawable/cover" />
 
   <!--Body text-->
   <TextView
@@ -22,9 +13,10 @@
       android:gravity="center"
       android:lineHeight="18dp"
       android:padding="12dp"
+      android:background="#000000"
       android:text="BASEline XR"
       android:textColor="#cccccc"
-      android:textSize="12dp" />
+      android:textSize="14sp" />
   <TextView
       android:id="@+id/sub_title"
       android:layout_width="match_parent"
@@ -32,6 +24,7 @@
       android:gravity="center"
       android:lineHeight="18dp"
       android:padding="12dp"
+      android:background="#000000"
       android:text=""
       android:textColor="#cccccc"
       android:textSize="12dp" />
@@ -50,6 +43,7 @@
         android:layout_gravity="center"
         android:layout_marginEnd="16dp"
         android:background="@drawable/button_bg"
+        android:visibility="gone"
         android:text="Toggle Debug"
         android:textColor="#ffffff" />
 

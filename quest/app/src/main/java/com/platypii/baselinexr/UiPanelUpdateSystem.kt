@@ -12,7 +12,7 @@ import com.meta.spatial.toolkit.Transform
 class UiPanelUpdateSystem : SystemBase() {
   private var initialized = false
   private var panelEntity: Entity? = null
-  private val panelOffset = Vector3(0f, 0f, 2f) // Panel will be 2 meters in front
+  private val panelOffset = Vector3(-0.2f, 0.15f, 2f)
 
   override fun execute() {
     val activity = SpatialActivityManager.getVrActivity<BaselineActivity>()
@@ -42,13 +42,15 @@ class UiPanelUpdateSystem : SystemBase() {
     val headPose = headTransform.transform
     if (headPose == Pose()) return
 
-    // Calculate the forward vector from the head's rotation
+    // Calculate the forward and right vectors from the head's rotation
     val forward = headPose.q * Vector3(0f, 0f, 1f)
+    val right = headPose.q * Vector3(1f, 0f, 0f)
+    val up = headPose.q * Vector3(0f, 1f, 0f)
 
     val targetPose = Pose()
 
-    // Position the panel directly in front of the head, including vertical movement
-    targetPose.t = headPose.t + (forward * panelOffset.z)
+    // Position the panel in bottom left relative to the user's view
+    targetPose.t = headPose.t + (forward * panelOffset.z) + (right * panelOffset.x) + (up * panelOffset.y)
 
     // Use look rotation to create the rotation quaternion
     // Calculate the direction from the panel to the head position

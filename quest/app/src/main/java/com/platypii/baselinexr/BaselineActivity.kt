@@ -206,7 +206,7 @@ class BaselineActivity : AppSystemActivity() {
             subtitle?.text = Services.location.dataSource()
             Services.location.locationUpdates.subscribe { loc ->
               val provider = Services.location.dataSource()
-              subtitle?.text = provider + " " + loc.toString()
+              subtitle?.text = provider + " " + loc.toStringSimple()
             }
             // TODO: unsubscribe later
           }
