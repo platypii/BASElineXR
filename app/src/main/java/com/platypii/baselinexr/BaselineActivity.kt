@@ -33,6 +33,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
+import com.meta.spatial.core.Pose
+import com.meta.spatial.core.Quaternion
+import com.meta.spatial.toolkit.Transform
 
 class BaselineActivity : AppSystemActivity() {
 
@@ -41,6 +44,7 @@ class BaselineActivity : AppSystemActivity() {
   private var gltfxEntity: Entity? = null
   private var sphereEntity: Entity? = null
   private var ballShooter: BallShooter? = null
+  private var terrainEntity: Entity? = null
   private var debug = false
   private lateinit var procMeshSpawner: AnchorProceduralMesh
   private lateinit var mrukFeature: MRUKFeature
@@ -96,7 +100,13 @@ class BaselineActivity : AppSystemActivity() {
       Mesh("sphere.gltf".toUri()),
       Visible(false)
     )
-    
+
+    // Load terrain GLTF directly
+    terrainEntity = Entity.create(
+      Mesh("eiger_terrain_0.5m.glb".toUri()),
+      Visible(true)
+    )
+
     loadGLXF().invokeOnCompletion {
       glxfLoaded = true
 
@@ -205,6 +215,22 @@ class BaselineActivity : AppSystemActivity() {
               // Update the flight path system with the new location
               val flightPathSystem = systemManager.findSystem<FlightPathTrailSystem>()
               flightPathSystem?.onLocationUpdate(loc)
+
+              // Get the eiger terrain entity
+              val eigerTerrain = terrainEntity
+
+              // Position the terrain at world origin (0, 0, 0) to align with GPS trail origin
+              // Rotate 90 degrees around X axis
+              // Assume Eiger Terrain origin is 7.9475298, 46.5901325
+              // TODO: Transform origin and map terrain transform appropriately.
+              val terrainTransform = Transform(Pose(
+                // +X moves terrain south, +Y moves up, +Z moves east
+                Vector3(  3400f, -3100f, 1750f),
+                Quaternion()
+              ))
+              eigerTerrain?.setComponent(terrainTransform)
+
+              log("Eiger terrain loaded and positioned at origin")
             }
             // TODO: unsubscribe later
           }

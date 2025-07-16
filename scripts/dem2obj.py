@@ -39,11 +39,15 @@ def main(dem_path, tex_path, obj_path, *, max_err=1.0):
         mtl.write(f'newmtl terrain\nmap_Kd {tex_name}\n')
         obj.write(f'mtllib {mtl_path.name}\nusemtl terrain\n')
 
-        # vertices + UVs
-        for i, (x, y, z) in enumerate(verts, start=1):
-            obj.write(f'v {x*px_size:.3f} {z:.3f} {y*px_size:.3f}\n')
-            u = x / (ncols - 1)
-            v = 1 - y / (nrows - 1)        # image origin is top-left
+        # vertices + UVs --- VR coord system:  X=north/south, Y=up, Z=east/west
+        for i, (col, row, elev) in enumerate(verts, start=1):
+            x = col * px_size
+            y = row * px_size
+            z = elev # up
+            obj.write(f'v {x:.3f} {y:.3f} {z:.3f}\n')
+
+            u = col / (ncols - 1)
+            v = row / (nrows - 1) # image origin is top-left
             obj.write(f'vt {u:.6f} {v:.6f}\n')
 
         # faces (Delatin already gives triangle indices)
