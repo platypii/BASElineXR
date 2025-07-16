@@ -1,8 +1,0 @@
-{
-  "compilerOptions": {
-    "allowJs": true,
-    "checkJs": true,
-    "lib": ["esnext", "dom"],
-    "noEmit": true
-  }
-}
