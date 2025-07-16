@@ -43,7 +43,6 @@ class BaselineActivity : AppSystemActivity() {
   private val activityScope = CoroutineScope(Dispatchers.Main)
   private var gltfxEntity: Entity? = null
   private var ballShooter: BallShooter? = null
-  private var gotAllAnchors = false
   private var debug = false
   private lateinit var procMeshSpawner: AnchorProceduralMesh
   private lateinit var mrukFeature: MRUKFeature

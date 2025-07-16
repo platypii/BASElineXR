@@ -12,7 +12,7 @@ import com.meta.spatial.toolkit.Transform
 class UiPanelUpdateSystem : SystemBase() {
   private var initialized = false
   private var panelEntity: Entity? = null
-  private val panelOffset = Vector3(-0.2f, 0.15f, 2f)
+  private val panelOffset = Vector3(-0.2f, 0.25f, 4f)
 
   override fun execute() {
     val activity = SpatialActivityManager.getVrActivity<BaselineActivity>()
@@ -57,9 +57,8 @@ class UiPanelUpdateSystem : SystemBase() {
     val toHead = headPose.t - targetPose.t
     val forwardVec = toHead.normalize()
     // Use the head's up vector to maintain consistent orientation
-    val upVec = headPose.q * Vector3(0f, 1f, 0f)
     // Use look rotation to create the rotation quaternion
-    val rotation = Quaternion.lookRotation(forwardVec, upVec)
+    val rotation = Quaternion.lookRotation(forwardVec, up)
     targetPose.q = rotation
 
     // Update panel transform directly
