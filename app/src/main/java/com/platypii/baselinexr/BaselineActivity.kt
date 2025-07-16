@@ -1,7 +1,6 @@
 package com.platypii.baselinexr
 
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.MotionEvent
@@ -19,29 +18,28 @@ import com.meta.spatial.mruk.AnchorProceduralMeshConfig
 import com.meta.spatial.mruk.MRUKFeature
 import com.meta.spatial.mruk.MRUKLabel
 import com.meta.spatial.mruk.MRUKLoadDeviceResult
-import com.meta.spatial.mruk.MRUKRoom
-import com.meta.spatial.mruk.MRUKSceneEventListener
-import com.meta.spatial.mruk.MRUKSystem
 import com.meta.spatial.ovrmetrics.OVRMetricsDataModel
 import com.meta.spatial.ovrmetrics.OVRMetricsFeature
 import com.meta.spatial.physics.PhysicsFeature
 import com.meta.spatial.physics.PhysicsOutOfBoundsSystem
-import com.meta.spatial.runtime.LayerConfig
 import com.meta.spatial.toolkit.AppSystemActivity
 import com.meta.spatial.toolkit.Mesh
 import com.meta.spatial.toolkit.PanelRegistration
+import com.meta.spatial.toolkit.Visible
 import com.meta.spatial.vr.LocomotionSystem
 import com.meta.spatial.vr.VRFeature
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import androidx.core.net.toUri
 
 class BaselineActivity : AppSystemActivity() {
 
   var glxfLoaded = false
   private val activityScope = CoroutineScope(Dispatchers.Main)
   private var gltfxEntity: Entity? = null
+  private var basketballEntity: Entity? = null
   private var ballShooter: BallShooter? = null
   private var debug = false
   private lateinit var procMeshSpawner: AnchorProceduralMesh
@@ -76,8 +74,6 @@ class BaselineActivity : AppSystemActivity() {
     val flightPathSystem = FlightPathTrailSystem(this)
     systemManager.registerSystem(flightPathSystem)
 
-    val mrukSystem = systemManager.findSystem<MRUKSystem>()
-
     // NOTE: Here a material could be set as well to visualize the walls, ceiling, etc
     //       It is also possible to spawn procedural meshes for volumes
     procMeshSpawner =
@@ -94,27 +90,25 @@ class BaselineActivity : AppSystemActivity() {
     systemManager.findSystem<LocomotionSystem>().enableLocomotion(false)
     scene.enablePassthrough(true)
 
+    // Load basketball GLTF directly
+    basketballEntity = Entity.create(
+      Mesh("BasketBall.gltf".toUri()),
+      Visible(false)  // Hide the original basketball, only use as template
+    )
+    
     loadGLXF().invokeOnCompletion {
       glxfLoaded = true
-      val composition = glXFManager.getGLXFInfo(GLXF_SCENE)
-      val bball = composition.getNodeByName("BasketBall").entity
-      val mesh = bball.getComponent<Mesh>()
+
+      // Get basketball mesh from directly loaded entity
+      val mesh = basketballEntity!!.getComponent<Mesh>()
       ballShooter = BallShooter(mesh)
       systemManager.registerSystem(ballShooter!!)
-      
+
       // Set mesh for flight path trail
       flightPathSystem.setSphereMesh(mesh)
 
-      mrukFeature.addSceneEventListener(object : MRUKSceneEventListener {
-        override fun onRoomAdded(room: MRUKRoom) {
-          // If a room exists, it has a floor. Remove the default floor.
-          val floor = composition.tryGetNodeByName("defaultFloor")
-          floor!!.entity.destroy()
-        }
-      })
-
       if (checkSelfPermission(PERMISSION_USE_SCENE) != PackageManager.PERMISSION_GRANTED) {
-        log("Scene permission has not been granted, requesting " + PERMISSION_USE_SCENE)
+        log("Scene permission has not been granted, requesting $PERMISSION_USE_SCENE")
         requestPermissions(arrayOf(PERMISSION_USE_SCENE), REQUEST_CODE_PERMISSION_USE_SCENE)
       } else {
         log("Scene permission has already been granted!")
@@ -233,7 +227,7 @@ class BaselineActivity : AppSystemActivity() {
     gltfxEntity = Entity.create()
     return activityScope.launch {
       glXFManager.inflateGLXF(
-          Uri.parse("apk:///scenes/Composition.glxf"),
+          "apk:///scenes/Composition.glxf".toUri(),
           rootEntity = gltfxEntity!!,
           keyName = GLXF_SCENE
       )

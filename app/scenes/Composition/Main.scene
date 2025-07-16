@@ -6,7 +6,6 @@ entities:
         com.meta.components.Scene:
           nodes:
             - ref:defaultFloor
-            - ref:BasketBall
             - ref:Panel
       tag: Scene
   com.meta.models.SceneNode:
@@ -34,33 +33,13 @@ entities:
             - -1.70000005
           componentVersion: 1
         com.meta.spatial.toolkit.Grabbable:
-          type: 0
           enabled: true
+          type: 0
         com.meta.spatial.toolkit.Panel:
           panel: "@layout/about"
         com.meta.spatial.toolkit.PanelDimensions:
           {}
       tag: Panel
-    - components:
-        com.meta.components.Animatable:
-          {}
-        com.meta.components.DocumentReference:
-          transformType: None
-          documentReference: projref:BasketBall/Main.metaspatialobj
-        com.meta.components.Name:
-          name: BasketBall
-        com.meta.components.PointerNodeInverseComponent:
-          {}
-        com.meta.components.SceneNode:
-          rotation.format: Euler
-          scale:
-            - 1
-            - 1
-            - 1
-          componentVersion: 1
-        com.meta.spatial.toolkit.Visible:
-          isVisible: false
-      tag: BasketBall
     - components:
         com.meta.components.Animatable:
           {}
@@ -83,13 +62,13 @@ entities:
             - 0
           componentVersion: 1
         com.meta.spatial.physics.Physics:
-          shape: box
-          restitution: 0.80000000000000004
-          state: 0
           dimensions:
             - 10
             - 0.00999999978
             - 10
+          state: 0
+          restitution: 0.80000000000000004
+          shape: box
         com.meta.spatial.toolkit.Visible:
           isVisible: false
       tag: defaultFloor

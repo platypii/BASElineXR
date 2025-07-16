@@ -1,7 +1,6 @@
 package com.platypii.baselinexr.location;
 
 import android.content.Context;
-import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
