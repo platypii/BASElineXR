@@ -13,12 +13,14 @@ import com.meta.spatial.toolkit.Transform
 import com.platypii.baselinexr.location.MockLocationProvider
 import com.platypii.baselinexr.measurements.MLocation
 
-class FlightPathTrailSystem(private val context: Context) : SystemBase() {
+class FlightPathTrailSystem(
+    private val context: Context,
+    private val gpsTransform: GpsToWorldTransform
+) : SystemBase() {
     companion object {
         private const val TAG = "FlightPathTrailSystem"
     }
     
-    private val gpsTransform = GpsToWorldTransform()
     private val trailEntities = mutableListOf<Entity>()
     private var trackData: List<MLocation>? = null
     private var initialized = false

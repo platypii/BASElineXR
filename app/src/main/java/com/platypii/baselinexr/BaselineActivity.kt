@@ -44,6 +44,7 @@ class BaselineActivity : AppSystemActivity() {
   private var debug = false
   private lateinit var procMeshSpawner: AnchorProceduralMesh
   private lateinit var mrukFeature: MRUKFeature
+  private val gpsTransform = GpsToWorldTransform()
 
   override fun registerFeatures(): List<SpatialFeature> {
     mrukFeature = MRUKFeature(this, systemManager)
@@ -71,7 +72,7 @@ class BaselineActivity : AppSystemActivity() {
     systemManager.registerSystem(
         PhysicsOutOfBoundsSystem(spatial).apply { setBounds(minY = -100.0f) })
     systemManager.registerSystem(UiPanelUpdateSystem())
-    val flightPathSystem = FlightPathTrailSystem(this)
+    val flightPathSystem = FlightPathTrailSystem(this, gpsTransform)
     systemManager.registerSystem(flightPathSystem)
 
     // NOTE: Here a material could be set as well to visualize the walls, ceiling, etc
