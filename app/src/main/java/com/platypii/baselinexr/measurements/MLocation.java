@@ -8,7 +8,6 @@ import com.platypii.baselinexr.location.Geo;
 import com.platypii.baselinexr.location.LatLng;
 import com.platypii.baselinexr.location.LocationCheck;
 import com.platypii.baselinexr.location.NMEAException;
-import com.platypii.baselinexr.util.Convert;
 import com.platypii.baselinexr.util.Exceptions;
 import com.platypii.baselinexr.util.Numbers;
 
@@ -24,8 +23,8 @@ public class MLocation extends Measurement implements Comparable<MLocation> {
     public final double latitude; // Latitude
     public final double longitude; // Longitude
     public final double altitude_gps; // GPS altitude MSL
-    private final double vN; // Velocity north
-    private final double vE; // Velocity east
+    public final double vN; // Velocity north
+    public final double vE; // Velocity east
     public float hAcc = Float.NaN; // Horizontal accuracy
     //public float vAcc = Float.NaN; // Vertical accuracy
     //public float sAcc = Float.NaN; // Speed accuracy

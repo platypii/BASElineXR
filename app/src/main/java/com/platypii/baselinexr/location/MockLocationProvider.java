@@ -43,13 +43,16 @@ public class MockLocationProvider extends LocationProvider {
         List<MLocation> all = loadData(context);
 //        all = all.subList(0, 100);
 
+        final long trackStartTime = all.get(0).millis;
         // Start emitting updates
         systemStartTime = System.currentTimeMillis();
+        // Time offset to make first fix "now"
+        final long timeDelta = systemStartTime - trackStartTime;
 
         new Thread(() -> {
             for (MLocation loc : all) {
                 final long elapsed = System.currentTimeMillis() - systemStartTime;
-                final long locElapsed = loc.millis - all.get(0).millis; // Time since first fix
+                final long locElapsed = loc.millis - trackStartTime; // Time since first fix
                 if (locElapsed > elapsed) {
                     try {
                         Thread.sleep(locElapsed - elapsed);
@@ -57,6 +60,8 @@ public class MockLocationProvider extends LocationProvider {
                         Log.e(TAG, "Mock location thread interrupted", e);
                     }
                 }
+                // Update the time
+                loc.millis = loc.millis + timeDelta;
                 updateLocation(loc);
             }
             Log.i(TAG, "Finished emitting mock locations");

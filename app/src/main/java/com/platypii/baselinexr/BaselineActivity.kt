@@ -45,6 +45,7 @@ class BaselineActivity : AppSystemActivity() {
   private var sphereEntity: Entity? = null
   private var ballShooter: BallShooter? = null
   private var terrainEntity: Entity? = null
+  private var terrainUpdateSystem: TerrainUpdateSystem? = null
   private var debug = false
   private lateinit var procMeshSpawner: AnchorProceduralMesh
   private lateinit var mrukFeature: MRUKFeature
@@ -76,8 +77,8 @@ class BaselineActivity : AppSystemActivity() {
     systemManager.registerSystem(
         PhysicsOutOfBoundsSystem(spatial).apply { setBounds(minY = -100.0f) })
     systemManager.registerSystem(UiPanelUpdateSystem())
-    val flightPathSystem = FlightPathTrailSystem(this, gpsTransform)
-    systemManager.registerSystem(flightPathSystem)
+//    val flightPathSystem = FlightPathTrailSystem(this, gpsTransform)
+//    systemManager.registerSystem(flightPathSystem)
 
     // NOTE: Here a material could be set as well to visualize the walls, ceiling, etc
     //       It is also possible to spawn procedural meshes for volumes
@@ -107,6 +108,12 @@ class BaselineActivity : AppSystemActivity() {
       Visible(true)
     )
 
+    // Create and register terrain update system for per-frame updates
+    terrainEntity?.let {
+      terrainUpdateSystem = TerrainUpdateSystem(it, gpsTransform)
+      systemManager.registerSystem(terrainUpdateSystem!!)
+    }
+
     loadGLXF().invokeOnCompletion {
       glxfLoaded = true
 
@@ -116,7 +123,7 @@ class BaselineActivity : AppSystemActivity() {
       systemManager.registerSystem(ballShooter!!)
 
       // Set mesh for flight path trail
-      flightPathSystem.setSphereMesh(mesh)
+//      flightPathSystem.setSphereMesh(mesh)
 
       if (checkSelfPermission(PERMISSION_USE_SCENE) != PackageManager.PERMISSION_GRANTED) {
         log("Scene permission has not been granted, requesting $PERMISSION_USE_SCENE")
@@ -217,31 +224,10 @@ class BaselineActivity : AppSystemActivity() {
               gpsTransform.setOrigin(loc)
 
               // Update the flight path system with the new location
-              val flightPathSystem = systemManager.findSystem<FlightPathTrailSystem>()
-              flightPathSystem?.onLocationUpdate(loc)
+//              val flightPathSystem = systemManager.findSystem<FlightPathTrailSystem>()
+//              flightPathSystem?.onLocationUpdate(loc)
 
-              // Get the eiger terrain entity
-              val eigerTerrain = terrainEntity
-
-              // Position the terrain at world origin (0, 0, 0) to align with GPS trail origin
-              // Rotate 90 degrees around X axis
-              // Assume Eiger Terrain origin is 7.9475298, 46.5901325
-              // Should go to (-3574f, -3210f, -1690f)
-              val terrainLon = 7.9475298
-              val terrainLat = 46.5901325
-              val terrainAlt = 0.0
-              // Transform terrain using gps transform
-              var terrainWorldPos = Vector3(-3574f, -3210f, -1690f)
-              terrainWorldPos = gpsTransform.toWorldCoordinates(terrainLat, terrainLon, terrainAlt)
-              terrainWorldPos.x -= 18
-              terrainWorldPos.y += 5
-              terrainWorldPos.z -= 3022
-              log("Positioning Eiger terrain at: $terrainWorldPos")
-              val terrainTransform = Transform(Pose(
-                terrainWorldPos,
-                Quaternion(0f, 180f, 0f)
-              ))
-              eigerTerrain?.setComponent(terrainTransform)
+              // Terrain positioning is now handled by TerrainUpdateSystem for per-frame updates
             }
             // TODO: unsubscribe later
           }

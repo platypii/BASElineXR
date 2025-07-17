@@ -159,9 +159,9 @@ class FlightPathTrailSystem(
             updateEntityTransformAndScale(entity, newPos, currentPose.q)
             
             // Log first entity position for debugging
-            if (index == 0) {
-                Log.i(TAG, "First entity moved from (${currentPos.x}, ${currentPos.y}, ${currentPos.z}) to (${newPos.x}, ${newPos.y}, ${newPos.z})")
-            }
+//            if (index == 0) {
+//                Log.i(TAG, "First entity moved from (${currentPos.x}, ${currentPos.y}, ${currentPos.z}) to (${newPos.x}, ${newPos.y}, ${newPos.z})")
+//            }
         }
         
         // Update the previous delta for next time
