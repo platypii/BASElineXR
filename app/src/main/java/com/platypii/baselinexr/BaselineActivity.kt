@@ -39,7 +39,7 @@ class BaselineActivity : AppSystemActivity() {
   var glxfLoaded = false
   private val activityScope = CoroutineScope(Dispatchers.Main)
   private var gltfxEntity: Entity? = null
-  private var basketballEntity: Entity? = null
+  private var sphereEntity: Entity? = null
   private var ballShooter: BallShooter? = null
   private var debug = false
   private lateinit var procMeshSpawner: AnchorProceduralMesh
@@ -90,17 +90,17 @@ class BaselineActivity : AppSystemActivity() {
     systemManager.findSystem<LocomotionSystem>().enableLocomotion(false)
     scene.enablePassthrough(true)
 
-    // Load basketball GLTF directly
-    basketballEntity = Entity.create(
-      Mesh("BasketBall.gltf".toUri()),
-      Visible(false)  // Hide the original basketball, only use as template
+    // Load sphere GLTF directly
+    sphereEntity = Entity.create(
+      Mesh("sphere.gltf".toUri()),
+      Visible(false)
     )
     
     loadGLXF().invokeOnCompletion {
       glxfLoaded = true
 
-      // Get basketball mesh from directly loaded entity
-      val mesh = basketballEntity!!.getComponent<Mesh>()
+      // Get sphere mesh from directly loaded entity
+      val mesh = sphereEntity!!.getComponent<Mesh>()
       ballShooter = BallShooter(mesh)
       systemManager.registerSystem(ballShooter!!)
 

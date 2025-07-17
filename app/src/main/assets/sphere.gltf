@@ -1,0 +1,115 @@
+{
+  "accessors": [
+    {
+      "name": "Node-Mesh_0_positions",
+      "componentType": 5126,
+      "count": 26,
+      "min": [
+        -6.800000190734863,
+        -6.800000190734863,
+        -6.800000190734863
+      ],
+      "max": [
+        6.800000190734863,
+        6.800000190734863,
+        6.800000190734863
+      ],
+      "type": "VEC3",
+      "bufferView": 0,
+      "byteOffset": 0
+    },
+    {
+      "name": "Node-Mesh_0_indices",
+      "componentType": 5123,
+      "count": 144,
+      "min": [
+        0
+      ],
+      "max": [
+        25
+      ],
+      "type": "SCALAR",
+      "bufferView": 1,
+      "byteOffset": 0
+    }
+  ],
+  "asset": {
+    "generator": "obj2gltf",
+    "version": "2.0"
+  },
+  "buffers": [
+    {
+      "name": "sphere",
+      "byteLength": 600,
+      "uri": "data:application/octet-stream;base64,mpnZQAAAAAAAAAAAbt2ZQG7dmcAAAAAAmplZQJqZWcBu3ZnAbt2ZQAAAAABu3ZnAbt2ZQAAAAABu3ZlAmplZQJqZWcBu3ZlAAAAAAAAAAACamdnAAAAAAAAAAACamdlAAAAAAJqZ2cAAAAAAAAAAAG7dmcBu3ZnAAAAAAG7dmcBu3ZlAbt2ZwG7dmcAAAAAAmplZwJqZWcBu3ZnAmplZwJqZWcBu3ZlAmpnZwAAAAAAAAAAAbt2ZwAAAAABu3ZnAbt2ZwAAAAABu3ZlAbt2ZwG7dmUAAAAAAmplZwJqZWUBu3ZnAmplZwJqZWUBu3ZlAAAAAAJqZ2UAAAAAAAAAAAG7dmUBu3ZnAAAAAAG7dmUBu3ZlAbt2ZQG7dmUAAAAAAmplZQJqZWUBu3ZnAmplZQJqZWUBu3ZlAAAABAAIAAAACAAMABAAFAAEABAABAAAAAwACAAYABwAFAAQAAQAIAAkAAQAJAAIABQAKAAgABQAIAAEAAgAJAAYABwAKAAUACAALAAwACAAMAAkACgANAAsACgALAAgACQAMAAYABwANAAoACwAOAA8ACwAPAAwADQAQAA4ADQAOAAsADAAPAAYABwAQAA0ADgARABIADgASAA8AEAATABEAEAARAA4ADwASAAYABwATABAAEQAUABUAEQAVABIAEwAWABQAEwAUABEAEgAVAAYABwAWABMAFAAXABgAFAAYABUAFgAZABcAFgAXABQAFQAYAAYABwAZABYAFwAAAAMAFwADABgAGQAEAAAAGQAAABcAGAADAAYABwAEABkA"
+    }
+  ],
+  "bufferViews": [
+    {
+      "name": "bufferView_0",
+      "buffer": 0,
+      "byteLength": 312,
+      "byteOffset": 0,
+      "byteStride": 12,
+      "target": 34962
+    },
+    {
+      "name": "bufferView_1",
+      "buffer": 0,
+      "byteLength": 288,
+      "byteOffset": 312,
+      "target": 34963
+    }
+  ],
+  "materials": [
+    {
+      "name": "darkorchid",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.5,
+          0.5,
+          0.5,
+          1
+        ],
+        "metallicFactor": 0,
+        "roughnessFactor": 1
+      },
+      "emissiveFactor": [
+        0,
+        0,
+        0
+      ],
+      "alphaMode": "OPAQUE",
+      "doubleSided": false
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Node-Mesh",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0
+          },
+          "indices": 1,
+          "material": 0,
+          "mode": 4
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "Node",
+      "mesh": 0
+    }
+  ],
+  "scene": 0,
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ]
+}

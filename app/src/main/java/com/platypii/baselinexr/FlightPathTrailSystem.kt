@@ -8,6 +8,7 @@ import com.meta.spatial.core.Quaternion
 import com.meta.spatial.core.SystemBase
 import com.meta.spatial.core.Vector3
 import com.meta.spatial.toolkit.Mesh
+import com.meta.spatial.toolkit.Scale
 import com.meta.spatial.toolkit.Transform
 import com.platypii.baselinexr.location.MockLocationProvider
 import com.platypii.baselinexr.measurements.MLocation
@@ -69,9 +70,10 @@ class FlightPathTrailSystem(private val context: Context) : SystemBase() {
             // Create pose with position and default rotation
             val pose = Pose(worldPos, Quaternion())
             val transform = Transform(pose)
+            val scale = Scale(Vector3(0.1f, 0.1f, 0.1f))
             
-            // Create entity with mesh and transform components
-            val sphereEntity = Entity.create(listOf(meshCopy, transform))
+            // Create entity with mesh, transform, and scale components
+            val sphereEntity = Entity.create(listOf(meshCopy, transform, scale))
             
             trailEntities.add(sphereEntity)
             

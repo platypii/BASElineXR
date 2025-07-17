@@ -17,6 +17,7 @@ import com.meta.spatial.physics.PhysicsState
 import com.meta.spatial.runtime.ButtonBits
 import com.meta.spatial.toolkit.Controller
 import com.meta.spatial.toolkit.Mesh
+import com.meta.spatial.toolkit.Scale
 import com.meta.spatial.toolkit.Transform
 import java.util.Timer
 import java.util.TimerTask
@@ -39,7 +40,8 @@ class BallShooter(private val mesh: Mesh) : SystemBase() {
           restitution = .99f
         }
 
-    val entity = Entity.create(listOf(physics, meshCopy, pose))
+    val scale = Scale(Vector3(0.1f, 0.1f, 0.1f))
+    val entity = Entity.create(listOf(physics, meshCopy, pose, scale))
 
     // destroy balls after some time
     delayAction(entity::destroy, 8000)
