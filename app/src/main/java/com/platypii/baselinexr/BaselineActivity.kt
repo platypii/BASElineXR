@@ -158,10 +158,11 @@ class BaselineActivity : AppSystemActivity() {
     super.onSceneReady()
 
     scene.setLightingEnvironment(
-        ambientColor = Vector3(0f),
-        sunColor = Vector3(7.0f, 7.0f, 7.0f),
-        sunDirection = -Vector3(1.0f, 3.0f, -2.0f),
-        environmentIntensity = 0.3f)
+      ambientColor = Vector3(0.6f),
+      sunColor     = Vector3(0.6f),
+      sunDirection = Vector3(0f,1f,0f),
+      environmentIntensity = 0.01f
+    )
     scene.updateIBLEnvironment("environment.env")
   }
 
@@ -211,7 +212,10 @@ class BaselineActivity : AppSystemActivity() {
             Services.location.locationUpdates.subscribe { loc ->
               val provider = Services.location.dataSource()
               subtitle?.text = provider + " " + loc.toStringSimple()
-              
+
+              // Update the origin to the latest GPS location
+              gpsTransform.setOrigin(loc)
+
               // Update the flight path system with the new location
               val flightPathSystem = systemManager.findSystem<FlightPathTrailSystem>()
               flightPathSystem?.onLocationUpdate(loc)
@@ -222,15 +226,22 @@ class BaselineActivity : AppSystemActivity() {
               // Position the terrain at world origin (0, 0, 0) to align with GPS trail origin
               // Rotate 90 degrees around X axis
               // Assume Eiger Terrain origin is 7.9475298, 46.5901325
-              // TODO: Transform origin and map terrain transform appropriately.
+              // Should go to (-3574f, -3210f, -1690f)
+              val terrainLon = 7.9475298
+              val terrainLat = 46.5901325
+              val terrainAlt = 0.0
+              // Transform terrain using gps transform
+              var terrainWorldPos = Vector3(-3574f, -3210f, -1690f)
+              terrainWorldPos = gpsTransform.toWorldCoordinates(terrainLat, terrainLon, terrainAlt)
+              terrainWorldPos.x -= 18
+              terrainWorldPos.y += 5
+              terrainWorldPos.z -= 3022
+              log("Positioning Eiger terrain at: $terrainWorldPos")
               val terrainTransform = Transform(Pose(
-                // +X moves terrain south, +Y moves up, +Z moves east
-                Vector3(  3400f, -3100f, 1750f),
-                Quaternion()
+                terrainWorldPos,
+                Quaternion(0f, 180f, 0f)
               ))
               eigerTerrain?.setComponent(terrainTransform)
-
-              log("Eiger terrain loaded and positioned at origin")
             }
             // TODO: unsubscribe later
           }

@@ -133,9 +133,6 @@ class FlightPathTrailSystem(
             return
         }
         
-        // Update the origin to the latest GPS location
-        gpsTransform.setOrigin(location)
-        
         // Calculate the new origin delta
         val newOriginDelta = gpsTransform.getOriginDelta()
         

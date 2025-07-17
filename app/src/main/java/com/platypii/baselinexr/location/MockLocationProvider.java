@@ -40,8 +40,8 @@ public class MockLocationProvider extends LocationProvider {
     public void start(@NonNull Context context) throws SecurityException {
         Log.i(TAG, "Starting mock location service");
         // Load track from eiger.csv
-        final List<MLocation> all = loadData(context)
-                .subList(0, 10); // WTF TODO
+        List<MLocation> all = loadData(context);
+//        all = all.subList(0, 100);
 
         // Start emitting updates
         systemStartTime = System.currentTimeMillis();

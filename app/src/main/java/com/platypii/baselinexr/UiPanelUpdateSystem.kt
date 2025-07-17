@@ -12,7 +12,7 @@ import com.meta.spatial.toolkit.Transform
 class UiPanelUpdateSystem : SystemBase() {
   private var initialized = false
   private var panelEntity: Entity? = null
-  private val panelOffset = Vector3(-0.2f, 0.25f, 4f)
+  private val panelOffset = Vector3(-0.2f, 0.5f, 4f)
 
   override fun execute() {
     val activity = SpatialActivityManager.getVrActivity<BaselineActivity>()
