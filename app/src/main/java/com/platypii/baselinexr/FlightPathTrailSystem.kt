@@ -28,6 +28,36 @@ class FlightPathTrailSystem(private val context: Context) : SystemBase() {
     fun setSphereMesh(mesh: Mesh) {
         sphereMesh = mesh
     }
+
+    /**
+     * Calculate scale factor based on distance from origin.
+     * Scales from 0.01 at 0m to 1.0 at 1000m.
+     */
+    private fun calculateScaleForDistance(distance: Float): Float {
+        val minScale = 0.01f
+        val maxScale = 1.0f
+        val maxDistance = 1000f
+        return (minScale + (distance / maxDistance) * (maxScale - minScale)).coerceAtMost(maxScale)
+    }
+
+    /**
+     * Calculate distance from origin for a given position.
+     */
+    private fun calculateDistance(position: Vector3): Float {
+        return kotlin.math.sqrt(
+            position.x * position.x + position.y * position.y + position.z * position.z
+        )
+    }
+
+    /**
+     * Update entity's transform and scale based on position.
+     */
+    private fun updateEntityTransformAndScale(entity: Entity, position: Vector3, rotation: Quaternion = Quaternion()) {
+        val distance = calculateDistance(position)
+        val scaleFactor = calculateScaleForDistance(distance)
+        entity.setComponent(Transform(Pose(position, rotation)))
+        entity.setComponent(Scale(Vector3(scaleFactor, scaleFactor, scaleFactor)))
+    }
     
     override fun execute() {
         if (!initialized && sphereMesh != null) {
@@ -67,18 +97,16 @@ class FlightPathTrailSystem(private val context: Context) : SystemBase() {
             // Create a copy of the mesh
             val meshCopy = Mesh(sphereMesh!!.mesh)
             
-            // Create pose with position and default rotation
-            val pose = Pose(worldPos, Quaternion())
-            val transform = Transform(pose)
-            val scale = Scale(Vector3(0.1f, 0.1f, 0.1f))
+            // Create entity with mesh component
+            val sphereEntity = Entity.create(listOf(meshCopy))
             
-            // Create entity with mesh, transform, and scale components
-            val sphereEntity = Entity.create(listOf(meshCopy, transform, scale))
+            // Update transform and scale using helper function
+            updateEntityTransformAndScale(sphereEntity, worldPos)
             
             trailEntities.add(sphereEntity)
             
             // Log first few points for debugging
-            if (i < 5) {
+            if (i < 3) {
                 Log.i(TAG, "Sphere $i at GPS(${location.latitude}, " +
                         "${location.longitude}, ${location.altitude_gps})")
             }
@@ -128,11 +156,8 @@ class FlightPathTrailSystem(private val context: Context) : SystemBase() {
                 currentPos.z + shift.z
             )
             
-            // Create new pose with updated position
-            val newPose = Pose(newPos, currentPose.q)
-            
-            // IMPORTANT: Set the component back on the entity for changes to take effect
-            entity.setComponent(Transform(newPose))
+            // Update transform and scale using helper function
+            updateEntityTransformAndScale(entity, newPos, currentPose.q)
             
             // Log first entity position for debugging
             if (index == 0) {
