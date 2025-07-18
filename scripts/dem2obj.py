@@ -10,7 +10,7 @@ Usage:
 import sys
 from pathlib import Path
 
-from osgeo import gdal
+from osgeo import gdal, osr
 import numpy as np
 from pydelatin import Delatin
 
@@ -39,7 +39,7 @@ def main(dem_path, tex_path, obj_path, *, max_err=1.0):
         mtl.write(f'newmtl terrain\nmap_Kd {tex_name}\n')
         obj.write(f'mtllib {mtl_path.name}\nusemtl terrain\n')
 
-        # vertices + UVs --- VR coord system:  X=north/south, Y=up, Z=east/west
+        # vertices + UVs --- VR coord system:  X=north/south, Y=east/west, Z=up/down
         for i, (col, row, elev) in enumerate(verts, start=1):
             x = col * px_size
             y = row * px_size
@@ -56,6 +56,20 @@ def main(dem_path, tex_path, obj_path, *, max_err=1.0):
             obj.write(f'f {a}/{a} {b}/{b} {c}/{c}\n')
 
     print('wrote', obj_path, 'and', mtl_path)
+
+    # Print origin lat/lon
+    gt  = ds.GetGeoTransform()          # (x0, px_w, rot, y0, rot, -px_h)
+    x0, y0 = gt[0], gt[3]               # top-left “anchor” – matches OBJ (0,0)
+
+    src = osr.SpatialReference()
+    src.ImportFromWkt(ds.GetProjection())
+    dst = osr.SpatialReference()
+    dst.ImportFromEPSG(4326)            # WGS-84 (lat/lon)
+    tx  = osr.CoordinateTransformation(src, dst)
+
+    lon, lat, _ = tx.TransformPoint(x0, y0)
+    # 7 decimals ≈ 1 cm at mid-latitudes – plenty for VR alignment
+    print(f'\norigin lat,lon = {lat:.7f}, {lon:.7f}\n')
 
 if __name__ == '__main__':
     if len(sys.argv) != 4:
