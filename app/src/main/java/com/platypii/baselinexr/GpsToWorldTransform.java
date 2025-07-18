@@ -9,64 +9,34 @@ public class GpsToWorldTransform {
     private static final String TAG = "GpsToWorldTransform";
     private static final double EARTH_RADIUS_METERS = 6371000.0;
 
-    // Default origin = kpow
-    private double originLat = 47.239;
-    private double originLon = 123.143;
-    private double originAlt = 84;
-    private boolean originSet = false;
-    
-    // Track the initial origin for calculating deltas
-    private double initialOriginLat;
-    private double initialOriginLon;
-    private double initialOriginAlt;
-    private boolean initialOriginSet = false;
-    
-    // Velocity tracking for extrapolation
-    private Vector3 velocity = new Vector3(0, 0, 0);
-    private long lastUpdateTimestamp = 0;
+    public MLocation initialOrigin;
+    public MLocation lastOrigin;
 
-    public void setOrigin(double lat, double lon, double alt) {
-        // Store initial origin on first call
-        if (!initialOriginSet) {
-            this.initialOriginLat = lat;
-            this.initialOriginLon = lon;
-            this.initialOriginAlt = alt;
-            this.initialOriginSet = true;
-        }
-        
-        this.originLat = lat;
-        this.originLon = lon;
-        this.originAlt = alt;
-        this.originSet = true;
-    }
-    
     public void setOrigin(MLocation location) {
-        setOrigin(location.latitude, location.longitude, location.altitude_gps);
-
-        // Update velocity and timestamp from the location
-        // Convert GPS velocities (vN, vE) to world coordinates
-        // vN is velocity north, vE is velocity east
-        // In world coordinates: X=East, Y=Up, Z=North
-        velocity = new Vector3((float)location.vE, (float)location.climb, (float)location.vN);
-        lastUpdateTimestamp = location.millis;
+        // Store initial origin on first call
+        if (initialOrigin == null) {
+            this.initialOrigin = location;
+        }
+        lastOrigin = location;
     }
 
     private Vector3 toWorldCoordinates(double lat, double lon, double alt) {
-        if (!originSet) {
+        if (lastOrigin == null) {
             Log.w(TAG, "Origin must be set before converting coordinates");
+            return new Vector3(0f);
         }
 
         double latRad = Math.toRadians(lat);
         double lonRad = Math.toRadians(lon);
-        double originLatRad = Math.toRadians(originLat);
-        double originLonRad = Math.toRadians(originLon);
+        double originLatRad = Math.toRadians(lastOrigin.latitude);
+        double originLonRad = Math.toRadians(lastOrigin.longitude);
 
         double deltaLat = latRad - originLatRad;
         double deltaLon = lonRad - originLonRad;
 
         double north = deltaLat * EARTH_RADIUS_METERS;
         double east = deltaLon * EARTH_RADIUS_METERS * Math.cos(originLatRad);
-        double up = alt - originAlt;
+        double up = alt - lastOrigin.altitude_gps;
 
         return new Vector3((float)east, (float)up, (float)north);
     }
@@ -84,21 +54,22 @@ public class GpsToWorldTransform {
      * @return World coordinates with position extrapolated based on velocity
      */
     public Vector3 toWorldCoordinates(double lat, double lon, double alt, long currentTimeMillis) {
-        if (!originSet) {
+        if (lastOrigin == null) {
             Log.w(TAG, "Origin must be set before converting coordinates");
+            return new Vector3(0f);
         }
         
         // First convert the GPS position to world coordinates
         Vector3 basePosition = toWorldCoordinates(lat, lon, alt);
         
         // If we have velocity data and a valid timestamp, extrapolate
-        if (lastUpdateTimestamp > 0 && currentTimeMillis > lastUpdateTimestamp) {
-            double deltaTime = (currentTimeMillis - lastUpdateTimestamp) / 1000.0; // Convert to seconds
+        if (lastOrigin.millis > 0 && currentTimeMillis > lastOrigin.millis) {
+            double deltaTime = (currentTimeMillis - lastOrigin.millis) / 1000.0; // Convert to seconds
 
             // Extrapolate position: position = position + velocity * deltaTime
-            float extrapolatedX = basePosition.getX() - velocity.getX() * (float)deltaTime;
-            float extrapolatedY = basePosition.getY() - velocity.getY() * (float)deltaTime;
-            float extrapolatedZ = basePosition.getZ() - velocity.getZ() * (float)deltaTime;
+            float extrapolatedX = basePosition.getX() - (float)lastOrigin.vE * (float)deltaTime;
+            float extrapolatedY = basePosition.getY() - (float)lastOrigin.climb * (float)deltaTime;
+            float extrapolatedZ = basePosition.getZ() - (float)lastOrigin.vN * (float)deltaTime;
 
             return new Vector3(extrapolatedX, extrapolatedY, extrapolatedZ);
         }
@@ -111,15 +82,15 @@ public class GpsToWorldTransform {
      * This can be used to shift trail positions when the origin is updated.
      */
     public Vector3 getOriginDelta() {
-        if (!initialOriginSet || !originSet) {
+        if (initialOrigin == null || lastOrigin == null) {
             return new Vector3(0, 0, 0);
         }
         
         // Calculate the difference between current origin and initial origin
-        double latRad = Math.toRadians(originLat);
-        double lonRad = Math.toRadians(originLon);
-        double initialLatRad = Math.toRadians(initialOriginLat);
-        double initialLonRad = Math.toRadians(initialOriginLon);
+        double latRad = Math.toRadians(lastOrigin.latitude);
+        double lonRad = Math.toRadians(lastOrigin.longitude);
+        double initialLatRad = Math.toRadians(initialOrigin.latitude);
+        double initialLonRad = Math.toRadians(initialOrigin.longitude);
         
         double deltaLat = latRad - initialLatRad;
         double deltaLon = lonRad - initialLonRad;
@@ -127,7 +98,7 @@ public class GpsToWorldTransform {
         // Use initial origin latitude for consistency with coordinate conversion
         double north = deltaLat * EARTH_RADIUS_METERS;
         double east = deltaLon * EARTH_RADIUS_METERS * Math.cos(initialLatRad);
-        double up = originAlt - initialOriginAlt;
+        double up = lastOrigin.altitude_gps - initialOrigin.altitude_gps;
         
         return new Vector3((float)east, (float)up, (float)north);
     }

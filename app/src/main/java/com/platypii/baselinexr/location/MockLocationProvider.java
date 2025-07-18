@@ -17,6 +17,8 @@ import java.util.List;
 public class MockLocationProvider extends LocationProvider {
     private static final String TAG = "MockLocationProvider";
 
+    private static final String filename = "eiger.csv";
+
     private long systemStartTime = System.currentTimeMillis();
 
     @NonNull
@@ -28,7 +30,7 @@ public class MockLocationProvider extends LocationProvider {
     @NonNull
     @Override
     protected String dataSource() {
-        return "MockFlysight";
+        return "Mock";
     }
 
     /**
@@ -39,7 +41,7 @@ public class MockLocationProvider extends LocationProvider {
     @Override
     public void start(@NonNull Context context) throws SecurityException {
         Log.i(TAG, "Starting mock location service");
-        // Load track from eiger.csv
+        // Load track from csv
         List<MLocation> all = loadData(context);
 //        all = all.subList(0, 100);
 
@@ -69,7 +71,7 @@ public class MockLocationProvider extends LocationProvider {
     }
 
     public static List<MLocation> loadData(Context context) {
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(context.getAssets().open("eiger.csv"), StandardCharsets.UTF_8))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(context.getAssets().open(filename), StandardCharsets.UTF_8))) {
             return TrackFileReader.parse(br);
         } catch (IOException e) {
             Log.e(TAG, "Error reading track data from eiger.csv", e);

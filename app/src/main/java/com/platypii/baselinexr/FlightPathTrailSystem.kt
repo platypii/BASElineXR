@@ -74,7 +74,7 @@ class FlightPathTrailSystem(
     }
     
     private fun loadTrackData() {
-        Log.i(TAG, "Loading track data from eiger.csv")
+        Log.i(TAG, "Loading track data from csv")
         trackData = MockLocationProvider.loadData(context)
         
         if (trackData.isNullOrEmpty()) {
