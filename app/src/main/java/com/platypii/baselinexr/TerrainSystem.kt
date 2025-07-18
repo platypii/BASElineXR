@@ -49,6 +49,7 @@ class TerrainSystem(
         }
     }
 
+    // Load from terrain json
     private fun loadTerrainConfiguration() {
         try {
             // Load JSON from assets
@@ -83,6 +84,11 @@ class TerrainSystem(
             Visible(true),
             Transform(Pose())  // Initial transform, updated in execute()
         )
+
+        // Also modify the mesh to use custom transparency shader
+        val mesh = entity.getComponent<Mesh>()
+        mesh.defaultShaderOverride = "data/shaders/terrain_transparent"
+        entity.setComponent(mesh)
 
         terrainTiles.add(TerrainTileEntity(config, entity))
     }

@@ -5,6 +5,7 @@ import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import com.meta.spatial.castinputforward.CastInputForwardFeature
+import com.meta.spatial.core.Color4
 import com.meta.spatial.core.Entity
 import com.meta.spatial.core.SpatialFeature
 import com.meta.spatial.core.Vector3
@@ -13,6 +14,7 @@ import com.meta.spatial.debugtools.HotReloadFeature
 import com.meta.spatial.ovrmetrics.OVRMetricsDataModel
 import com.meta.spatial.ovrmetrics.OVRMetricsFeature
 import com.meta.spatial.toolkit.AppSystemActivity
+import com.meta.spatial.toolkit.Material
 import com.meta.spatial.toolkit.Mesh
 import com.meta.spatial.toolkit.PanelRegistration
 import com.meta.spatial.toolkit.Visible
@@ -24,6 +26,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
 import com.meta.spatial.physics.PhysicsFeature
+import com.platypii.baselinexr.location.LocationStatus
+import com.meta.spatial.runtime.AlphaMode
+import com.meta.spatial.runtime.SceneMaterial
+import com.platypii.baselinexr.util.Convert
 
 class BaselineActivity : AppSystemActivity() {
 

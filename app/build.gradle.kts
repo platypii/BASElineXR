@@ -20,7 +20,7 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
     // Update the ndkVersion to the right version for your app
-    // ndkVersion = "27.0.12077973"
+    ndkVersion = "29.0.13599879"
   }
 
   packaging { resources.excludes.add("META-INF/LICENSE") }
@@ -91,4 +91,5 @@ spatial {
       assetsDir.set(File("src/main/assets"))
     }
   }
+  shaders { sources.add(project.layout.projectDirectory.dir("src/shaders")) }
 }
