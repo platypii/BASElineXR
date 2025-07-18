@@ -33,9 +33,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
-import com.meta.spatial.core.Pose
-import com.meta.spatial.core.Quaternion
-import com.meta.spatial.toolkit.Transform
+import com.platypii.baselinexr.util.Convert
 
 class BaselineActivity : AppSystemActivity() {
 
@@ -76,7 +74,7 @@ class BaselineActivity : AppSystemActivity() {
     // Add a system to remove objects that fall 100 meters below the floor
     systemManager.registerSystem(
         PhysicsOutOfBoundsSystem(spatial).apply { setBounds(minY = -100.0f) })
-    systemManager.registerSystem(UiPanelUpdateSystem())
+    systemManager.registerSystem(HudSystem())
 //    val flightPathSystem = FlightPathTrailSystem(this, gpsTransform)
 //    systemManager.registerSystem(flightPathSystem)
 
@@ -165,8 +163,8 @@ class BaselineActivity : AppSystemActivity() {
     super.onSceneReady()
 
     scene.setLightingEnvironment(
-      ambientColor = Vector3(0.6f),
-      sunColor     = Vector3(0.6f),
+      ambientColor = Vector3(0.9f),
+      sunColor     = Vector3(0.9f),
       sunDirection = Vector3(0f,1f,0f),
       environmentIntensity = 0.01f
     )
@@ -194,7 +192,7 @@ class BaselineActivity : AppSystemActivity() {
 
   override fun registerPanels(): List<PanelRegistration> {
     return listOf(
-        PanelRegistration(R.layout.about) {
+        PanelRegistration(R.layout.hud) {
           config {
             themeResourceId = R.style.PanelAppThemeTransparent
             includeGlass = false
@@ -202,23 +200,18 @@ class BaselineActivity : AppSystemActivity() {
             enableTransparent = true
           }
           panel {
-            val debugButton = rootView?.findViewById<Button>(R.id.toggle_debug)
-            debugButton?.setOnClickListener({
-              debug = !debug
-              spatial.enablePhysicsDebugLines(debug)
-            })
-            debugButton?.setOnHoverListener(::onHoverButton)
-
             val exitButton = rootView?.findViewById<Button>(R.id.exit_button)
             exitButton?.setOnClickListener({
               finish()
             })
 
-            val subtitle = rootView?.findViewById<TextView>(R.id.sub_title)
-            subtitle?.text = Services.location.dataSource()
-            Services.location.locationUpdates.subscribe { loc ->
+            val latlngLabel = rootView?.findViewById<TextView>(R.id.lat_lng)
+            latlngLabel?.text = Services.location.dataSource()
+            val speedLabel = rootView?.findViewById<TextView>(R.id.speed)
+            Services.location.locationUpdates.subscribeMain { loc ->
               val provider = Services.location.dataSource()
-              subtitle?.text = provider + " " + loc.toStringSimple()
+              latlngLabel?.text = provider + " " + loc.toStringSimple()
+              speedLabel?.text = Convert.speed(loc.groundSpeed()) + "  " + Convert.distance(loc.altitude_gps)
 
               // Update the origin to the latest GPS location
               gpsTransform.setOrigin(loc)
@@ -226,8 +219,6 @@ class BaselineActivity : AppSystemActivity() {
               // Update the flight path system with the new location
 //              val flightPathSystem = systemManager.findSystem<FlightPathTrailSystem>()
 //              flightPathSystem?.onLocationUpdate(loc)
-
-              // Terrain positioning is now handled by TerrainUpdateSystem for per-frame updates
             }
             // TODO: unsubscribe later
           }

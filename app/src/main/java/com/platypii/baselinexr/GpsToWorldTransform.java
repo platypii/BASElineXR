@@ -1,15 +1,18 @@
 package com.platypii.baselinexr;
 
+import android.util.Log;
+
 import com.meta.spatial.core.Vector3;
 import com.platypii.baselinexr.measurements.MLocation;
 
 public class GpsToWorldTransform {
-    
+    private static final String TAG = "GpsToWorldTransform";
     private static final double EARTH_RADIUS_METERS = 6371000.0;
-    
-    private double originLat;
-    private double originLon;
-    private double originAlt;
+
+    // Default origin = kpow
+    private double originLat = 47.239;
+    private double originLon = 123.143;
+    private double originAlt = 84;
     private boolean originSet = false;
     
     // Track the initial origin for calculating deltas
@@ -50,7 +53,7 @@ public class GpsToWorldTransform {
 
     private Vector3 toWorldCoordinates(double lat, double lon, double alt) {
         if (!originSet) {
-            throw new IllegalStateException("Origin must be set before converting coordinates");
+            Log.w(TAG, "Origin must be set before converting coordinates");
         }
 
         double latRad = Math.toRadians(lat);
@@ -82,7 +85,7 @@ public class GpsToWorldTransform {
      */
     public Vector3 toWorldCoordinates(double lat, double lon, double alt, long currentTimeMillis) {
         if (!originSet) {
-            throw new IllegalStateException("Origin must be set before converting coordinates");
+            Log.w(TAG, "Origin must be set before converting coordinates");
         }
         
         // First convert the GPS position to world coordinates

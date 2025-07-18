@@ -36,7 +36,7 @@ entities:
           enabled: true
           type: 0
         com.meta.spatial.toolkit.Panel:
-          panel: "@layout/about"
+          panel: "@layout/hud"
         com.meta.spatial.toolkit.PanelDimensions:
           {}
       tag: Panel

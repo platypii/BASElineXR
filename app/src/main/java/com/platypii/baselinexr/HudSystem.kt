@@ -9,10 +9,10 @@ import com.meta.spatial.toolkit.PlayerBodyAttachmentSystem
 import com.meta.spatial.toolkit.SpatialActivityManager
 import com.meta.spatial.toolkit.Transform
 
-class UiPanelUpdateSystem : SystemBase() {
+class HudSystem : SystemBase() {
   private var initialized = false
   private var panelEntity: Entity? = null
-  private val panelOffset = Vector3(-0.2f, 0.8f, 4f)
+  private val panelOffset = Vector3(-0.2f, 1.8f, 5f)
 
   override fun execute() {
     val activity = SpatialActivityManager.getVrActivity<BaselineActivity>()
