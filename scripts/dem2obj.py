@@ -47,7 +47,7 @@ def main(dem_path, tex_path, obj_path, *, max_err=1.0):
             obj.write(f'v {x:.3f} {y:.3f} {z:.3f}\n')
 
             u = col / (ncols - 1)
-            v = row / (nrows - 1) # image origin is top-left
+            v = row / (nrows - 1)      # image origin is top-left
             obj.write(f'vt {u:.6f} {v:.6f}\n')
 
         # faces (Delatin already gives triangle indices)
@@ -59,7 +59,9 @@ def main(dem_path, tex_path, obj_path, *, max_err=1.0):
 
     # Print origin lat/lon
     gt  = ds.GetGeoTransform()          # (x0, px_w, rot, y0, rot, -px_h)
-    x0, y0 = gt[0], gt[3]               # top-left “anchor” – matches OBJ (0,0)
+    # Use bottom-left corner instead of top-left to match VR coordinate system
+    x0 = gt[0]                          # left edge (same)
+    y0 = gt[3] + (nrows * gt[5])        # bottom edge (gt[3] + nrows * -px_h)
 
     src = osr.SpatialReference()
     src.ImportFromWkt(ds.GetProjection())
@@ -67,9 +69,9 @@ def main(dem_path, tex_path, obj_path, *, max_err=1.0):
     dst.ImportFromEPSG(4326)            # WGS-84 (lat/lon)
     tx  = osr.CoordinateTransformation(src, dst)
 
-    lon, lat, _ = tx.TransformPoint(x0, y0)
-    # 7 decimals ≈ 1 cm at mid-latitudes – plenty for VR alignment
-    print(f'\norigin lat,lon = {lat:.7f}, {lon:.7f}\n')
+    lat, lon, _ = tx.TransformPoint(x0, y0)
+    # 8 decimals ≈ 1 mm at mid-latitudes – plenty for VR alignment
+    print(f'\norigin lat,lon = {lat:.8f}, {lon:.8f}\n')
 
 if __name__ == '__main__':
     if len(sys.argv) != 4:

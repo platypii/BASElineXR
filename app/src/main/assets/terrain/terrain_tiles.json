@@ -1,0 +1,23 @@
+{
+  "tiles": [
+    {
+      "model": "terrain/tile_2024_2641.glb",
+      "lat": 46.57202227,
+      "lon": 7.97344826,
+      "alt": 0,
+      "gridX": 0,
+      "gridZ": 0
+    },
+    {
+      "model": "terrain/tile_2024_2642.glb",
+      "lat": 46.57196027,
+      "lon": 7.98649197,
+      "alt": 0,
+      "gridX": 1,
+      "gridZ": 0
+    }
+  ],
+  "offsetX": 0,
+  "offsetY": 6,
+  "offsetZ": -8
+}

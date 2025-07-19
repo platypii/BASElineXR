@@ -75,7 +75,7 @@ class BaselineActivity : AppSystemActivity() {
     )
 
     // Create and register terrain rendering system
-    terrainSystem = TerrainSystem(gpsTransform)
+    terrainSystem = TerrainSystem(gpsTransform, this)
     terrainSystem!!.initialize()
     systemManager.registerSystem(terrainSystem!!)
 

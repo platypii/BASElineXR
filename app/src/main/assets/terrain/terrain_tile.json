@@ -1,0 +1,15 @@
+{
+  "tiles": [
+    {
+      "model": "eiger_terrain_0.5m.glb",
+      "lat": 46.57202227,
+      "lon": 7.97344826,
+      "alt": 0,
+      "gridX": -2,
+      "gridZ": -1
+    }
+  ],
+  "offsetX": 2,
+  "offsetY": 6,
+  "offsetZ": -8
+}
