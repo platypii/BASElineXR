@@ -53,7 +53,7 @@ dependencies {
   implementation(libs.meta.spatial.sdk.toolkit)
   implementation(libs.meta.spatial.sdk.physics)
   implementation(libs.meta.spatial.sdk.vr)
-  implementation(libs.meta.spatial.sdk.mruk)
+//  implementation(libs.meta.spatial.sdk.mruk)
   implementation(libs.meta.spatial.sdk.castinputforward)
   implementation(libs.meta.spatial.sdk.hotreload)
   implementation(libs.meta.spatial.sdk.datamodelinspector)

@@ -13,15 +13,8 @@ import com.meta.spatial.core.SpatialFeature
 import com.meta.spatial.core.Vector3
 import com.meta.spatial.datamodelinspector.DataModelInspectorFeature
 import com.meta.spatial.debugtools.HotReloadFeature
-import com.meta.spatial.mruk.AnchorProceduralMesh
-import com.meta.spatial.mruk.AnchorProceduralMeshConfig
-import com.meta.spatial.mruk.MRUKFeature
-import com.meta.spatial.mruk.MRUKLabel
-import com.meta.spatial.mruk.MRUKLoadDeviceResult
 import com.meta.spatial.ovrmetrics.OVRMetricsDataModel
 import com.meta.spatial.ovrmetrics.OVRMetricsFeature
-import com.meta.spatial.physics.PhysicsFeature
-import com.meta.spatial.physics.PhysicsOutOfBoundsSystem
 import com.meta.spatial.toolkit.AppSystemActivity
 import com.meta.spatial.toolkit.Mesh
 import com.meta.spatial.toolkit.PanelRegistration
@@ -33,6 +26,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
+import com.meta.spatial.physics.PhysicsFeature
 import com.platypii.baselinexr.util.Convert
 
 class BaselineActivity : AppSystemActivity() {
@@ -44,17 +38,13 @@ class BaselineActivity : AppSystemActivity() {
   private var ballShooter: BallShooter? = null
   private var terrainSystem: TerrainSystem? = null
   private var debug = false
-  private lateinit var procMeshSpawner: AnchorProceduralMesh
-  private lateinit var mrukFeature: MRUKFeature
   private val gpsTransform = GpsToWorldTransform()
 
   override fun registerFeatures(): List<SpatialFeature> {
-    mrukFeature = MRUKFeature(this, systemManager)
     val features =
         mutableListOf<SpatialFeature>(
           PhysicsFeature(spatial),
           VRFeature(this),
-          mrukFeature
         )
     if (BuildConfig.DEBUG) {
       features.add(CastInputForwardFeature(this))
@@ -70,24 +60,9 @@ class BaselineActivity : AppSystemActivity() {
 
     Services.create(this)
 
-    // Add a system to remove objects that fall 100 meters below the floor
-    systemManager.registerSystem(
-        PhysicsOutOfBoundsSystem(spatial).apply { setBounds(minY = -100.0f) })
     systemManager.registerSystem(HudSystem())
 //    val flightPathSystem = FlightPathTrailSystem(this, gpsTransform)
 //    systemManager.registerSystem(flightPathSystem)
-
-    // NOTE: Here a material could be set as well to visualize the walls, ceiling, etc
-    //       It is also possible to spawn procedural meshes for volumes
-    procMeshSpawner =
-        AnchorProceduralMesh(
-            mrukFeature,
-            mapOf(
-                MRUKLabel.FLOOR to AnchorProceduralMeshConfig(null, true),
-//                MRUKLabel.WALL_FACE to AnchorProceduralMeshConfig(null, true),
-                MRUKLabel.CEILING to AnchorProceduralMeshConfig(null, true),
-//                MRUKLabel.TABLE to AnchorProceduralMeshConfig(null, true),
-                MRUKLabel.OTHER to AnchorProceduralMeshConfig(null, true)))
 
     // Enable MR mode
     systemManager.findSystem<LocomotionSystem>().enableLocomotion(false)
@@ -114,14 +89,6 @@ class BaselineActivity : AppSystemActivity() {
 
       // Set mesh for flight path trail
 //      flightPathSystem.setSphereMesh(mesh)
-
-      if (checkSelfPermission(PERMISSION_USE_SCENE) != PackageManager.PERMISSION_GRANTED) {
-        log("Scene permission has not been granted, requesting $PERMISSION_USE_SCENE")
-        requestPermissions(arrayOf(PERMISSION_USE_SCENE), REQUEST_CODE_PERMISSION_USE_SCENE)
-      } else {
-        log("Scene permission has already been granted!")
-        loadSceneFromDevice()
-      }
     }
   }
 
@@ -135,22 +102,6 @@ class BaselineActivity : AppSystemActivity() {
     Services.stop()
   }
 
-  private fun loadSceneFromDevice() {
-    log("Loading scene from device...")
-    mrukFeature.loadSceneFromDevice().whenComplete { result: MRUKLoadDeviceResult, _ ->
-      if (result != MRUKLoadDeviceResult.SUCCESS) {
-        log("Error loading scene from device: ${result}")
-      } else {
-        log("Scene loaded from device")
-      }
-    }
-  }
-
-  override fun onDestroy() {
-    super.onDestroy()
-    procMeshSpawner.destroy()
-  }
-
   override fun onSceneReady() {
     super.onSceneReady()
 
@@ -161,25 +112,6 @@ class BaselineActivity : AppSystemActivity() {
       environmentIntensity = 0.01f
     )
     scene.updateIBLEnvironment("environment.env")
-  }
-
-  override fun onRequestPermissionsResult(
-      requestCode: Int,
-      permissions: Array<out String>,
-      grantResults: IntArray
-  ) {
-    if (requestCode == REQUEST_CODE_PERMISSION_USE_SCENE &&
-        permissions.size == 1 &&
-        permissions[0] == PERMISSION_USE_SCENE
-    ) {
-      val granted = grantResults[0] == PackageManager.PERMISSION_GRANTED
-      if (granted) {
-        log("Use scene permission has been granted")
-        loadSceneFromDevice()
-      } else {
-        log("Use scene permission was DENIED!")
-      }
-    }
   }
 
   override fun registerPanels(): List<PanelRegistration> {

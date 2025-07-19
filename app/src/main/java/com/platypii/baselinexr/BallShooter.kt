@@ -27,7 +27,7 @@ class BallShooter(private val mesh: Mesh) : SystemBase() {
   public var enabled = true
 
   private fun shootBall(transform: Pose) {
-    val speed = 16f
+    val speed = 10f
     val meshCopy = Mesh(mesh.mesh)
     val pose = Transform(transform)
     val physics =
@@ -40,7 +40,7 @@ class BallShooter(private val mesh: Mesh) : SystemBase() {
           restitution = .99f
         }
 
-    val scale = Scale(Vector3(0.1f, 0.1f, 0.1f))
+    val scale = Scale(Vector3(0.05f, 0.05f, 0.05f))
     val entity = Entity.create(listOf(physics, meshCopy, pose, scale))
 
     // destroy balls after some time
