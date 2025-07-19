@@ -42,8 +42,7 @@ class BaselineActivity : AppSystemActivity() {
   private var gltfxEntity: Entity? = null
   private var sphereEntity: Entity? = null
   private var ballShooter: BallShooter? = null
-  private var terrainEntity: Entity? = null
-  private var terrainUpdateSystem: TerrainUpdateSystem? = null
+  private var terrainSystem: TerrainSystem? = null
   private var debug = false
   private lateinit var procMeshSpawner: AnchorProceduralMesh
   private lateinit var mrukFeature: MRUKFeature
@@ -100,17 +99,10 @@ class BaselineActivity : AppSystemActivity() {
       Visible(false)
     )
 
-    // Load terrain GLTF directly
-    terrainEntity = Entity.create(
-      Mesh("eiger_terrain_0.5m.glb".toUri()),
-      Visible(true)
-    )
-
-    // Create and register terrain update system for per-frame updates
-    terrainEntity?.let {
-      terrainUpdateSystem = TerrainUpdateSystem(it, gpsTransform)
-      systemManager.registerSystem(terrainUpdateSystem!!)
-    }
+    // Create and register terrain rendering system
+    terrainSystem = TerrainSystem(gpsTransform)
+    terrainSystem!!.initialize()
+    systemManager.registerSystem(terrainSystem!!)
 
     loadGLXF().invokeOnCompletion {
       glxfLoaded = true
