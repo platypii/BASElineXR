@@ -26,19 +26,53 @@ public class GpsToWorldTransform {
             return new Vector3(0f);
         }
 
-        double latRad = Math.toRadians(lat);
-        double lonRad = Math.toRadians(lon);
-        double originLatRad = Math.toRadians(lastOrigin.latitude);
-        double originLonRad = Math.toRadians(lastOrigin.longitude);
-
-        double deltaLat = latRad - originLatRad;
-        double deltaLon = lonRad - originLonRad;
-
-        double north = deltaLat * EARTH_RADIUS_METERS;
-        double east = deltaLon * EARTH_RADIUS_METERS * Math.cos(originLatRad);
+        // Use more accurate geodetic calculations
+        double[] worldCoords = latlonToMeters(lat, lon, lastOrigin.latitude, lastOrigin.longitude);
+        double east = worldCoords[0];
+        double north = worldCoords[1];
         double up = alt - lastOrigin.altitude_gps;
 
         return new Vector3((float)east, (float)up, (float)north);
+    }
+
+    /**
+     * Convert lat/lon coordinates to meters from origin using accurate geodetic calculations.
+     * Uses the haversine formula for distance and proper bearing calculations.
+     *
+     * @param lat Target latitude in degrees
+     * @param lon Target longitude in degrees
+     * @param originLat Origin latitude in degrees
+     * @param originLon Origin longitude in degrees
+     * @return Array containing [east_meters, north_meters]
+     */
+    private double[] latlonToMeters(double lat, double lon, double originLat, double originLon) {
+        // Convert to radians
+        double lat1Rad = Math.toRadians(originLat);
+        double lon1Rad = Math.toRadians(originLon);
+        double lat2Rad = Math.toRadians(lat);
+        double lon2Rad = Math.toRadians(lon);
+
+        // Calculate distance using haversine formula
+        double deltaLat = lat2Rad - lat1Rad;
+        double deltaLon = lon2Rad - lon1Rad;
+
+        double a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+                   Math.cos(lat1Rad) * Math.cos(lat2Rad) *
+                   Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        double distance = EARTH_RADIUS_METERS * c;
+
+        // Calculate initial bearing from origin to target point
+        double y = Math.sin(deltaLon) * Math.cos(lat2Rad);
+        double x = Math.cos(lat1Rad) * Math.sin(lat2Rad) -
+                   Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(deltaLon);
+        double bearing = Math.atan2(y, x);
+
+        // Convert to east/north components
+        double east = distance * Math.sin(bearing);
+        double north = distance * Math.cos(bearing);
+
+        return new double[]{east, north};
     }
 
     public Vector3 toWorldCoordinates(MLocation location) {
@@ -86,18 +120,13 @@ public class GpsToWorldTransform {
             return new Vector3(0, 0, 0);
         }
         
-        // Calculate the difference between current origin and initial origin
-        double latRad = Math.toRadians(lastOrigin.latitude);
-        double lonRad = Math.toRadians(lastOrigin.longitude);
-        double initialLatRad = Math.toRadians(initialOrigin.latitude);
-        double initialLonRad = Math.toRadians(initialOrigin.longitude);
-        
-        double deltaLat = latRad - initialLatRad;
-        double deltaLon = lonRad - initialLonRad;
-        
-        // Use initial origin latitude for consistency with coordinate conversion
-        double north = deltaLat * EARTH_RADIUS_METERS;
-        double east = deltaLon * EARTH_RADIUS_METERS * Math.cos(initialLatRad);
+        // Use accurate geodetic calculations for origin delta
+        double[] worldCoords = latlonToMeters(
+            lastOrigin.latitude, lastOrigin.longitude,
+            initialOrigin.latitude, initialOrigin.longitude
+        );
+        double east = worldCoords[0];
+        double north = worldCoords[1];
         double up = lastOrigin.altitude_gps - initialOrigin.altitude_gps;
         
         return new Vector3((float)east, (float)up, (float)north);
