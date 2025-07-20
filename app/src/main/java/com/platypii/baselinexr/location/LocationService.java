@@ -23,7 +23,8 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
     private static final int LOCATION_MOCK = 3;
     private int locationMode = LOCATION_NONE;
 
-    private static final boolean useMock = true;
+    // Mock location provider will replay an existing track
+    private static final boolean useMock = false;
 
     @NonNull
     private final BluetoothService bluetooth;

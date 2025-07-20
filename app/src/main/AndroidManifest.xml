@@ -50,10 +50,17 @@
   />
   <uses-permission android:name="com.oculus.permission.RENDER_MODEL" />
   <!-- Volume Control -->
-  <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+<!--  <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />-->
 
   <uses-permission android:name="com.oculus.permission.USE_ANCHOR_API" />
   <uses-permission android:name="com.oculus.permission.USE_SCENE" />
+
+<!--  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>-->
+<!--  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>-->
+<!--  <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30"/>-->
+<!--  <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30"/>-->
+<!--  <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>-->
+<!--  <uses-permission android:name="android.permission.BLUETOOTH_SCAN"/>-->
 
   <application
       android:allowBackup="false"

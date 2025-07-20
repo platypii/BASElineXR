@@ -25,7 +25,11 @@ public class LocationProviderBluetooth extends LocationProviderNMEA {
     @NonNull
     @Override
     protected String dataSource() {
-        return "BT " + bluetooth.preferences.preferenceDeviceName;
+        if (bluetooth.preferences.preferenceDeviceName != null) {
+            return "BT " + bluetooth.preferences.preferenceDeviceName;
+        } else {
+            return "BT";
+        }
     }
 
     LocationProviderBluetooth(@NonNull BluetoothService bluetooth) {

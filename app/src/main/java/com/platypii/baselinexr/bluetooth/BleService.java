@@ -52,6 +52,8 @@ public class BleService {
     @Nullable
     private BluetoothPeripheral currentPeripheral;
 
+    private boolean hasDiscovered = false;
+
     public BleService(@NonNull BleProtocol... protocols) {
         this.protocols = protocols;
     }
@@ -126,7 +128,7 @@ public class BleService {
         @Override
         public void onConnectionFailed(@NonNull BluetoothPeripheral peripheral, @NonNull final HciStatus status) {
             Log.e(TAG, "BLE connection " + peripheral.getName() + " failed with status " + status);
-            start(activity); // start over
+            scanIfPermitted(activity); // start over
         }
 
         @Override
@@ -144,6 +146,11 @@ public class BleService {
             if (bluetoothState != BT_SCANNING) {
                 Log.e(TAG, "Invalid BLE state: " + BluetoothState.BT_STATES[bluetoothState]);
             }
+            if (!hasDiscovered) {
+                Log.i(TAG, "Discovered first peripheral");
+                hasDiscovered = true;
+            }
+//            Log.d(TAG, "Discovered: " + peripheral.getAddress() + " " + peripheral.getAddress());
 
             // TODO: Check for bluetooth connect permission
             final ScanRecord record = scanResult.getScanRecord();

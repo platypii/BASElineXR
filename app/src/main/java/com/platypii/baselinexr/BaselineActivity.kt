@@ -1,10 +1,7 @@
 package com.platypii.baselinexr
 
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
-import android.view.MotionEvent
-import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import com.meta.spatial.castinputforward.CastInputForwardFeature
@@ -27,6 +24,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
 import com.meta.spatial.physics.PhysicsFeature
+import com.platypii.baselinexr.location.LocationStatus
 import com.platypii.baselinexr.util.Convert
 
 class BaselineActivity : AppSystemActivity() {
@@ -37,7 +35,6 @@ class BaselineActivity : AppSystemActivity() {
   private var sphereEntity: Entity? = null
   private var ballShooter: BallShooter? = null
   private var terrainSystem: TerrainSystem? = null
-  private var debug = false
   private val gpsTransform = GpsToWorldTransform()
 
   override fun registerFeatures(): List<SpatialFeature> {
@@ -133,8 +130,10 @@ class BaselineActivity : AppSystemActivity() {
             latlngLabel?.text = Services.location.dataSource()
             val speedLabel = rootView?.findViewById<TextView>(R.id.speed)
             Services.location.locationUpdates.subscribeMain { loc ->
+              LocationStatus.updateStatus(this@BaselineActivity)
               val provider = Services.location.dataSource()
               latlngLabel?.text = provider + " " + loc.toStringSimple()
+              latlngLabel?.setCompoundDrawablesWithIntrinsicBounds(LocationStatus.icon, 0, 0, 0)
               speedLabel?.text = Convert.speed(loc.groundSpeed()) + "  " + Convert.distance(loc.altitude_gps)
 
               // Update the origin to the latest GPS location
@@ -144,22 +143,21 @@ class BaselineActivity : AppSystemActivity() {
 //              val flightPathSystem = systemManager.findSystem<FlightPathTrailSystem>()
 //              flightPathSystem?.onLocationUpdate(loc)
             }
+            // Update status periodically
+            LocationStatus.updateStatus(this@BaselineActivity)
+            latlngLabel?.text = LocationStatus.message
+            latlngLabel?.setCompoundDrawablesWithIntrinsicBounds(LocationStatus.icon, 0, 0, 0)
+            // TODO: Satellites
+//              if (LocationStatus.satellites > 0) {
+//                binding.satelliteStatus.setText(String.format(Locale.US, "%d", LocationStatus.satellites));
+//                binding.satelliteStatus.setVisibility(View.VISIBLE);
+//              } else {
+//                binding.satelliteStatus.setVisibility(View.GONE);
+//              }
+
             // TODO: unsubscribe later
           }
         })
-  }
-
-  fun onHoverButton(v: View, event: MotionEvent): Boolean {
-    // don't shoot balls while hovering over the buttons
-    when (event.action) {
-      MotionEvent.ACTION_HOVER_ENTER -> {
-        ballShooter?.enabled = false
-      }
-      MotionEvent.ACTION_HOVER_EXIT -> {
-        ballShooter?.enabled = true
-      }
-    }
-    return true
   }
 
   private fun loadGLXF(): Job {
@@ -175,8 +173,6 @@ class BaselineActivity : AppSystemActivity() {
 
   companion object {
     const val TAG = "BaselineActivityDebug"
-    const val PERMISSION_USE_SCENE: String = "com.oculus.permission.USE_SCENE"
-    const val REQUEST_CODE_PERMISSION_USE_SCENE: Int = 1
     const val GLXF_SCENE = "GLXF_SCENE"
   }
 }

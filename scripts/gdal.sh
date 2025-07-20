@@ -12,17 +12,16 @@ TMP_DIR=build/tmp      # Workspace for intermediate rasters/meshes
 # --------------------------------------------------------------------
 
 mkdir -p "$OUT_DIR" "$TMP_DIR"
-
-shopt -s nullglob      # empty globs -> empty array, not literal string
+shopt -s nullglob      # empty globs → empty array, not literal string
 
 # --------------------------------------------------------------------
 # Loop over every DEM tile -------------------------------------------
 # --------------------------------------------------------------------
 for dem in "$DEM_DIR"/*.tif; do
-  dem_base=$(basename "$dem")                     # swissalti3d_2024_2644-1158_0.5_2056_5728.tif
-  tile_xy=${dem_base#swissalti3d_*_}              # 2644-1158_0.5_2056_5728.tif
-  tile_xy=${tile_xy%%_*}                          # 2644-1158
-  tile_x=${tile_xy%%-*}                           # 2644  (used for filenames)
+  dem_base=$(basename "$dem")                     # swissalti3d_2024_2641-1158_0.5_2056_5728.tif
+  tile_xy=${dem_base#swissalti3d_*_}              # 2641-1158_0.5_2056_5728.tif
+  tile_xy=${tile_xy%%_*}                          # 2641-1158
+  tile_id=${tile_xy/-/_}                          # 2641_1158
 
   # ------------------------------------------------------------------
   # Find the best matching ortho image (any year / any GSD) ----------
@@ -38,23 +37,23 @@ for dem in "$DEM_DIR"/*.tif; do
   img=$(printf '%s\n' "${imgs[@]}" | sort -t'_' -k2,2r -k4,4n | head -n1)
 
   # Extract bits for logging
-  img_base=${img##*/}              # strip path
+  img_base=${img##*/}               # strip path
   img_year=${img_base#swissimage-dop10_}
-  img_year=${img_year%%_*}         # first field after prefix
+  img_year=${img_year%%_*}
   img_gsd=$(echo "$img_base" | cut -d'_' -f4)
 
-  echo "🟢 tile $tile_xy  DEM:$dem_base  IMG:$img_base (year:$img_year gsd:${img_gsd}m)"
+  echo "🟢 tile $tile_xy  IMG‑year:$img_year  IMG‑gsd:${img_gsd}m"
 
   # ------------------------------------------------------------------
-  # Paths for temporaries --------------------------------------------
+  # Paths for temporaries (include both coordinates) -----------------
   # ------------------------------------------------------------------
-  dem_tmp="$TMP_DIR/dem_${tile_x}.tif"
-  img_tmp="$TMP_DIR/img_${tile_x}.tif"
-  jpg_tmp="$TMP_DIR/img_${tile_x}.jpg"
-  obj_tmp="$TMP_DIR/mesh_${tile_x}.obj"
+  dem_tmp="$TMP_DIR/dem_${tile_id}.tif"
+  img_tmp="$TMP_DIR/img_${tile_id}.tif"
+  jpg_tmp="$TMP_DIR/img_${tile_id}.jpg"
+  obj_tmp="$TMP_DIR/mesh_${tile_id}.obj"
 
   # ------------------------------------------------------------------
-  # 1. Resample DEM and imagery to $RES metres -----------------------
+  # 1. Resample DEM and imagery to $RES metres ------------------------
   # ------------------------------------------------------------------
   gdalwarp -tr "$RES" "$RES" -r cubic    "$dem" "$dem_tmp"
   gdalwarp -tr "$RES" "$RES" -r bilinear "$img" "$img_tmp"
@@ -70,11 +69,11 @@ for dem in "$DEM_DIR"/*.tif; do
   python dem2obj.py "$dem_tmp" "$jpg_tmp" "$obj_tmp"
 
   # ------------------------------------------------------------------
-  # 4. OBJ → GLB -----------------------------------------------------
+  # 4. OBJ → binary GLB (uses both coords) ---------------------------
   # ------------------------------------------------------------------
   obj2gltf \
     -i "$obj_tmp" \
-    -o "$OUT_DIR/tile_${tile_x}.glb" \
+    -o "$OUT_DIR/tile_${tile_id}.glb" \
     --binary \
     --inputUpAxis Z \
     --outputUpAxis Y \

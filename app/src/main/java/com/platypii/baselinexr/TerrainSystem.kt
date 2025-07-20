@@ -12,6 +12,8 @@ import com.meta.spatial.core.Vector3
 import com.meta.spatial.toolkit.Mesh
 import com.meta.spatial.toolkit.Transform
 import com.meta.spatial.toolkit.Visible
+import com.platypii.baselinexr.location.Geo
+import com.platypii.baselinexr.measurements.LatLngAlt
 
 class TerrainSystem(
     private val gpsToWorldTransform: GpsToWorldTransform,
@@ -21,6 +23,12 @@ class TerrainSystem(
     private val terrainTiles = mutableListOf<TerrainTileEntity>()
     private var isInitialized = false
     private var terrainConfig: TerrainConfiguration? = null
+
+    private val kpow = LatLngAlt(47.239, -123.171, -1300.0)
+    private val eiger = LatLngAlt(46.56314640, 7.94727628, 0.0)
+//    private val capitolHill = LatLngAlt(47.5967, -122.3818, -3790.0) // top of eiger
+    private val capitolHill = LatLngAlt(47.59, -122.36, -2100.0) // foot of eiger
+    private val origins = arrayOf(kpow, eiger, capitolHill)
 
     fun initialize() {
         loadTerrainConfiguration()
@@ -86,17 +94,17 @@ class TerrainSystem(
         val currentTime = System.currentTimeMillis()
 
         // Calculate reference position from first tile
-        val referenceTile = terrainTiles[0]
-        val referencePos = gpsToWorldTransform.toWorldCoordinates(
-            referenceTile.config.lat,
-            referenceTile.config.lon,
-            referenceTile.config.alt,
-            currentTime
-        )
-        // Override reference position to kpow
-//        val referencePos = gpsToWorldTransform.toWorldCoordinates(47.239, -123.171, -1300.0, currentTime)
-        // Override reference position to eiger
-//        val referencePos = gpsToWorldTransform.toWorldCoordinates(46.56314640, 7.94727628, 0.0, currentTime)
+//        val referenceTile = terrainTiles[0]
+//        val referencePos = gpsToWorldTransform.toWorldCoordinates(
+//            referenceTile.config.lat,
+//            referenceTile.config.lon,
+//            referenceTile.config.alt,
+//            currentTime
+//        )
+        // Find nearest origin
+        val referencePos = origins.minByOrNull { Geo.distance(it.lat, it.lng, location.latitude, location.longitude) }?.let {
+            gpsToWorldTransform.toWorldCoordinates(it.lat, it.lng, it.alt, currentTime)
+        } ?: return
 
         val config = terrainConfig ?: return
 
