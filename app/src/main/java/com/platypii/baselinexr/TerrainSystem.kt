@@ -86,15 +86,15 @@ class TerrainSystem(
         val currentTime = System.currentTimeMillis()
 
         // Calculate reference position from first tile
-//        val referenceTile = terrainTiles[0]
-//        val referencePos = gpsToWorldTransform.toWorldCoordinates(
-//            referenceTile.config.lat,
-//            referenceTile.config.lon,
-//            referenceTile.config.alt,
-//            currentTime
-//        )
+        val referenceTile = terrainTiles[0]
+        val referencePos = gpsToWorldTransform.toWorldCoordinates(
+            referenceTile.config.lat,
+            referenceTile.config.lon,
+            referenceTile.config.alt,
+            currentTime
+        )
         // Override reference position to kpow
-        val referencePos = gpsToWorldTransform.toWorldCoordinates(47.239, -123.171, -1300.0, currentTime)
+//        val referencePos = gpsToWorldTransform.toWorldCoordinates(47.239, -123.171, -1300.0, currentTime)
         // Override reference position to eiger
 //        val referencePos = gpsToWorldTransform.toWorldCoordinates(46.56314640, 7.94727628, 0.0, currentTime)
 

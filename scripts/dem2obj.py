@@ -14,11 +14,12 @@ from osgeo import gdal, osr
 import numpy as np
 from pydelatin import Delatin
 
-def main(dem_path, tex_path, obj_path, *, max_err=1.0):
+def main(dem_path, tex_path, obj_path, *, max_err=4.0):
     ds = gdal.Open(dem_path, gdal.GA_ReadOnly)
     if ds is None:
         raise RuntimeError(f'cannot open {dem_path}')
     elev = ds.GetRasterBand(1).ReadAsArray().astype(np.float32)
+    print(elev)
     nrows, ncols = elev.shape
     px_size = ds.GetGeoTransform()[1]     # metres / pixel
 
@@ -27,7 +28,18 @@ def main(dem_path, tex_path, obj_path, *, max_err=1.0):
 
     # adaptive triangulation
     tin = Delatin(elev, max_error=max_err)   # <- max error 1 m
-    verts, tris = tin.vertices, tin.triangles   # ndarray shapes (N,3) & (M,3) :contentReference[oaicite:0]{index=0}
+    verts, tris = tin.vertices, tin.triangles   # ndarray shapes (N,3) & (M,3)
+
+    # --- drop vertices whose elevation is less than 0
+    keep = verts[:, 2] > 0.0                  # boolean mask
+    remap = -np.ones(len(verts), dtype=np.int32)
+    remap[keep] = np.arange(keep.sum(), dtype=np.int32)
+
+    # keep only triangles made entirely of retained vertices
+    tris_keep = keep[tris].all(axis=1)
+    tris = remap[tris[tris_keep]]
+    verts = verts[keep]
+
     print(f'output mesh: {len(verts):,} verts, {len(tris):,} tris')
 
     obj_path = Path(obj_path)

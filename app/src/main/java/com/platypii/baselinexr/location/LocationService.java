@@ -23,6 +23,8 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
     private static final int LOCATION_MOCK = 3;
     private int locationMode = LOCATION_NONE;
 
+    private static final boolean useMock = true;
+
     @NonNull
     private final BluetoothService bluetooth;
 
@@ -74,29 +76,28 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
             Log.e(TAG, "Location service already started");
         }
         // MOCK LOCATION
-        locationMode = LOCATION_MOCK;
-        // Delay location updates because it crashes
-        new Thread(() -> {
-            try {
-                Thread.sleep(4000);
-                locationProviderMock.start(context);
-                locationProviderMock.locationUpdates.subscribe(this);
-            } catch (InterruptedException ignored) {
-            }
-        }).start();
-
-        // TODO:
-//        if (bluetooth.preferences.preferenceEnabled) {
-//            // Start bluetooth location service
-//            locationMode = LOCATION_BLUETOOTH;
-//            locationProviderBluetooth.start(context);
-//            locationProviderBluetooth.locationUpdates.subscribe(this);
-//        } else {
-//            // Start android location service
-//            locationMode = LOCATION_ANDROID;
-//            locationProviderAndroid.start(context);
-//            locationProviderAndroid.locationUpdates.subscribe(this);
-//        }
+        if (useMock) {
+            locationMode = LOCATION_MOCK;
+            // Delay location updates because it crashes
+            new Thread(() -> {
+                try {
+                    Thread.sleep(4000);
+                    locationProviderMock.start(context);
+                    locationProviderMock.locationUpdates.subscribe(this);
+                } catch (InterruptedException ignored) {
+                }
+            }).start();
+        } else if (bluetooth.preferences.preferenceEnabled) {
+            // Start bluetooth location service
+            locationMode = LOCATION_BLUETOOTH;
+            locationProviderBluetooth.start(context);
+            locationProviderBluetooth.locationUpdates.subscribe(this);
+        } else {
+            // Start android location service
+            locationMode = LOCATION_ANDROID;
+            locationProviderAndroid.start(context);
+            locationProviderAndroid.locationUpdates.subscribe(this);
+        }
     }
 
     @Override

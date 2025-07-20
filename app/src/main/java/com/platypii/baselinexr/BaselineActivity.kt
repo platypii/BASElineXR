@@ -106,8 +106,8 @@ class BaselineActivity : AppSystemActivity() {
     super.onSceneReady()
 
     scene.setLightingEnvironment(
-      ambientColor = Vector3(0.9f),
-      sunColor     = Vector3(0.9f),
+      ambientColor = Vector3(1f),
+      sunColor     = Vector3(1f),
       sunDirection = Vector3(0f,1f,0f),
       environmentIntensity = 0.01f
     )

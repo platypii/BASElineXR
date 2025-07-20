@@ -1,23 +1,127 @@
 {
   "tiles": [
     {
-      "model": "terrain/tile_2024_2641.glb",
-      "lat": 46.57202227,
-      "lon": 7.97344826,
+      "model": "terrain/tile_2639_1157.glb",
+      "lat": 46.56314640,
+      "lon": 7.94727628,
       "alt": 0,
       "gridX": 0,
       "gridZ": 0
     },
     {
-      "model": "terrain/tile_2024_2642.glb",
-      "lat": 46.57196027,
-      "lon": 7.98649197,
+      "model": "terrain/tile_2639_1158.glb",
+      "lat": 46.57214179,
+      "lon": 7.94736075,
+      "alt": 0,
+      "gridX": 0,
+      "gridZ": 1
+    },
+    {
+      "model": "terrain/tile_2640_1157.glb",
+      "lat": 46.56308740,
+      "lon": 7.96031788,
       "alt": 0,
       "gridX": 1,
       "gridZ": 0
+    },
+    {
+      "model": "terrain/tile_2640_1158.glb",
+      "lat": 46.57208278,
+      "lon": 7.96040452,
+      "alt": 0,
+      "gridX": 1,
+      "gridZ": 1
+    },
+    {
+      "model": "terrain/tile_2641_1157.glb",
+      "lat": 46.56302690,
+      "lon": 7.97335945,
+      "alt": 0,
+      "gridX": 2,
+      "gridZ": 0
+    },
+    {
+      "model": "terrain/tile_2641_1158.glb",
+      "lat": 46.57202227,
+      "lon": 7.97344826,
+      "alt": 0,
+      "gridX": 2,
+      "gridZ": 1
+    },
+    {
+      "model": "terrain/tile_2641_1159.glb",
+      "lat": 46.58101764,
+      "lon": 7.97353710,
+      "alt": 0,
+      "gridX": 2,
+      "gridZ": 2
+    },
+    {
+      "model": "terrain/tile_2642_1157.glb",
+      "lat": 46.56296491,
+      "lon": 7.98640099,
+      "alt": 0,
+      "gridX": 3,
+      "gridZ": 0
+    },
+    {
+      "model": "terrain/tile_2642_1158.glb",
+      "lat": 46.57196027,
+      "lon": 7.98649197,
+      "alt": 0,
+      "gridX": 3,
+      "gridZ": 1
+    },
+    {
+      "model": "terrain/tile_2642_1159.glb",
+      "lat": 46.58095562,
+      "lon": 7.98658298,
+      "alt": 0,
+      "gridX": 3,
+      "gridZ": 2
+    },
+    {
+      "model": "terrain/tile_2643_1157.glb",
+      "lat": 46.56290142,
+      "lon": 7.99944251,
+      "alt": 0,
+      "gridX": 4,
+      "gridZ": 0
+    },
+    {
+      "model": "terrain/tile_2643_1158.glb",
+      "lat": 46.57189677,
+      "lon": 7.99953565,
+      "alt": 0,
+      "gridX": 4,
+      "gridZ": 1
+    },
+    {
+      "model": "terrain/tile_2643_1159.glb",
+      "lat": 46.58089211,
+      "lon": 7.99962883,
+      "alt": 0,
+      "gridX": 4,
+      "gridZ": 2
+    },
+    {
+      "model": "terrain/tile_2644_1158.glb",
+      "lat": 46.57183178,
+      "lon": 8.01257930,
+      "alt": 0,
+      "gridX": 5,
+      "gridZ": 1
+    },
+    {
+      "model": "terrain/tile_2644_1159.glb",
+      "lat": 46.58082711,
+      "lon": 8.01267465,
+      "alt": 0,
+      "gridX": 5,
+      "gridZ": 2
     }
   ],
-  "offsetX": 0,
+  "offsetX": 2,
   "offsetY": 6,
-  "offsetZ": -8
+  "offsetZ": -19
 }
