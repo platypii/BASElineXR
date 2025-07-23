@@ -109,8 +109,10 @@ class TerrainSystem(
 //            currentTime
 //        )
         // Find nearest origin
+        val motionEstimator = Services.location.motionEstimator
         val referencePos = origins.minByOrNull { Geo.distance(it.lat, it.lng, location.latitude, location.longitude) }?.let {
-            gpsToWorldTransform.toWorldCoordinates(it.lat, it.lng, it.alt, currentTime)
+            // Pass motion estimator to toWorldCoordinates for better prediction
+            gpsToWorldTransform.toWorldCoordinates(it.lat, it.lng, it.alt, currentTime, motionEstimator)
         } ?: return
 
         val config = terrainConfig ?: return
