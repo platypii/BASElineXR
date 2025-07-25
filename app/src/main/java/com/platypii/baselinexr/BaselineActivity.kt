@@ -80,9 +80,9 @@ class BaselineActivity : AppSystemActivity() {
       glxfLoaded = true
 
       // Get sphere mesh from directly loaded entity
-      val mesh = sphereEntity!!.getComponent<Mesh>()
-      ballShooter = BallShooter(mesh)
-      systemManager.registerSystem(ballShooter!!)
+//      val mesh = sphereEntity!!.getComponent<Mesh>()
+//      ballShooter = BallShooter(mesh)
+//      systemManager.registerSystem(ballShooter!!)
 
       // Set mesh for flight path trail
 //      flightPathSystem.setSphereMesh(mesh)
