@@ -57,6 +57,7 @@ class BaselineActivity : AppSystemActivity() {
 
     systemManager.registerSystem(HudSystem(gpsTransform))
     systemManager.registerSystem(AltimeterSystem())
+    systemManager.registerSystem(SpeedometerSystem())
 //    val flightPathSystem = FlightPathTrailSystem(this, gpsTransform)
 //    systemManager.registerSystem(flightPathSystem)
 
@@ -143,6 +144,19 @@ class BaselineActivity : AppSystemActivity() {
             val altitudeLabel = rootView?.findViewById<TextView>(R.id.altitude)
             val altimeterSystem = systemManager.findSystem<AltimeterSystem>()
             altimeterSystem?.setupLocationUpdates(this@BaselineActivity, altitudeLabel)
+          }
+        },
+        PanelRegistration(R.layout.speedometer) {
+          config {
+            themeResourceId = R.style.PanelAppThemeTransparent
+            includeGlass = false
+            enableTransparent = true
+          }
+          panel {
+            // Set up speedometer updates via SpeedometerSystem
+            val speedLabel = rootView?.findViewById<TextView>(R.id.speed)
+            val speedometerSystem = systemManager.findSystem<SpeedometerSystem>()
+            speedometerSystem?.setupLocationUpdates(this@BaselineActivity, speedLabel)
           }
         })
   }

@@ -44,8 +44,8 @@ class GrabbablePanel(
                     clicked: Int,
                     downTime: Long
                 ): Boolean {
-                    val triggerPressed = changed and clicked and ButtonBits.ButtonTriggerR
-                    val triggerReleased = changed and clicked.inv() and ButtonBits.ButtonTriggerR
+                    val triggerPressed = changed and clicked and ButtonBits.ButtonTriggerL
+                    val triggerReleased = changed and clicked.inv() and ButtonBits.ButtonTriggerL
 
                     if (triggerPressed != 0 && !isDragging) {
                         isDragging = true
@@ -77,7 +77,7 @@ class GrabbablePanel(
             if (controllerTransform == null) return
 
             // Check if trigger is still pressed
-            if ((controller.buttonState and ButtonBits.ButtonTriggerR) == 0) {
+            if ((controller.buttonState and ButtonBits.ButtonTriggerL) == 0) {
                 isDragging = false
                 // Store the new offset relative to head
                 val head = getHmd()
