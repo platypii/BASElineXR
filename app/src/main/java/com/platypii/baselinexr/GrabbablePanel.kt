@@ -18,7 +18,7 @@ import com.meta.spatial.toolkit.getAbsoluteTransform
 class GrabbablePanel(
     private val systemManager: com.meta.spatial.core.SystemManager,
     private val panelEntity: Entity,
-    private val initialOffset: Vector3 = Vector3(-0.2f, 1.8f, 4f)
+    initialOffset: Vector3 = Vector3(-0.2f, 1.8f, 4f)
 ) {
     private var inputListenerAdded = false
     private var panelOffset = initialOffset

@@ -56,6 +56,7 @@ class BaselineActivity : AppSystemActivity() {
     Services.create(this)
 
     systemManager.registerSystem(HudSystem(gpsTransform))
+    systemManager.registerSystem(AltimeterSystem())
 //    val flightPathSystem = FlightPathTrailSystem(this, gpsTransform)
 //    systemManager.registerSystem(flightPathSystem)
 
@@ -129,6 +130,19 @@ class BaselineActivity : AppSystemActivity() {
             val speedLabel = rootView?.findViewById<TextView>(R.id.speed)
             val hudSystem = systemManager.findSystem<HudSystem>()
             hudSystem?.setupLocationUpdates(this@BaselineActivity, latlngLabel, speedLabel)
+          }
+        },
+        PanelRegistration(R.layout.altimeter) {
+          config {
+            themeResourceId = R.style.PanelAppThemeTransparent
+            includeGlass = false
+            enableTransparent = true
+          }
+          panel {
+            // Set up altimeter updates via AltimeterSystem
+            val altitudeLabel = rootView?.findViewById<TextView>(R.id.altitude)
+            val altimeterSystem = systemManager.findSystem<AltimeterSystem>()
+            altimeterSystem?.setupLocationUpdates(this@BaselineActivity, altitudeLabel)
           }
         })
   }
