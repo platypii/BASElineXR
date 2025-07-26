@@ -64,7 +64,7 @@
 
   <application
       android:allowBackup="false"
-      android:icon="@drawable/wingsuit"
+      android:icon="@drawable/ic_launcher"
       android:label="BASElineXR">
     <meta-data
       android:name="com.oculus.supportedDevices"
