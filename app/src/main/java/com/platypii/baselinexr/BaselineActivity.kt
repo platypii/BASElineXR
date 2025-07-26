@@ -24,8 +24,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
 import com.meta.spatial.physics.PhysicsFeature
-import com.platypii.baselinexr.location.LocationStatus
-import com.platypii.baselinexr.util.Convert
 
 class BaselineActivity : AppSystemActivity() {
 
@@ -57,7 +55,7 @@ class BaselineActivity : AppSystemActivity() {
 
     Services.create(this)
 
-    systemManager.registerSystem(HudSystem())
+    systemManager.registerSystem(HudSystem(gpsTransform))
 //    val flightPathSystem = FlightPathTrailSystem(this, gpsTransform)
 //    systemManager.registerSystem(flightPathSystem)
 
@@ -126,36 +124,11 @@ class BaselineActivity : AppSystemActivity() {
               finish()
             })
 
+            // Set up HUD updates via HudSystem
             val latlngLabel = rootView?.findViewById<TextView>(R.id.lat_lng)
-            latlngLabel?.text = Services.location.dataSource()
             val speedLabel = rootView?.findViewById<TextView>(R.id.speed)
-            Services.location.locationUpdates.subscribeMain { loc ->
-              LocationStatus.updateStatus(this@BaselineActivity)
-              val provider = Services.location.dataSource()
-              latlngLabel?.text = provider + " " + loc.toStringSimple()
-              latlngLabel?.setCompoundDrawablesWithIntrinsicBounds(LocationStatus.icon, 0, 0, 0)
-              speedLabel?.text = Convert.speed(loc.groundSpeed()) + "  " + Convert.distance(loc.altitude_gps)
-
-              // Update the origin to the latest GPS location
-              gpsTransform.setOrigin(loc)
-
-              // Update the flight path system with the new location
-//              val flightPathSystem = systemManager.findSystem<FlightPathTrailSystem>()
-//              flightPathSystem?.onLocationUpdate(loc)
-            }
-            // Update status periodically
-            LocationStatus.updateStatus(this@BaselineActivity)
-            latlngLabel?.text = LocationStatus.message
-            latlngLabel?.setCompoundDrawablesWithIntrinsicBounds(LocationStatus.icon, 0, 0, 0)
-            // TODO: Satellites
-//              if (LocationStatus.satellites > 0) {
-//                binding.satelliteStatus.setText(String.format(Locale.US, "%d", LocationStatus.satellites));
-//                binding.satelliteStatus.setVisibility(View.VISIBLE);
-//              } else {
-//                binding.satelliteStatus.setVisibility(View.GONE);
-//              }
-
-            // TODO: unsubscribe later
+            val hudSystem = systemManager.findSystem<HudSystem>()
+            hudSystem?.setupLocationUpdates(this@BaselineActivity, latlngLabel, speedLabel)
           }
         })
   }

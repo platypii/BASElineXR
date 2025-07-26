@@ -1,5 +1,6 @@
 package com.platypii.baselinexr
 
+import android.widget.TextView
 import com.meta.spatial.core.Entity
 import com.meta.spatial.core.Pose
 import com.meta.spatial.core.Quaternion
@@ -15,8 +16,10 @@ import com.meta.spatial.toolkit.SceneObjectSystem
 import com.meta.spatial.toolkit.SpatialActivityManager
 import com.meta.spatial.toolkit.Transform
 import com.meta.spatial.toolkit.getAbsoluteTransform
+import com.platypii.baselinexr.location.LocationStatus
+import com.platypii.baselinexr.util.Convert
 
-class HudSystem : SystemBase() {
+class HudSystem(private val gpsTransform: GpsToWorldTransform) : SystemBase() {
   private var initialized = false
   private var panelEntity: Entity? = null
   private var inputListenerAdded = false
@@ -25,6 +28,11 @@ class HudSystem : SystemBase() {
   private var dragController: Entity? = null
   private var dragLocalOffset: Vector3? = null
   private var dragDistance: Float = 0f
+  
+  // HUD content references
+  private var latlngLabel: TextView? = null
+  private var speedLabel: TextView? = null
+  private var locationSubscriptionInitialized = false
 
   override fun execute() {
     val activity = SpatialActivityManager.getVrActivity<BaselineActivity>()
@@ -37,6 +45,8 @@ class HudSystem : SystemBase() {
     if (initialized && !inputListenerAdded) {
       setupPanelInteraction()
     }
+
+    // Location updates are set up via setupLocationUpdates() called from BaselineActivity
 
     updatePanelPosition()
   }
@@ -87,6 +97,35 @@ class HudSystem : SystemBase() {
           return false
         }
       })
+    }
+  }
+
+  fun setupLocationUpdates(activity: BaselineActivity, latlngLabel: TextView?, speedLabel: TextView?) {
+    this.latlngLabel = latlngLabel
+    this.speedLabel = speedLabel
+    
+    if (latlngLabel != null && speedLabel != null && !locationSubscriptionInitialized) {
+      // Set initial values
+      latlngLabel.text = Services.location.dataSource()
+      
+      // Subscribe to location updates
+      Services.location.locationUpdates.subscribeMain { loc ->
+        LocationStatus.updateStatus(activity)
+        val provider = Services.location.dataSource()
+        latlngLabel.text = provider + " " + loc.toStringSimple()
+        latlngLabel.setCompoundDrawablesWithIntrinsicBounds(LocationStatus.icon, 0, 0, 0)
+        speedLabel.text = Convert.speed(loc.groundSpeed()) + "  " + Convert.distance(loc.altitude_gps)
+
+        // Update the origin to the latest GPS location
+        gpsTransform.setOrigin(loc)
+      }
+      
+      // Update status periodically
+      LocationStatus.updateStatus(activity)
+      latlngLabel.text = LocationStatus.message
+      latlngLabel.setCompoundDrawablesWithIntrinsicBounds(LocationStatus.icon, 0, 0, 0)
+      
+      locationSubscriptionInitialized = true
     }
   }
 
