@@ -14,7 +14,7 @@ from osgeo import gdal, osr
 import numpy as np
 from pydelatin import Delatin
 
-def main(dem_path, tex_path, obj_path, *, max_err=4.0):
+def main(dem_path, tex_path, obj_path, *, max_err=5.0):
     ds = gdal.Open(dem_path, gdal.GA_ReadOnly)
     if ds is None:
         raise RuntimeError(f'cannot open {dem_path}')
@@ -79,6 +79,7 @@ def main(dem_path, tex_path, obj_path, *, max_err=4.0):
     src.ImportFromWkt(ds.GetProjection())
     dst = osr.SpatialReference()
     dst.ImportFromEPSG(4326)            # WGS-84 (lat/lon)
+    # 2056 LV95 ??
     tx  = osr.CoordinateTransformation(src, dst)
 
     lat, lon, _ = tx.TransformPoint(x0, y0)

@@ -6,7 +6,7 @@
 #include <metaSpatialSdkFragmentBase.glsl>
 #include <Uniforms.glsl>
 
-const float OPACITY = 0.95;
+const float OPACITY = 1.0;
 const float BRIGHTNESS = 3.0;
 const float CONTRAST = 0.5; // 1.0 = S-curve contrast, 0.0 = no contrast enhancement
 const float SATURATION = 1.3; // 1.0 = normal, >1.0 = more saturated

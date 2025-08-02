@@ -1,88 +1,43 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
 
-# --------------------------------------------------------------------
-# Parameters ---------------------------------------------------------
-# --------------------------------------------------------------------
-RES=0.5                # Target ground sampling distance in metres
-DEM_DIR=dem            # Folder with SwissALTI3D tiles
-IMG_DIR=images         # Folder with swissimage tiles
-OUT_DIR=build/tiles    # Final GLB destination
-TMP_DIR=build/tmp      # Workspace for intermediate rasters/meshes
-# --------------------------------------------------------------------
+set -e
 
-mkdir -p "$OUT_DIR" "$TMP_DIR"
-shopt -s nullglob      # empty globs → empty array, not literal string
+RES=0.5
+IMG_RES=0.4
 
-# --------------------------------------------------------------------
-# Loop over every DEM tile -------------------------------------------
-# --------------------------------------------------------------------
-for dem in "$DEM_DIR"/*.tif; do
-  dem_base=$(basename "$dem")                     # swissalti3d_2024_2641-1158_0.5_2056_5728.tif
-  tile_xy=${dem_base#swissalti3d_*_}              # 2641-1158_0.5_2056_5728.tif
-  tile_xy=${tile_xy%%_*}                          # 2641-1158
-  tile_id=${tile_xy/-/_}                          # 2641_1158
+mkdir -p build
 
-  # ------------------------------------------------------------------
-  # Find the best matching ortho image (any year / any GSD) ----------
-  # ------------------------------------------------------------------
-  imgs=( "$IMG_DIR"/swissimage-dop10_*_"$tile_xy"_*_2056.tif )
+# Assemble images from tiles
+gdalbuildvrt -tr $IMG_RES $IMG_RES build/eiger_rgb_${IMG_RES}m.vrt images/*.tif
 
-  if ((${#imgs[@]} == 0)); then
-    echo "‼️  No ortho image for DEM $dem_base (tile $tile_xy)" >&2
-    continue
-  fi
+# Convert to JPG for VR
+gdal_translate -of JPEG build/eiger_rgb_${IMG_RES}m.vrt build/eiger_rgb_${IMG_RES}m.jpg
 
-  # Choose newest year (descending) then finest GSD (ascending)
-  img=$(printf '%s\n' "${imgs[@]}" | sort -t'_' -k2,2r -k4,4n | head -n1)
+# Assemble dems from tiles
+rm -f build/eiger_dem_${RES}m.vrt build/eiger_dem_${RES}m.tif
+gdalbuildvrt build/eiger_dem_${RES}m.vrt dem/*.tif
+gdalwarp build/eiger_dem_${RES}m.vrt build/eiger_dem_${RES}m.tif
 
-  # Extract bits for logging
-  img_base=${img##*/}               # strip path
-  img_year=${img_base#swissimage-dop10_}
-  img_year=${img_year%%_*}
-  img_gsd=$(echo "$img_base" | cut -d'_' -f4)
+# Raster to mesh (Wavefront OBJ) and point the MTL to the JPEG
+python dem2obj.py \
+    build/eiger_dem_${RES}m.tif \
+    build/eiger_rgb_${IMG_RES}m.jpg \
+    build/eiger_terrain_${RES}m.obj
+# This writes build/eiger_terrain_2m.obj + build/eiger_terrain_2m.mtl
 
-  echo "🟢 tile $tile_xy  IMG‑year:$img_year  IMG‑gsd:${img_gsd}m"
-
-  # ------------------------------------------------------------------
-  # Paths for temporaries (include both coordinates) -----------------
-  # ------------------------------------------------------------------
-  dem_tmp="$TMP_DIR/dem_${tile_id}.tif"
-  img_tmp="$TMP_DIR/img_${tile_id}.tif"
-  jpg_tmp="$TMP_DIR/img_${tile_id}.jpg"
-  obj_tmp="$TMP_DIR/mesh_${tile_id}.obj"
-
-  # ------------------------------------------------------------------
-  # 1. Resample DEM and imagery to $RES metres ------------------------
-  # ------------------------------------------------------------------
-  gdalwarp -tr "$RES" "$RES" -r cubic    "$dem" "$dem_tmp"
-  gdalwarp -tr "$RES" "$RES" -r bilinear "$img" "$img_tmp"
-
-  # ------------------------------------------------------------------
-  # 2. RGB → JPEG ----------------------------------------------------
-  # ------------------------------------------------------------------
-  gdal_translate -of JPEG -co JPEGQuality=90 "$img_tmp" "$jpg_tmp"
-
-  # ------------------------------------------------------------------
-  # 3. Height‑field → OBJ -------------------------------------------
-  # ------------------------------------------------------------------
-  python dem2obj.py "$dem_tmp" "$jpg_tmp" "$obj_tmp"
-
-  # ------------------------------------------------------------------
-  # 4. OBJ → binary GLB (uses both coords) ---------------------------
-  # ------------------------------------------------------------------
-  obj2gltf \
-    -i "$obj_tmp" \
-    -o "$OUT_DIR/tile_${tile_id}.glb" \
+echo "OBJ written: build/eiger_terrain_${RES}m.obj"
+# npm install -g obj2gltf
+obj2gltf \
+    -i build/eiger_terrain_${RES}m.obj \
+    -o build/eiger_terrain_${RES}m.glb \
     --binary \
     --inputUpAxis Z \
     --outputUpAxis Y \
-    --optimize
 
-  # ------------------------------------------------------------------
-  # 5. Clean up ------------------------------------------------------
-  # ------------------------------------------------------------------
-  rm -f "$dem_tmp" "$img_tmp" "$jpg_tmp" "$obj_tmp" "${obj_tmp%.obj}.mtl"
-done
-
-shopt -u nullglob
+# cleanup
+rm build/eiger_dem_${RES}m.vrt
+rm build/eiger_rgb_${IMG_RES}m.vrt
+rm build/eiger_dem_${RES}m.tif
+rm build/eiger_rgb_${IMG_RES}m.jpg
+rm build/eiger_terrain_${RES}m.obj
+rm build/eiger_terrain_${RES}m.mtl
