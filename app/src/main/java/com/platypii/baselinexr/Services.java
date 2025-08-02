@@ -11,11 +11,9 @@ import androidx.annotation.NonNull;
 
 import com.platypii.baselinexr.bluetooth.BluetoothService;
 import com.platypii.baselinexr.cloud.AuthState;
-import com.platypii.baselinexr.cloud.BaselineCloud;
 import com.platypii.baselinexr.cloud.tasks.Tasks;
 import com.platypii.baselinexr.location.LocationService;
 import com.platypii.baselinexr.places.Places;
-import com.platypii.baselinexr.tracks.Tracks;
 import com.platypii.baselinexr.util.Convert;
 
 /**
@@ -39,11 +37,9 @@ public class Services {
     private static final Runnable stopRunnable = Services::stopIfIdle;
 
     // Services
-    public static final Tracks tracks = new Tracks();
     public static final BluetoothService bluetooth = new BluetoothService();
     public static final LocationService location = new LocationService(bluetooth);
     public static final Tasks tasks = new Tasks();
-    public static final BaselineCloud cloud = new BaselineCloud();
     public static final Places places = new Places();
 
     /**
@@ -87,12 +83,6 @@ public class Services {
             Log.i(TAG, "Starting task manager");
             tasks.start(appContext);
 
-            Log.i(TAG, "Starting tracks service");
-            tracks.start(appContext);
-
-            Log.i(TAG, "Starting cloud services");
-            cloud.start(appContext);
-
             Log.i(TAG, "Starting place database");
             places.start(appContext);
 
@@ -134,7 +124,6 @@ public class Services {
             places.stop();
             tasks.stop();
             location.stop();
-            tracks.stop();
             bluetooth.stop();
             initialized = false;
         }

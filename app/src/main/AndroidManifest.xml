@@ -54,6 +54,7 @@
 
   <uses-permission android:name="com.oculus.permission.USE_ANCHOR_API" />
   <uses-permission android:name="com.oculus.permission.USE_SCENE" />
+  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
 <!--  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>-->
 <!--  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>-->
@@ -89,12 +90,32 @@
       android:configChanges="screenSize|screenLayout|orientation|keyboardHidden|keyboard|navigation|uiMode"
       android:exported="true"
     >
-      <!-- This filter lets the apk show up as a launchable icon. -->
+
+      <!-- Minimal HOME-role filter -->
       <intent-filter>
-        <action android:name="android.intent.action.MAIN" />
-        <category android:name="com.oculus.intent.category.VR" />
-        <category android:name="android.intent.category.LAUNCHER" />
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.HOME"/>
+        <category android:name="android.intent.category.DEFAULT"/>
       </intent-filter>
+
+      <!-- VR/launcher filter (no HOME) -->
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="com.oculus.intent.category.VR"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+
     </activity>
+
+    <!-- Boot receiver to launch automatically -->
+    <receiver
+        android:name=".BootReceiver"
+        android:exported="true"
+        android:enabled="true">
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED"/>
+      </intent-filter>
+    </receiver>
+
   </application>
 </manifest>

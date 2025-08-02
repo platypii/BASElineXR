@@ -62,7 +62,7 @@ public class LocationStatus {
                     break;
                 default:
                     message = "GPS bluetooth not connected";
-                    Log.e(TAG, "Bluetooth inconsistent state: preference enabled, state " + BT_STATES[btState]);
+//                    Log.e(TAG, "Bluetooth inconsistent state: preference enabled, state " + BT_STATES[btState]);
             }
         } else {
             // Internal GPS, or bluetooth connected:

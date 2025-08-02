@@ -44,8 +44,8 @@ class GrabbablePanel(
                     clicked: Int,
                     downTime: Long
                 ): Boolean {
-                    val triggerPressed = changed and clicked and (ButtonBits.ButtonTriggerL or ButtonBits.ButtonTriggerR)
-                    val triggerReleased = changed and clicked.inv() and (ButtonBits.ButtonTriggerL or ButtonBits.ButtonTriggerR)
+                    val triggerPressed = changed and clicked and (ButtonBits.AllButtonClickMask)
+                    val triggerReleased = changed and clicked.inv() and (ButtonBits.AllButtonClickMask)
 
                     if (triggerPressed != 0 && !isDragging) {
                         isDragging = true
