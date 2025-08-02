@@ -6,6 +6,10 @@
 #include <metaSpatialSdkFragmentBase.glsl>
 #include <Uniforms.glsl>
 
+const float BRIGHTNESS = 3.0;
+const float CONTRAST = 0.5; // 1.0 = S-curve contrast, 0.0 = no contrast enhancement
+const float SATURATION = 1.3; // 1.0 = normal, >1.0 = more saturated
+
 void main() {
     vec4 albedo = texture(albedoSampler, vertexOut.albedoCoord) * vertexOut.color;
 
@@ -40,9 +44,17 @@ void main() {
     if(finalAlpha < alphaCutoff && dither > finalAlpha)
         discard;
 
+    // Increase contrast using S-curve
+    vec3 enhanced = albedo.rgb;
+    enhanced = mix(albedo.rgb, enhanced * enhanced * (3.0 - 2.0 * enhanced), CONTRAST);
+
+    // Boost saturation
+    float luminance = dot(enhanced, vec3(0.299, 0.587, 0.114));
+    enhanced = mix(vec3(luminance), enhanced, SATURATION);
+
     // Use vertex lighting for better performance
     vec3 lighting = vertexOut.lighting * g_ViewUniform.ambientColor.rgb;
 
-    outColor.rgb = albedo.rgb * lighting;
+    outColor.rgb = enhanced * lighting * BRIGHTNESS;
     outColor.a = finalAlpha;
 }
