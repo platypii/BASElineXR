@@ -8,5 +8,5 @@
     android:textColor="#ffffff"
     android:textSize="100sp"
     android:typeface="monospace"
-    android:gravity="center"
+    android:gravity="center|top"
     android:orientation="vertical" />

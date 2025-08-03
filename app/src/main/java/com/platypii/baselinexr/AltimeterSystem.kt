@@ -33,7 +33,7 @@ class AltimeterSystem : SystemBase() {
         val panel = composition.tryGetNodeByName("AltimeterPanel")
         if (panel?.entity != null) {
             // Position altimeter on the right side, slightly lower than main HUD
-            val altimeterOffset = Vector3(-1.2f, -2.5f, 3f)
+            val altimeterOffset = Vector3(-1.2f, -2.2f, 3f)
             grabbablePanel = GrabbablePanel(systemManager, panel.entity, altimeterOffset)
             initialized = true
         }

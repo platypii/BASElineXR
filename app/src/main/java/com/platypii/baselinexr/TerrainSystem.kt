@@ -24,7 +24,7 @@ class TerrainSystem(
     private var isInitialized = false
     private var terrainConfig: TerrainConfiguration? = null
 
-    private val kpow = LatLngAlt(47.239, -123.171, -1300.0)
+    private val kpow = LatLngAlt(47.2375, -123.166, -900.0)
     private val eiger = LatLngAlt(46.56314640, 7.94727628, 0.0)
 //    private val capitolHill = LatLngAlt(47.5967, -122.3818, -3790.0) // top of eiger
     private val capitolHill = LatLngAlt(47.59, -122.36, -2100.0) // foot of eiger
@@ -87,7 +87,7 @@ class TerrainSystem(
 
         // Also modify the mesh to use custom transparency shader
         val mesh = entity.getComponent<Mesh>()
-//        mesh.defaultShaderOverride = "data/shaders/terrain_transparent"
+        mesh.defaultShaderOverride = "data/shaders/terrain_transparent"
 //        mesh.defaultShaderOverride = "data/shaders/terrain_bubble"
         entity.setComponent(mesh)
 
