@@ -5,7 +5,7 @@
 #include <metaSpatialSdkFragmentBase.glsl>
 #include <Uniforms.glsl>
 
-const float OPACITY = 1.0;
+const float OPACITY = 0.75;
 
 void main() {
     vec4 albedo = texture(albedoSampler, vertexOut.albedoCoord) * vertexOut.color;

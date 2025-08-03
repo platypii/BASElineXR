@@ -13,10 +13,10 @@ void main() {
     float distance = length(vertexOut.worldPosition - getEyeCenter());
 
     // Distance fade parameters
-    float minDistance = 200.0; // Full opacity until this distance
-    float maxDistance = 400.0; // Fully transparent at this distance
-    float minAlpha = 1; // Alpha value at minDistance and closer
-    float maxAlpha = 0.0; // Alpha value at maxDistance and farther
+    float minDistance = 400.0; // Full opacity until this distance
+    float maxDistance = 500.0; // Fully transparent at this distance
+    float minAlpha = 0.9; // Alpha value at minDistance and closer
+    float maxAlpha = 0.2; // Alpha value at maxDistance and farther
 
     // Distance-based alpha: minAlpha until minDistance, then fade to maxAlpha at maxDistance
     float distanceAlpha;

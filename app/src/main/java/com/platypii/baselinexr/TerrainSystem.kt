@@ -88,8 +88,8 @@ class TerrainSystem(
 
         // Also modify the mesh to use custom transparency shader
         val mesh = entity.getComponent<Mesh>()
-        mesh.defaultShaderOverride = "data/shaders/terrain_transparent"
-//        mesh.defaultShaderOverride = "data/shaders/terrain_bubble"
+//        mesh.defaultShaderOverride = "data/shaders/terrain_transparent"
+        mesh.defaultShaderOverride = "data/shaders/terrain_bubble"
         entity.setComponent(mesh)
 
         terrainTiles.add(TerrainTileEntity(config, entity))
