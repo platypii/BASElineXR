@@ -19,7 +19,8 @@ public class MockLocationProvider extends LocationProvider {
 
     private static final String filename = "kpow-prison.csv";
 
-    private long systemStartTime = System.currentTimeMillis();
+    public static long systemStartTime = System.currentTimeMillis();
+    private boolean started = false;
 
     @NonNull
     @Override
@@ -41,6 +42,8 @@ public class MockLocationProvider extends LocationProvider {
     @Override
     public void start(@NonNull Context context) throws SecurityException {
         Log.i(TAG, "Starting mock location service");
+        systemStartTime = System.currentTimeMillis();
+        started = true;
         // Load track from csv
         List<MLocation> all = loadData(context);
 //        all = all.subList(0, 100);
@@ -53,6 +56,7 @@ public class MockLocationProvider extends LocationProvider {
 
         new Thread(() -> {
             for (MLocation loc : all) {
+                if (!started) break;
                 final long elapsed = System.currentTimeMillis() - systemStartTime;
                 final long locElapsed = loc.millis - trackStartTime; // Time since first fix
                 if (locElapsed > elapsed) {
@@ -79,4 +83,10 @@ public class MockLocationProvider extends LocationProvider {
         }
     }
 
+    @Override
+    public void stop() {
+        // Stop thread
+        started = false;
+        super.stop();
+    }
 }

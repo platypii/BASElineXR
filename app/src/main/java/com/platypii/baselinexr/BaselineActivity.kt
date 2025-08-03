@@ -99,8 +99,23 @@ class BaselineActivity : AppSystemActivity() {
   }
 
   override fun onStop() {
+    Log.i(TAG, "Stopping...")
     super.onStop()
     Services.stop()
+  }
+
+  override fun onDestroy() {
+    // Clean up all systems that have cleanup methods
+    systemManager.findSystem<HudSystem>()?.cleanup()
+    systemManager.findSystem<AltimeterSystem>()?.cleanup()
+    systemManager.findSystem<SpeedometerSystem>()?.cleanup()
+    terrainSystem?.cleanup()
+
+    // Clean up entities
+//    sphereEntity?.destroy()
+//    gltfxEntity?.destroy()
+
+    super.onDestroy()
   }
 
   override fun onSceneReady() {
@@ -127,6 +142,7 @@ class BaselineActivity : AppSystemActivity() {
           panel {
             val exitButton = rootView?.findViewById<Button>(R.id.exit_button)
             exitButton?.setOnClickListener({
+//              Services.stop()
               finish()
             })
 

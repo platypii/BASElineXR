@@ -118,10 +118,18 @@ class FlightPathTrailSystem(
     }
     
     override fun delete(entity: Entity) {
+        cleanup()
+        super.delete(entity)
+    }
+
+    fun cleanup() {
         // Clean up any entities we created
         trailEntities.forEach { it.destroy() }
         trailEntities.clear()
-        super.delete(entity)
+        trackData = null
+        initialized = false
+        sphereMesh = null
+        previousOriginDelta = Vector3(0f, 0f, 0f)
     }
     
     /**

@@ -13,6 +13,7 @@ class SpeedometerSystem : SystemBase() {
     // Speedometer content references
     private var speedLabel: TextView? = null
     private var locationSubscriptionInitialized = false
+    private var locationSubscriber: ((com.platypii.baselinexr.measurements.MLocation) -> Unit)? = null
 
     override fun execute() {
         val activity = SpatialActivityManager.getVrActivity<BaselineActivity>()
@@ -47,12 +48,24 @@ class SpeedometerSystem : SystemBase() {
             speedLabel.text = "--- mph"
             
             // Subscribe to location updates
-            Services.location.locationUpdates.subscribeMain { loc ->
+            locationSubscriber = { loc ->
                 val speedText = Convert.speed(loc.groundSpeed())
                 speedLabel.text = speedText
             }
+            Services.location.locationUpdates.subscribeMain(locationSubscriber!!)
             
             locationSubscriptionInitialized = true
         }
+    }
+
+    fun cleanup() {
+        locationSubscriber?.let { subscriber ->
+            Services.location.locationUpdates.unsubscribeMain(subscriber)
+            locationSubscriber = null
+        }
+        grabbablePanel = null
+        speedLabel = null
+        locationSubscriptionInitialized = false
+        initialized = false
     }
 }

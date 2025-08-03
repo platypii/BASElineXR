@@ -111,6 +111,8 @@ public class Services {
         if (dec()) {
             Log.i(TAG, String.format("All activities have stopped. Base services will stop in %d seconds", shutdownDelay / 1000));
             handler.postDelayed(stopRunnable, shutdownDelay);
+        } else {
+            Log.w(TAG, "Not stopping, start count " + startCount);
         }
     }
 

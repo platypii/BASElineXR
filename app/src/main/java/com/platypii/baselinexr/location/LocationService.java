@@ -151,6 +151,9 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
             // Stop bluetooth location service
             locationProviderBluetooth.locationUpdates.unsubscribe(this);
             locationProviderBluetooth.stop();
+        } else if (locationMode == LOCATION_MOCK) {
+            locationProviderMock.locationUpdates.unsubscribe(this);
+            locationProviderMock.stop();
         }
         locationMode = LOCATION_NONE;
         super.stop();

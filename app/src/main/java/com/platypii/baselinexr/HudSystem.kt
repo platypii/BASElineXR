@@ -14,6 +14,7 @@ class HudSystem(private val gpsTransform: GpsToWorldTransform) : SystemBase() {
   private var latlngLabel: TextView? = null
   private var speedLabel: TextView? = null
   private var locationSubscriptionInitialized = false
+  private var locationSubscriber: ((com.platypii.baselinexr.measurements.MLocation) -> Unit)? = null
 
   override fun execute() {
     val activity = SpatialActivityManager.getVrActivity<BaselineActivity>()
@@ -50,7 +51,7 @@ class HudSystem(private val gpsTransform: GpsToWorldTransform) : SystemBase() {
       latlngLabel.text = Services.location.dataSource()
       
       // Subscribe to location updates
-      Services.location.locationUpdates.subscribeMain { loc ->
+      locationSubscriber = { loc ->
         LocationStatus.updateStatus(activity)
         val provider = Services.location.dataSource()
         latlngLabel.text = provider + " " + loc.toStringSimple()
@@ -60,6 +61,7 @@ class HudSystem(private val gpsTransform: GpsToWorldTransform) : SystemBase() {
         // Update the origin to the latest GPS location
         gpsTransform.setOrigin(loc)
       }
+      Services.location.locationUpdates.subscribeMain(locationSubscriber!!)
       
       // Update status periodically
       LocationStatus.updateStatus(activity)
@@ -70,4 +72,15 @@ class HudSystem(private val gpsTransform: GpsToWorldTransform) : SystemBase() {
     }
   }
 
+  fun cleanup() {
+    locationSubscriber?.let { subscriber ->
+      Services.location.locationUpdates.unsubscribeMain(subscriber)
+      locationSubscriber = null
+    }
+    grabbablePanel = null
+    latlngLabel = null
+    speedLabel = null
+    locationSubscriptionInitialized = false
+    initialized = false
+  }
 }
