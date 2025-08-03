@@ -25,11 +25,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
-import com.meta.spatial.physics.PhysicsFeature
-import com.platypii.baselinexr.location.LocationStatus
-import com.meta.spatial.runtime.AlphaMode
-import com.meta.spatial.runtime.SceneMaterial
-import com.platypii.baselinexr.util.Convert
+import com.meta.spatial.core.PerformanceLevel
 
 class BaselineActivity : AppSystemActivity() {
 
@@ -37,14 +33,12 @@ class BaselineActivity : AppSystemActivity() {
   private val activityScope = CoroutineScope(Dispatchers.Main)
   private var gltfxEntity: Entity? = null
   private var sphereEntity: Entity? = null
-  private var ballShooter: BallShooter? = null
   private var terrainSystem: TerrainSystem? = null
   private val gpsTransform = GpsToWorldTransform()
 
   override fun registerFeatures(): List<SpatialFeature> {
     val features =
         mutableListOf<SpatialFeature>(
-          PhysicsFeature(spatial),
           VRFeature(this),
         )
     if (BuildConfig.DEBUG) {
@@ -58,6 +52,10 @@ class BaselineActivity : AppSystemActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+
+    // Set CPU/GPU performance to SustainedHigh for better performance
+    // This allows CPU level 4-6 and GPU level 3-5
+    spatial.setPerformanceLevel(PerformanceLevel.SUSTAINED_HIGH)
 
     Services.create(this)
 
@@ -136,7 +134,7 @@ class BaselineActivity : AppSystemActivity() {
             val latlngLabel = rootView?.findViewById<TextView>(R.id.lat_lng)
             val speedLabel = rootView?.findViewById<TextView>(R.id.speed)
             val hudSystem = systemManager.findSystem<HudSystem>()
-            hudSystem?.setupLocationUpdates(this@BaselineActivity, latlngLabel, speedLabel)
+            hudSystem.setupLocationUpdates(this@BaselineActivity, latlngLabel, speedLabel)
           }
         },
         PanelRegistration(R.layout.altimeter) {
@@ -149,7 +147,7 @@ class BaselineActivity : AppSystemActivity() {
             // Set up altimeter updates via AltimeterSystem
             val altitudeLabel = rootView?.findViewById<TextView>(R.id.altitude)
             val altimeterSystem = systemManager.findSystem<AltimeterSystem>()
-            altimeterSystem?.setupLocationUpdates(this@BaselineActivity, altitudeLabel)
+            altimeterSystem.setupLocationUpdates(this@BaselineActivity, altitudeLabel)
           }
         },
         PanelRegistration(R.layout.speedometer) {
@@ -162,7 +160,7 @@ class BaselineActivity : AppSystemActivity() {
             // Set up speedometer updates via SpeedometerSystem
             val speedLabel = rootView?.findViewById<TextView>(R.id.speed)
             val speedometerSystem = systemManager.findSystem<SpeedometerSystem>()
-            speedometerSystem?.setupLocationUpdates(this@BaselineActivity, speedLabel)
+            speedometerSystem.setupLocationUpdates(this@BaselineActivity, speedLabel)
           }
         })
   }

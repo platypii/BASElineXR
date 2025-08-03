@@ -14,7 +14,7 @@ from osgeo import gdal, osr
 import numpy as np
 from pydelatin import Delatin
 
-def main(dem_path, tex_path, obj_path, *, max_err=5.0):
+def main(dem_path, tex_path, obj_path, *, max_err=8.0):
     ds = gdal.Open(dem_path, gdal.GA_ReadOnly)
     if ds is None:
         raise RuntimeError(f'cannot open {dem_path}')

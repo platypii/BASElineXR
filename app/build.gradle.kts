@@ -38,7 +38,10 @@ android {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
   }
-  kotlinOptions { jvmTarget = "17" }
+  kotlinOptions {
+    jvmTarget = "17"
+    freeCompilerArgs += "-opt-in=com.meta.spatial.core.SpatialSDKExperimentalAPI"
+  }
 }
 
 dependencies {

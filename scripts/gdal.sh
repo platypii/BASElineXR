@@ -3,7 +3,7 @@
 set -e
 
 RES=0.5
-IMG_RES=0.4
+IMG_RES=0.5
 
 mkdir -p build
 
