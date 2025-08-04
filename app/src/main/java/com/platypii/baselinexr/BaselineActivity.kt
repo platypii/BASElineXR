@@ -174,6 +174,37 @@ class BaselineActivity : AppSystemActivity() {
               }
             })
 
+            val velButton = rootView?.findViewById<Button>(R.id.vel_button)
+            velButton?.setOnClickListener({
+              // Get current head transform to determine yaw
+              val head = systemManager
+                  .tryFindSystem<PlayerBodyAttachmentSystem>()
+                  ?.tryGetLocalPlayerAvatarBody()
+                  ?.head
+              head?.let {
+                val headTransform = it.tryGetComponent<Transform>()
+                headTransform?.let { transform ->
+                  val currentHeadYaw = transform.transform.q.toEuler().y
+                  
+                  // Get current location with velocity data
+                  val currentLocation = Services.location.lastLoc
+                  currentLocation?.let { loc ->
+                    // Calculate velocity bearing (direction of movement)
+                    val velocityBearing = loc.bearing() // This returns degrees
+                    val velocityBearingRad = Math.toRadians(velocityBearing)
+                    
+                    // Calculate the difference between head direction and velocity direction
+                    val headToVelocityDiff = velocityBearingRad - Math.toRadians(currentHeadYaw.toDouble())
+                    
+                    // Set yaw adjustment so that when looking in velocity direction, world is oriented north
+                    // We want: head_direction + yaw_adjustment = north (0)
+                    // So: yaw_adjustment = -head_direction + velocity_to_north_correction
+                    gpsTransform.yawAdjustment = Math.toRadians(currentHeadYaw.toDouble()) - velocityBearingRad
+                  }
+                }
+              }
+            })
+
             // Set up HUD references
             val latlngLabel = rootView?.findViewById<TextView>(R.id.lat_lng)
             val speedLabel = rootView?.findViewById<TextView>(R.id.speed)

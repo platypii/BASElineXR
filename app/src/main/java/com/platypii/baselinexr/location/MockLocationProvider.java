@@ -17,7 +17,7 @@ import java.util.List;
 public class MockLocationProvider extends LocationProvider {
     private static final String TAG = "MockLocationProvider";
 
-    private static final String filename = "eiger.csv";
+    private static final String filename = "kpow-hangar.csv";
 
     public static long systemStartTime = System.currentTimeMillis();
     private boolean started = false;

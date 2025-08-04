@@ -61,6 +61,15 @@
         android:textSize="12sp" />
 
     <Button
+        android:id="@+id/vel_button"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:background="@drawable/button_bg"
+        android:text="Vel"
+        android:textColor="#ffffff"
+        android:textSize="12sp" />
+
+    <Button
         android:id="@+id/exit_button"
         android:layout_width="100dp"
         android:layout_height="100dp"
