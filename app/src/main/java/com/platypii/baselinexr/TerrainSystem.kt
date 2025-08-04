@@ -94,7 +94,7 @@ class TerrainSystem(
 
         // Find nearest origin
         val motionEstimator = Services.location.motionEstimator
-        val dest = VROptions.destinations.get(VROptions.dest)!!
+        val dest = VROptions.destination()
         // Pass motion estimator to toWorldCoordinates for better prediction
         val referencePos = gpsToWorldTransform.toWorldCoordinates(dest.lat, dest.lng, dest.alt, currentTime, motionEstimator)
 

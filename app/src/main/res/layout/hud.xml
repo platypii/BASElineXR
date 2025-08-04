@@ -53,7 +53,7 @@
         android:background="@drawable/button_bg"
         android:text="Exit"
         android:textColor="#ffffff"
-        android:textSize="16sp" />
+        android:textSize="18sp" />
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -69,7 +69,7 @@
             android:background="@drawable/button_bg"
             android:text="-5°"
             android:textColor="#ffffff"
-            android:textSize="16sp" />
+            android:textSize="18sp" />
 
         <Button
             android:id="@+id/yaw_plus_button"
@@ -78,7 +78,7 @@
             android:background="@drawable/button_bg"
             android:text="+5°"
             android:textColor="#ffffff"
-            android:textSize="16sp" />
+            android:textSize="18sp" />
 
         <Button
             android:id="@+id/reset_north_button"
@@ -87,7 +87,7 @@
             android:background="@drawable/button_bg"
             android:text="North"
             android:textColor="#ffffff"
-            android:textSize="16sp" />
+            android:textSize="18sp" />
 
         <Button
             android:id="@+id/vel_button"
@@ -96,7 +96,7 @@
             android:background="@drawable/button_bg"
             android:text="Vel"
             android:textColor="#ffffff"
-            android:textSize="16sp" />
+            android:textSize="18sp" />
 
     </LinearLayout>
 

@@ -13,6 +13,8 @@ public class VROptions {
 
     // LIVE:
 //    public static final String mockTrack = null;
+//    public static final String source = "eiger";
+//    public static final String dest = "kpow";
 
     // Eiger mushroom BASE:
 //    public static final String mockTrack = "eiger-glacier.csv";
@@ -48,4 +50,9 @@ public class VROptions {
 
     public static String terrainModel = "terrain/" + source + "_tile.json";
 
+    public static LatLngAlt destination() {
+        return VROptions.destinations.get(VROptions.dest);
+    }
+
+    public static LatLngAlt target = new LatLngAlt(47.239, -123.143, 84);
 }

@@ -40,6 +40,7 @@ class BaselineActivity : AppSystemActivity() {
   private var hudSystem: HudSystem? = null
   private var altimeterSystem: AltimeterSystem? = null
   private var speedometerSystem: SpeedometerSystem? = null
+  private var targetPanelSystem: TargetPanel? = null
   private val gpsTransform = GpsToWorldTransform()
   private var locationSubscriber: ((com.platypii.baselinexr.measurements.MLocation) -> Unit)? = null
 
@@ -71,12 +72,14 @@ class BaselineActivity : AppSystemActivity() {
     altimeterSystem = AltimeterSystem()
     speedometerSystem = SpeedometerSystem()
     directionArrowSystem = DirectionArrowSystem(gpsTransform)
+    targetPanelSystem = TargetPanel(gpsTransform)
 
     // Register systems
     systemManager.registerSystem(hudSystem!!)
     systemManager.registerSystem(altimeterSystem!!)
     systemManager.registerSystem(speedometerSystem!!)
     systemManager.registerSystem(directionArrowSystem!!)
+    systemManager.registerSystem(targetPanelSystem!!)
     
     // Set up centralized location updates
     setupLocationUpdates()
@@ -121,6 +124,7 @@ class BaselineActivity : AppSystemActivity() {
     speedometerSystem?.cleanup()
     terrainSystem?.cleanup()
     directionArrowSystem?.cleanup()
+    targetPanelSystem?.cleanup()
 
     super.onDestroy()
   }
@@ -240,6 +244,13 @@ class BaselineActivity : AppSystemActivity() {
             // Set up speedometer references
             val speedLabel = rootView?.findViewById<TextView>(R.id.speed)
             speedometerSystem?.setLabel(speedLabel)
+          }
+        },
+        PanelRegistration(R.layout.target_panel) {
+          config {
+            themeResourceId = R.style.PanelAppThemeTransparent
+            includeGlass = false
+            enableTransparent = true
           }
         })
   }
