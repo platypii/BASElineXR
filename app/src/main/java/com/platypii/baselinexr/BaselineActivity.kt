@@ -35,6 +35,7 @@ class BaselineActivity : AppSystemActivity() {
   private var sphereEntity: Entity? = null
   private var terrainSystem: TerrainSystem? = null
   private val gpsTransform = GpsToWorldTransform()
+  private var locationSubscriber: ((com.platypii.baselinexr.measurements.MLocation) -> Unit)? = null
 
   override fun registerFeatures(): List<SpatialFeature> {
     val features =
@@ -62,6 +63,9 @@ class BaselineActivity : AppSystemActivity() {
     systemManager.registerSystem(HudSystem(gpsTransform))
     systemManager.registerSystem(AltimeterSystem())
     systemManager.registerSystem(SpeedometerSystem())
+    
+    // Set up centralized location updates
+    setupLocationUpdates()
 //    val flightPathSystem = FlightPathTrailSystem(this, gpsTransform)
 //    systemManager.registerSystem(flightPathSystem)
 
@@ -105,6 +109,12 @@ class BaselineActivity : AppSystemActivity() {
   }
 
   override fun onDestroy() {
+    // Clean up location subscription
+    locationSubscriber?.let { subscriber ->
+      Services.location.locationUpdates.unsubscribeMain(subscriber)
+      locationSubscriber = null
+    }
+    
     // Clean up all systems that have cleanup methods
     systemManager.findSystem<HudSystem>()?.cleanup()
     systemManager.findSystem<AltimeterSystem>()?.cleanup()
@@ -146,11 +156,11 @@ class BaselineActivity : AppSystemActivity() {
               finish()
             })
 
-            // Set up HUD updates via HudSystem
+            // Set up HUD references
             val latlngLabel = rootView?.findViewById<TextView>(R.id.lat_lng)
             val speedLabel = rootView?.findViewById<TextView>(R.id.speed)
             val hudSystem = systemManager.findSystem<HudSystem>()
-            hudSystem.setupLocationUpdates(this@BaselineActivity, latlngLabel, speedLabel)
+            hudSystem.setLabels(latlngLabel, speedLabel)
           }
         },
         PanelRegistration(R.layout.altimeter) {
@@ -160,10 +170,10 @@ class BaselineActivity : AppSystemActivity() {
             enableTransparent = true
           }
           panel {
-            // Set up altimeter updates via AltimeterSystem
+            // Set up altimeter references
             val altitudeLabel = rootView?.findViewById<TextView>(R.id.altitude)
             val altimeterSystem = systemManager.findSystem<AltimeterSystem>()
-            altimeterSystem.setupLocationUpdates(this@BaselineActivity, altitudeLabel)
+            altimeterSystem.setLabel(altitudeLabel)
           }
         },
         PanelRegistration(R.layout.speedometer) {
@@ -173,10 +183,10 @@ class BaselineActivity : AppSystemActivity() {
             enableTransparent = true
           }
           panel {
-            // Set up speedometer updates via SpeedometerSystem
+            // Set up speedometer references
             val speedLabel = rootView?.findViewById<TextView>(R.id.speed)
             val speedometerSystem = systemManager.findSystem<SpeedometerSystem>()
-            speedometerSystem.setupLocationUpdates(this@BaselineActivity, speedLabel)
+            speedometerSystem.setLabel(speedLabel)
           }
         })
   }
@@ -190,6 +200,19 @@ class BaselineActivity : AppSystemActivity() {
           keyName = GLXF_SCENE
       )
     }
+  }
+
+  private fun setupLocationUpdates() {
+    locationSubscriber = { loc ->
+      // Update GPS transform origin
+      gpsTransform.setOrigin(loc)
+      
+      // Notify all systems of location update
+      systemManager.findSystem<HudSystem>()?.onLocation(loc, this)
+      systemManager.findSystem<AltimeterSystem>()?.onLocation(loc)
+      systemManager.findSystem<SpeedometerSystem>()?.onLocation(loc)
+    }
+    Services.location.locationUpdates.subscribeMain(locationSubscriber!!)
   }
 
   companion object {

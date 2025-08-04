@@ -25,7 +25,8 @@ class TerrainSystem(
     private var terrainConfig: TerrainConfiguration? = null
 
 //    private val kpow = LatLngAlt(47.2375, -123.166, -900.0) // lake
-    private val kpow = LatLngAlt(47.22, -123.225, -250.0) // prison
+//    private val kpow = LatLngAlt(47.22, -123.225, -250.0) // prison
+    private val kpow = LatLngAlt(47.22, -123.225, -3000.0) // hangar
     private val eiger = LatLngAlt(46.56314640, 7.94727628, 0.0)
 //    private val capitolHill = LatLngAlt(47.5967, -122.3818, -3790.0) // top of eiger
     private val capitolHill = LatLngAlt(47.59, -122.36, -2100.0) // foot of eiger

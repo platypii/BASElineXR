@@ -12,8 +12,6 @@ class AltimeterSystem : SystemBase() {
     
     // Altimeter content references
     private var altitudeLabel: TextView? = null
-    private var locationSubscriptionInitialized = false
-    private var locationSubscriber: ((com.platypii.baselinexr.measurements.MLocation) -> Unit)? = null
 
     override fun execute() {
         val activity = SpatialActivityManager.getVrActivity<BaselineActivity>()
@@ -40,32 +38,20 @@ class AltimeterSystem : SystemBase() {
         }
     }
 
-    fun setupLocationUpdates(activity: BaselineActivity, altitudeLabel: TextView?) {
+    fun setLabel(altitudeLabel: TextView?) {
         this.altitudeLabel = altitudeLabel
-        
-        if (altitudeLabel != null && !locationSubscriptionInitialized) {
-            // Set initial value
-            altitudeLabel.text = "--- ft"
-            
-            // Subscribe to location updates
-            locationSubscriber = { loc ->
-                val altitudeText = Convert.distance(loc.altitude_gps)
-                altitudeLabel.text = altitudeText
-            }
-            Services.location.locationUpdates.subscribeMain(locationSubscriber!!)
-            
-            locationSubscriptionInitialized = true
-        }
+        // Set initial value
+        altitudeLabel?.text = "--- ft"
+    }
+    
+    fun onLocation(loc: com.platypii.baselinexr.measurements.MLocation) {
+        val altitudeText = Convert.distance(loc.altitude_gps)
+        altitudeLabel?.text = altitudeText
     }
 
     fun cleanup() {
-        locationSubscriber?.let { subscriber ->
-            Services.location.locationUpdates.unsubscribeMain(subscriber)
-            locationSubscriber = null
-        }
         grabbablePanel = null
         altitudeLabel = null
-        locationSubscriptionInitialized = false
         initialized = false
     }
 }

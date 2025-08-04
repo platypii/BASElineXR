@@ -13,8 +13,6 @@ class HudSystem(private val gpsTransform: GpsToWorldTransform) : SystemBase() {
   // HUD content references
   private var latlngLabel: TextView? = null
   private var speedLabel: TextView? = null
-  private var locationSubscriptionInitialized = false
-  private var locationSubscriber: ((com.platypii.baselinexr.measurements.MLocation) -> Unit)? = null
 
   override fun execute() {
     val activity = SpatialActivityManager.getVrActivity<BaselineActivity>()
@@ -29,7 +27,7 @@ class HudSystem(private val gpsTransform: GpsToWorldTransform) : SystemBase() {
       grabbablePanel?.updatePosition()
     }
 
-    // Location updates are set up via setupLocationUpdates() called from BaselineActivity
+    // Location updates are handled by BaselineActivity calling onLocation()
   }
 
   private fun initializePanel(activity: BaselineActivity) {
@@ -42,45 +40,27 @@ class HudSystem(private val gpsTransform: GpsToWorldTransform) : SystemBase() {
   }
 
 
-  fun setupLocationUpdates(activity: BaselineActivity, latlngLabel: TextView?, speedLabel: TextView?) {
+  fun setLabels(latlngLabel: TextView?, speedLabel: TextView?) {
     this.latlngLabel = latlngLabel
     this.speedLabel = speedLabel
     
-    if (latlngLabel != null && speedLabel != null && !locationSubscriptionInitialized) {
-      // Set initial values
-      latlngLabel.text = Services.location.dataSource()
-      
-      // Subscribe to location updates
-      locationSubscriber = { loc ->
-        LocationStatus.updateStatus(activity)
-        val provider = Services.location.dataSource()
-        latlngLabel.text = provider + " " + loc.toStringSimple()
-        latlngLabel.setCompoundDrawablesWithIntrinsicBounds(LocationStatus.icon, 0, 0, 0)
-        speedLabel.text = Convert.speed(loc.groundSpeed()) + "  " + Convert.distance(loc.altitude_gps)
-
-        // Update the origin to the latest GPS location
-        gpsTransform.setOrigin(loc)
-      }
-      Services.location.locationUpdates.subscribeMain(locationSubscriber!!)
-      
-      // Update status periodically
-      LocationStatus.updateStatus(activity)
-      latlngLabel.text = LocationStatus.message
-      latlngLabel.setCompoundDrawablesWithIntrinsicBounds(LocationStatus.icon, 0, 0, 0)
-      
-      locationSubscriptionInitialized = true
-    }
+    // Set initial values
+    latlngLabel?.text = Services.location.dataSource()
+    speedLabel?.text = "--- mph"
+  }
+  
+  fun onLocation(loc: com.platypii.baselinexr.measurements.MLocation, activity: BaselineActivity) {
+    LocationStatus.updateStatus(activity)
+    val provider = Services.location.dataSource()
+    latlngLabel?.text = provider + " " + loc.toStringSimple()
+    latlngLabel?.setCompoundDrawablesWithIntrinsicBounds(LocationStatus.icon, 0, 0, 0)
+    speedLabel?.text = Convert.speed(loc.groundSpeed()) + "  " + Convert.distance(loc.altitude_gps)
   }
 
   fun cleanup() {
-    locationSubscriber?.let { subscriber ->
-      Services.location.locationUpdates.unsubscribeMain(subscriber)
-      locationSubscriber = null
-    }
     grabbablePanel = null
     latlngLabel = null
     speedLabel = null
-    locationSubscriptionInitialized = false
     initialized = false
   }
 }
