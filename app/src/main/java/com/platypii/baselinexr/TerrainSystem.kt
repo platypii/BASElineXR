@@ -127,9 +127,11 @@ class TerrainSystem(
             )
 
             // Update entity transform
+            // Apply yaw adjustment to the terrain rotation
+            val yawDegrees = Math.toDegrees(gpsToWorldTransform.yawAdjustment).toFloat()
             val transform = Transform(Pose(
                 worldPos,
-                Quaternion(0f, 180f, 0f)  // Adjust rotation as needed
+                Quaternion(0f, 180f + yawDegrees, 0f)  // Apply yaw adjustment
             ))
 
             tile.entity.setComponent(transform)

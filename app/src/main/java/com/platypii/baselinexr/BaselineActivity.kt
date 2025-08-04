@@ -26,6 +26,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
 import com.meta.spatial.core.PerformanceLevel
+import com.meta.spatial.toolkit.PlayerBodyAttachmentSystem
+import com.meta.spatial.toolkit.Transform
 
 class BaselineActivity : AppSystemActivity() {
 
@@ -154,6 +156,22 @@ class BaselineActivity : AppSystemActivity() {
             exitButton?.setOnClickListener({
 //              Services.stop()
               finish()
+            })
+
+            val resetNorthButton = rootView?.findViewById<Button>(R.id.reset_north_button)
+            resetNorthButton?.setOnClickListener({
+              // Get current head transform to determine yaw
+              val head = systemManager
+                  .tryFindSystem<PlayerBodyAttachmentSystem>()
+                  ?.tryGetLocalPlayerAvatarBody()
+                  ?.head
+              head?.let {
+                val headTransform = it.tryGetComponent<Transform>()
+                headTransform?.let { transform ->
+                  val currentYaw = transform.transform.q.toEuler().y
+                  gpsTransform.yawAdjustment = Math.toRadians(currentYaw.toDouble())
+                }
+              }
             })
 
             // Set up HUD references
