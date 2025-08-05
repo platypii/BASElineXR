@@ -6,6 +6,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.platypii.baselinexr.VROptions;
 import com.platypii.baselinexr.bluetooth.BluetoothService;
 import com.platypii.baselinexr.measurements.MLocation;
 import com.platypii.baselinexr.util.PubSub.Subscriber;
@@ -24,7 +25,7 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
     private int locationMode = LOCATION_NONE;
 
     // Mock location provider will replay an existing track
-    private static final boolean useMock = true;
+    private static final boolean useMock = VROptions.mockTrack != null;
 
     @NonNull
     private final BluetoothService bluetooth;

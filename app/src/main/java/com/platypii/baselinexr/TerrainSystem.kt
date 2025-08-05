@@ -24,9 +24,10 @@ class TerrainSystem(
     private var isInitialized = false
     private var terrainConfig: TerrainConfiguration? = null
 
-//    private val kpow = LatLngAlt(47.2375, -123.166, -900.0) // lake
-//    private val kpow = LatLngAlt(47.22, -123.225, -250.0) // prison
-    private val kpow = LatLngAlt(47.225, -123.17, -2100.0) // hangar
+//    private val kpow = LatLngAlt(47.2375, -123.166, -900.0) // eiger to lake
+    private val kpow = LatLngAlt(47.22, -123.225, -250.0) // eiger to prison
+//    private val kpow = LatLngAlt(47.226, -123.17, -500.0) // hangar adjusted for eiger
+//    private val kpow = LatLngAlt(47.22966825, -123.16380949, 1500.0) // kpow tile origin + 4500ft
     private val eiger = LatLngAlt(46.56314640, 7.94727628, 0.0)
 //    private val capitolHill = LatLngAlt(47.5967, -122.3818, -3790.0) // top of eiger
     private val capitolHill = LatLngAlt(47.59, -122.36, -2100.0) // foot of eiger
@@ -55,7 +56,7 @@ class TerrainSystem(
     private fun loadTerrainConfiguration() {
         try {
             // Load JSON from assets
-            val jsonString = context.assets.open("terrain/terrain_tile.json")
+            val jsonString = context.assets.open(VROptions.terrainModel)
                 .bufferedReader()
                 .use { it.readText() }
 
@@ -102,14 +103,6 @@ class TerrainSystem(
         val location = Services.location.lastLoc ?: return
         val currentTime = System.currentTimeMillis()
 
-        // Calculate reference position from first tile
-//        val referenceTile = terrainTiles[0]
-//        val referencePos = gpsToWorldTransform.toWorldCoordinates(
-//            referenceTile.config.lat,
-//            referenceTile.config.lon,
-//            referenceTile.config.alt,
-//            currentTime
-//        )
         // Find nearest origin
         val motionEstimator = Services.location.motionEstimator
         val referencePos = origins.minByOrNull { Geo.distance(it.lat, it.lng, location.latitude, location.longitude) }?.let {

@@ -5,6 +5,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.platypii.baselinexr.VROptions;
 import com.platypii.baselinexr.measurements.MLocation;
 import com.platypii.baselinexr.tracks.TrackFileReader;
 
@@ -17,7 +18,7 @@ import java.util.List;
 public class MockLocationProvider extends LocationProvider {
     private static final String TAG = "MockLocationProvider";
 
-    private static final String filename = "kpow-hangar.csv";
+    private static final String filename = VROptions.mockTrack;
 
     public static long systemStartTime = System.currentTimeMillis();
     private boolean started = false;

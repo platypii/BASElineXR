@@ -1,0 +1,15 @@
+{
+  "tiles": [
+    {
+      "model": "terrain/kpow.glb",
+      "lat": 47.22966825,
+      "lon": -123.16380949,
+      "alt": 0,
+      "gridX": 0,
+      "gridZ": 0
+    }
+  ],
+  "offsetX": 0,
+  "offsetY": 0,
+  "offsetZ": 0
+}
