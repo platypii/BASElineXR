@@ -28,6 +28,7 @@ import androidx.core.net.toUri
 import com.meta.spatial.core.PerformanceLevel
 import com.meta.spatial.toolkit.PlayerBodyAttachmentSystem
 import com.meta.spatial.toolkit.Transform
+import com.platypii.baselinexr.location.LocationStatus
 
 class BaselineActivity : AppSystemActivity() {
 
@@ -258,11 +259,11 @@ class BaselineActivity : AppSystemActivity() {
     locationSubscriber = { loc ->
       // Update GPS transform origin
       gpsTransform.setOrigin(loc)
-      
-      // Notify all systems of location update
-      hudSystem?.onLocation(loc, this)
-      altimeterSystem?.onLocation(loc)
-      speedometerSystem?.onLocation(loc)
+
+      // Update LocationStatus helper
+      LocationStatus.updateStatus(this)
+
+      // Notify direction arrow system of location update (others update automatically)
       directionArrowSystem?.onLocation(loc)
     }
     Services.location.locationUpdates.subscribeMain(locationSubscriber!!)

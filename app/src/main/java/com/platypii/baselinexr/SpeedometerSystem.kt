@@ -9,7 +9,7 @@ import com.platypii.baselinexr.util.Convert
 class SpeedometerSystem : SystemBase() {
     private var initialized = false
     private var grabbablePanel: GrabbablePanel? = null
-    
+
     // Speedometer content references
     private var speedLabel: TextView? = null
 
@@ -25,6 +25,8 @@ class SpeedometerSystem : SystemBase() {
             grabbablePanel?.setupInteraction()
             grabbablePanel?.updatePosition()
         }
+
+        updateLocation()
     }
 
     private fun initializePanel(activity: BaselineActivity) {
@@ -40,13 +42,24 @@ class SpeedometerSystem : SystemBase() {
 
     fun setLabel(speedLabel: TextView?) {
         this.speedLabel = speedLabel
-        // Set initial value
-        speedLabel?.text = "--- mph"
+        updateLocation()
     }
-    
-    fun onLocation(loc: com.platypii.baselinexr.measurements.MLocation) {
-        val speedText = Convert.speed(loc.groundSpeed())
-        speedLabel?.text = speedText
+
+    private fun updateLocation() {
+        val loc = Services.location.lastLoc
+        val millisecondsSinceLastFix = Services.location.lastFixDuration()
+
+        // Hide speedometer text if GPS data is stale (3+ seconds)
+        if (millisecondsSinceLastFix >= 3000) {
+            speedLabel?.text = ""
+            return
+        }
+
+        if (loc != null) {
+            speedLabel?.text = Convert.speed(loc.groundSpeed())
+        } else {
+            speedLabel?.text = "--- mph"
+        }
     }
 
     fun cleanup() {

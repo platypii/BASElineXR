@@ -12,8 +12,6 @@ import com.meta.spatial.core.Vector3
 import com.meta.spatial.toolkit.Mesh
 import com.meta.spatial.toolkit.Transform
 import com.meta.spatial.toolkit.Visible
-import com.platypii.baselinexr.location.Geo
-import com.platypii.baselinexr.measurements.LatLngAlt
 
 class TerrainSystem(
     private val gpsToWorldTransform: GpsToWorldTransform,
@@ -23,16 +21,6 @@ class TerrainSystem(
     private val terrainTiles = mutableListOf<TerrainTileEntity>()
     private var isInitialized = false
     private var terrainConfig: TerrainConfiguration? = null
-
-//    private val kpow = LatLngAlt(47.2375, -123.166, -900.0) // eiger to lake
-    private val kpow = LatLngAlt(47.22, -123.225, -250.0) // eiger to prison
-//    private val kpow = LatLngAlt(47.226, -123.17, -500.0) // hangar adjusted for eiger
-//    private val kpow = LatLngAlt(47.22966825, -123.16380949, 0.0) // kpow tile origin
-//    private val kpow = LatLngAlt(47.22966825, -123.16380949, 1500.0) // kpow tile origin + 4500ft
-    private val eiger = LatLngAlt(46.56314640, 7.94727628, 0.0)
-//    private val capitolHill = LatLngAlt(47.5967, -122.3818, -3790.0) // top of eiger
-    private val capitolHill = LatLngAlt(47.59, -122.36, -2100.0) // foot of eiger
-    private val origins = arrayOf(kpow, eiger, capitolHill)
 
     fun initialize() {
         loadTerrainConfiguration()
@@ -102,15 +90,13 @@ class TerrainSystem(
     private fun updateTilePositions() {
         if (!isInitialized || terrainTiles.isEmpty()) return
 
-        val location = Services.location.lastLoc ?: return
         val currentTime = System.currentTimeMillis()
 
         // Find nearest origin
         val motionEstimator = Services.location.motionEstimator
-        val referencePos = origins.minByOrNull { Geo.distance(it.lat, it.lng, location.latitude, location.longitude) }?.let {
-            // Pass motion estimator to toWorldCoordinates for better prediction
-            gpsToWorldTransform.toWorldCoordinates(it.lat, it.lng, it.alt, currentTime, motionEstimator)
-        } ?: return
+        val dest = VROptions.destinations.get(VROptions.dest)!!
+        // Pass motion estimator to toWorldCoordinates for better prediction
+        val referencePos = gpsToWorldTransform.toWorldCoordinates(dest.lat, dest.lng, dest.alt, currentTime, motionEstimator)
 
         val config = terrainConfig ?: return
 

@@ -1,10 +1,13 @@
 package com.platypii.baselinexr
 
+import android.graphics.Color
 import android.widget.TextView
 import com.meta.spatial.core.SystemBase
 import com.meta.spatial.toolkit.SpatialActivityManager
 import com.platypii.baselinexr.location.LocationStatus
+import com.platypii.baselinexr.measurements.MLocation
 import com.platypii.baselinexr.util.Convert
+import com.platypii.baselinexr.util.GpsFreshnessColor
 
 class HudSystem(private val gpsTransform: GpsToWorldTransform) : SystemBase() {
   private var initialized = false
@@ -27,7 +30,7 @@ class HudSystem(private val gpsTransform: GpsToWorldTransform) : SystemBase() {
       grabbablePanel?.updatePosition()
     }
 
-    // Location updates are handled by BaselineActivity calling onLocation()
+    updateLocation()
   }
 
   private fun initializePanel(activity: BaselineActivity) {
@@ -43,18 +46,24 @@ class HudSystem(private val gpsTransform: GpsToWorldTransform) : SystemBase() {
   fun setLabels(latlngLabel: TextView?, speedLabel: TextView?) {
     this.latlngLabel = latlngLabel
     this.speedLabel = speedLabel
-    
-    // Set initial values
-    latlngLabel?.text = Services.location.dataSource()
-    speedLabel?.text = "--- mph"
+
+    updateLocation()
   }
   
-  fun onLocation(loc: com.platypii.baselinexr.measurements.MLocation, activity: BaselineActivity) {
-    LocationStatus.updateStatus(activity)
+  private fun updateLocation() {
     val provider = Services.location.dataSource()
-    latlngLabel?.text = provider + " " + loc.toStringSimple()
+    val loc = Services.location.lastLoc
     latlngLabel?.setCompoundDrawablesWithIntrinsicBounds(LocationStatus.icon, 0, 0, 0)
-    speedLabel?.text = Convert.speed(loc.groundSpeed()) + "  " + Convert.distance(loc.altitude_gps)
+    if (loc != null) {
+      latlngLabel?.text = provider + " " + loc.toStringSimple() + " (" + VROptions.source + " -> " + VROptions.dest + ")"
+      speedLabel?.text = Convert.speed(loc.groundSpeed()) + "  " + Convert.distance(loc.altitude_gps)
+    } else {
+      latlngLabel?.text = LocationStatus.message
+      speedLabel?.text = ""
+    }
+    val millisecondsSinceLastFix = Services.location.lastFixDuration()
+    val color = GpsFreshnessColor.getColorForFreshness(millisecondsSinceLastFix)
+    speedLabel?.setTextColor(color)
   }
 
   fun cleanup() {

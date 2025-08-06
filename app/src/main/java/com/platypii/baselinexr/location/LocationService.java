@@ -110,8 +110,10 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
 
     @Override
     public long lastFixDuration() {
-        if (bluetooth.preferences.preferenceEnabled) {
+        if (locationMode == LOCATION_BLUETOOTH) {
             return locationProviderBluetooth.lastFixDuration();
+        } else if (locationMode == LOCATION_MOCK) {
+            return locationProviderMock.lastFixDuration();
         } else {
             return locationProviderAndroid.lastFixDuration();
         }

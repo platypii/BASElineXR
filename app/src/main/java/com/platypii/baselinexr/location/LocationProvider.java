@@ -12,7 +12,7 @@ import com.platypii.baselinexr.util.RefreshRateEstimator;
 
 public abstract class LocationProvider {
     // Duration until location considered stale, in milliseconds
-    private static final long LOCATION_TTL = 10000;
+    private static final long LOCATION_TTL = 5000;
 
     // Moving average of refresh rate in Hz
     public final RefreshRateEstimator refreshRate = new RefreshRateEstimator();

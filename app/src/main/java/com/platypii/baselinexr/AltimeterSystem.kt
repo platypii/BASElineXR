@@ -5,11 +5,12 @@ import com.meta.spatial.core.SystemBase
 import com.meta.spatial.core.Vector3
 import com.meta.spatial.toolkit.SpatialActivityManager
 import com.platypii.baselinexr.util.Convert
+import com.platypii.baselinexr.util.GpsFreshnessColor
 
 class AltimeterSystem : SystemBase() {
     private var initialized = false
     private var grabbablePanel: GrabbablePanel? = null
-    
+
     // Altimeter content references
     private var altitudeLabel: TextView? = null
 
@@ -25,6 +26,8 @@ class AltimeterSystem : SystemBase() {
             grabbablePanel?.setupInteraction()
             grabbablePanel?.updatePosition()
         }
+
+        updateLocation()
     }
 
     private fun initializePanel(activity: BaselineActivity) {
@@ -40,13 +43,20 @@ class AltimeterSystem : SystemBase() {
 
     fun setLabel(altitudeLabel: TextView?) {
         this.altitudeLabel = altitudeLabel
-        // Set initial value
-        altitudeLabel?.text = "--- ft"
+        updateLocation()
     }
-    
-    fun onLocation(loc: com.platypii.baselinexr.measurements.MLocation) {
-        val altitudeText = Convert.distance(loc.altitude_gps)
-        altitudeLabel?.text = altitudeText
+
+    private fun updateLocation() {
+        val loc = Services.location.lastLoc
+        if (loc != null) {
+            altitudeLabel?.text = Convert.distance(loc.altitude_gps)
+        } else {
+            altitudeLabel?.text = "--- ft"
+        }
+
+        val millisecondsSinceLastFix = Services.location.lastFixDuration()
+        val color = GpsFreshnessColor.getColorForFreshness(millisecondsSinceLastFix)
+        altitudeLabel?.setTextColor(color)
     }
 
     fun cleanup() {
