@@ -33,8 +33,8 @@ public class MotionEstimatorTest {
         MotionEstimator.State state = estimator.predict(0);
         assertVector3Equals(new Vector3(), state.position());
 
-        // Velocity should match GPS velocity (vE, vN, -climb)
-        assertVector3Equals(new Vector3(5.0, 10.0, -2.0), state.velocity());
+        // Velocity should match GPS velocity (vE, vN, climb)
+        assertVector3Equals(new Vector3(5.0, 10.0, 2.0), state.velocity());
 
         // Acceleration should be zero on first update
         assertVector3Equals(new Vector3(), state.acceleration());
@@ -152,7 +152,7 @@ public class MotionEstimatorTest {
         assertEquals(0.0, state.position().x, EPSILON);
         assertEquals(0.0, state.position().y, EPSILON);
         assertEquals(10.0, state.position().z, EPSILON); // Up is positive
-        assertEquals(10.0, state.velocity().z, EPSILON); // Climb rate (inverted from GPS)
+        assertEquals(-10.0, state.velocity().z, EPSILON); // Climb rate (same as GPS climb)
     }
 
     @Test
