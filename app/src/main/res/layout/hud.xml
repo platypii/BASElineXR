@@ -5,105 +5,99 @@
     android:gravity="left"
     android:orientation="vertical">
 
-  <LinearLayout
-      android:layout_width="match_parent"
-      android:layout_height="100dp"
-      android:background="#000000"
-      android:padding="4dp"
-      android:orientation="vertical">
-
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:lineHeight="18dp"
-        android:text="BASEline XR"
-        android:drawableStart="@drawable/wingsuit"
-        android:drawablePadding="4dp"
-        android:textColor="#cccccc"
-        android:textSize="20sp" />
+        android:layout_height="100dp"
+        android:background="#000000"
+        android:padding="4dp"
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/lat_lng"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:lineHeight="18dp"
-        android:layout_marginEnd="100dp"
-        android:lines="1"
-        android:drawablePadding="5dp"
-        android:text=""
-        android:textColor="#cccccc"
-        android:textSize="14sp" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:lineHeight="18dp"
+            android:text="BASEline XR"
+            android:drawableStart="@drawable/wingsuit"
+            android:drawablePadding="4dp"
+            android:textColor="#cccccc"
+            android:textSize="20sp" />
 
-    <TextView
-        android:id="@+id/speed"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:lineHeight="18dp"
-        android:text=""
-        android:textColor="#cccccc"
-        android:textSize="30sp" />
+        <TextView
+            android:id="@+id/lat_lng"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:lineHeight="18dp"
+            android:layout_marginEnd="100dp"
+            android:lines="1"
+            android:drawablePadding="5dp"
+            android:text=""
+            android:textColor="#cccccc"
+            android:textSize="14sp" />
 
-  </LinearLayout>
+        <TextView
+            android:id="@+id/speed"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:lineHeight="18dp"
+            android:text=""
+            android:textColor="#cccccc"
+            android:textSize="30sp" />
 
-  <Button
-      android:id="@+id/exit_button"
-      android:layout_width="100dp"
-      android:layout_height="100dp"
-      android:layout_gravity="top|end"
-      android:background="@drawable/button_bg"
-      android:text="Exit"
-      android:textColor="#ffffff"
-      android:textSize="12sp" />
+    </LinearLayout>
 
-  <LinearLayout
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_gravity="top|end"
-      android:layout_marginTop="100dp"
-      android:orientation="vertical">
+    <Button
+        android:id="@+id/exit_button"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_gravity="top|end"
+        android:background="@drawable/button_bg"
+        android:text="Exit"
+        android:textColor="#ffffff"
+        android:textSize="16sp" />
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="100dp"
         android:orientation="horizontal">
 
-      <Button
-          android:id="@+id/yaw_plus_button"
-          android:layout_width="100dp"
-          android:layout_height="100dp"
-          android:background="@drawable/button_bg"
-          android:text="+5°"
-          android:textColor="#ffffff"
-          android:textSize="12sp" />
+        <Button
+            android:id="@+id/yaw_minus_button"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="@drawable/button_bg"
+            android:text="-5°"
+            android:textColor="#ffffff"
+            android:textSize="16sp" />
 
-      <Button
-          android:id="@+id/yaw_minus_button"
-          android:layout_width="100dp"
-          android:layout_height="100dp"
-          android:background="@drawable/button_bg"
-          android:text="-5°"
-          android:textColor="#ffffff"
-          android:textSize="12sp" />
+        <Button
+            android:id="@+id/yaw_plus_button"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="@drawable/button_bg"
+            android:text="+5°"
+            android:textColor="#ffffff"
+            android:textSize="16sp" />
 
-      <Button
-          android:id="@+id/reset_north_button"
-          android:layout_width="100dp"
-          android:layout_height="100dp"
-          android:background="@drawable/button_bg"
-          android:text="North"
-          android:textColor="#ffffff"
-          android:textSize="12sp" />
+        <Button
+            android:id="@+id/reset_north_button"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="@drawable/button_bg"
+            android:text="North"
+            android:textColor="#ffffff"
+            android:textSize="16sp" />
 
-      <Button
-          android:id="@+id/vel_button"
-          android:layout_width="100dp"
-          android:layout_height="100dp"
-          android:background="@drawable/button_bg"
-          android:text="Vel"
-          android:textColor="#ffffff"
-          android:textSize="12sp" />
+        <Button
+            android:id="@+id/vel_button"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="@drawable/button_bg"
+            android:text="Vel"
+            android:textColor="#ffffff"
+            android:textSize="16sp" />
 
     </LinearLayout>
 
-  </LinearLayout>
 </FrameLayout>

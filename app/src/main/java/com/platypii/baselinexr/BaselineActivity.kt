@@ -36,6 +36,7 @@ class BaselineActivity : AppSystemActivity() {
   private var gltfxEntity: Entity? = null
   private var sphereEntity: Entity? = null
   private var terrainSystem: TerrainSystem? = null
+  private var directionArrowSystem: DirectionArrowSystem? = null
   private val gpsTransform = GpsToWorldTransform()
   private var locationSubscriber: ((com.platypii.baselinexr.measurements.MLocation) -> Unit)? = null
 
@@ -65,6 +66,10 @@ class BaselineActivity : AppSystemActivity() {
     systemManager.registerSystem(HudSystem(gpsTransform))
     systemManager.registerSystem(AltimeterSystem())
     systemManager.registerSystem(SpeedometerSystem())
+    
+    // Create and register direction arrow system
+    directionArrowSystem = DirectionArrowSystem(gpsTransform)
+    systemManager.registerSystem(directionArrowSystem!!)
     
     // Set up centralized location updates
     setupLocationUpdates()
@@ -122,6 +127,7 @@ class BaselineActivity : AppSystemActivity() {
     systemManager.findSystem<AltimeterSystem>()?.cleanup()
     systemManager.findSystem<SpeedometerSystem>()?.cleanup()
     terrainSystem?.cleanup()
+    directionArrowSystem?.cleanup()
 
     // Clean up entities
 //    sphereEntity?.destroy()
@@ -272,6 +278,7 @@ class BaselineActivity : AppSystemActivity() {
       systemManager.findSystem<HudSystem>()?.onLocation(loc, this)
       systemManager.findSystem<AltimeterSystem>()?.onLocation(loc)
       systemManager.findSystem<SpeedometerSystem>()?.onLocation(loc)
+      directionArrowSystem?.onLocation(loc)
     }
     Services.location.locationUpdates.subscribeMain(locationSubscriber!!)
   }

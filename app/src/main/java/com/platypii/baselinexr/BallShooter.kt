@@ -24,7 +24,7 @@ import java.util.TimerTask
 
 class BallShooter(private val mesh: Mesh) : SystemBase() {
 
-  public var enabled = true
+  var enabled = true
 
   private fun shootBall(transform: Pose) {
     val speed = 10f

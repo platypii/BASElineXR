@@ -6,6 +6,9 @@ To setup:
 
 1. Pair FlySight with Quest: Double-tap FlySight, Pair in Quest Settings.
 2. Use Android Studio to install on Quest.
+3. Do NOT enable travel mode!
+4. On final approach, put on headset, when tracking freaks out, click "Continue without tracking"
+5. Ensure alignment with direction of flight
 
 Notes:
 
