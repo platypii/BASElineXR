@@ -174,6 +174,18 @@ class BaselineActivity : AppSystemActivity() {
               }
             })
 
+            val yawPlusButton = rootView?.findViewById<Button>(R.id.yaw_plus_button)
+            yawPlusButton?.setOnClickListener({
+              // Increment yaw adjustment by 5 degrees (convert to radians)
+              gpsTransform.yawAdjustment += Math.toRadians(5.0)
+            })
+
+            val yawMinusButton = rootView?.findViewById<Button>(R.id.yaw_minus_button)
+            yawMinusButton?.setOnClickListener({
+              // Decrement yaw adjustment by 5 degrees (convert to radians)
+              gpsTransform.yawAdjustment -= Math.toRadians(5.0)
+            })
+
             val velButton = rootView?.findViewById<Button>(R.id.vel_button)
             velButton?.setOnClickListener({
               // Get current head transform to determine yaw

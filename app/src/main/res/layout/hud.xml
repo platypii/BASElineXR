@@ -45,38 +45,65 @@
 
   </LinearLayout>
 
+  <Button
+      android:id="@+id/exit_button"
+      android:layout_width="100dp"
+      android:layout_height="100dp"
+      android:layout_gravity="top|end"
+      android:background="@drawable/button_bg"
+      android:text="Exit"
+      android:textColor="#ffffff"
+      android:textSize="12sp" />
+
   <LinearLayout
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:layout_gravity="top|end"
-      android:orientation="horizontal">
+      android:layout_marginTop="100dp"
+      android:orientation="vertical">
 
-    <Button
-        android:id="@+id/reset_north_button"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:background="@drawable/button_bg"
-        android:text="North"
-        android:textColor="#ffffff"
-        android:textSize="12sp" />
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
-    <Button
-        android:id="@+id/vel_button"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:background="@drawable/button_bg"
-        android:text="Vel"
-        android:textColor="#ffffff"
-        android:textSize="12sp" />
+      <Button
+          android:id="@+id/yaw_plus_button"
+          android:layout_width="100dp"
+          android:layout_height="100dp"
+          android:background="@drawable/button_bg"
+          android:text="+5°"
+          android:textColor="#ffffff"
+          android:textSize="12sp" />
 
-    <Button
-        android:id="@+id/exit_button"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:background="@drawable/button_bg"
-        android:text="Exit"
-        android:textColor="#ffffff"
-        android:textSize="12sp" />
+      <Button
+          android:id="@+id/yaw_minus_button"
+          android:layout_width="100dp"
+          android:layout_height="100dp"
+          android:background="@drawable/button_bg"
+          android:text="-5°"
+          android:textColor="#ffffff"
+          android:textSize="12sp" />
+
+      <Button
+          android:id="@+id/reset_north_button"
+          android:layout_width="100dp"
+          android:layout_height="100dp"
+          android:background="@drawable/button_bg"
+          android:text="North"
+          android:textColor="#ffffff"
+          android:textSize="12sp" />
+
+      <Button
+          android:id="@+id/vel_button"
+          android:layout_width="100dp"
+          android:layout_height="100dp"
+          android:background="@drawable/button_bg"
+          android:text="Vel"
+          android:textColor="#ffffff"
+          android:textSize="12sp" />
+
+    </LinearLayout>
 
   </LinearLayout>
 </FrameLayout>
