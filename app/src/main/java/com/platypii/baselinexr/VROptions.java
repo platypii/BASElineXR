@@ -7,14 +7,14 @@ import java.util.Map;
 
 public class VROptions {
 
-    public static final String shader = null;
+//    public static final String shader = null;
 //    public static final String shader = "data/shaders/terrain_transparent";
-//    public static final String shader = "data/shaders/terrain_bubble";
+    public static final String shader = "data/shaders/terrain_bubble";
 
     // LIVE:
-//    public static final String mockTrack = null;
-//    public static final String source = "eiger";
-//    public static final String dest = "kpow";
+    public static final String mockTrack = null;
+    public static final String source = "eiger";
+    public static final String dest = "kpowPrisonSouth";
 
     // Eiger mushroom BASE:
 //    public static final String mockTrack = "eiger-glacier.csv";
@@ -22,9 +22,9 @@ public class VROptions {
 //    public static final String dest = "eiger";
 
     // Eiger skydive:
-    public static final String mockTrack = "kpow-prison.csv";
-    public static final String source = "eiger";
-    public static final String dest = "kpowPrison";
+//    public static final String mockTrack = "kpow-prison.csv";
+//    public static final String source = "eiger";
+//    public static final String dest = "kpowPrison";
 
     // Kpow skydive landing:
 //    public static final String mockTrack = "kpow-landing.csv";
@@ -45,6 +45,7 @@ public class VROptions {
         destinations.put("kpow", new LatLngAlt(47.22966825, -123.16380949, 0.0));
         destinations.put("kpow4500", new LatLngAlt(47.22966825, -123.16380949, 1500.0));
         destinations.put("kpowPrison", new LatLngAlt(47.22, -123.225, -250.0));
+        destinations.put("kpowPrisonSouth", new LatLngAlt(47.21, -123.225, -250.0));
         destinations.put("kpowLake", new LatLngAlt(47.2375, -123.166, -900.0));
     }
 
@@ -54,5 +55,6 @@ public class VROptions {
         return VROptions.destinations.get(VROptions.dest);
     }
 
-    public static LatLngAlt target = new LatLngAlt(47.239, -123.143, 84);
+    // Kpow student field
+    public static LatLngAlt target = new LatLngAlt(47.2375, -123.1458, 84);
 }

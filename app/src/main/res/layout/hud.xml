@@ -90,11 +90,20 @@
             android:textSize="18sp" />
 
         <Button
-            android:id="@+id/vel_button"
+            android:id="@+id/fwd_button"
             android:layout_width="100dp"
             android:layout_height="100dp"
             android:background="@drawable/button_bg"
-            android:text="Vel"
+            android:text="Fwd"
+            android:textColor="#ffffff"
+            android:textSize="18sp" />
+
+        <Button
+            android:id="@+id/tail_button"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="@drawable/button_bg"
+            android:text="Tail"
             android:textColor="#ffffff"
             android:textSize="18sp" />
 

@@ -29,7 +29,7 @@ List boot services:
 
 ```
 adb shell pm query-receivers --user 0 --components -a android.intent.action.BOOT_COMPLETED
-  ```
+```
 
 Disable unnecessary services:
 
@@ -45,6 +45,12 @@ adb shell pm disable-user --user 0 com.oculus.store
 adb shell pm disable-user --user 0 com.oculus.tv
 adb shell pm disable-user --user 0 com.whatsapp
 Package com.oculus.socialplatform new state: disabled-user
+```
+
+Get GPU memory usage:
+
+```
+adb shell gpumeminfo -l
 ```
 
 ### Things that don't work:

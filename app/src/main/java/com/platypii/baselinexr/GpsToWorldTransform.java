@@ -56,7 +56,7 @@ public class GpsToWorldTransform {
      */
     public Vector3 toWorldCoordinates(double lat, double lon, double alt, long currentTimeMillis, MotionEstimator motionEstimator) {
         if (lastOrigin == null) {
-            Log.w(TAG, "Origin must be set before converting coordinates");
+//            Log.w(TAG, "Origin must be set before converting coordinates");
             return new Vector3(0f);
         }
 

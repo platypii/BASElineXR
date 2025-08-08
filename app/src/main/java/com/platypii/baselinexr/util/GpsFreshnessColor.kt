@@ -3,7 +3,7 @@ package com.platypii.baselinexr.util
 import android.graphics.Color
 
 object GpsFreshnessColor {
-    private const val FADE_START_MS = 3000L
+    private const val FADE_START_MS = 1000L
     private const val FADE_END_MS = 6000L
     
     /**
