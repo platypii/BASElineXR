@@ -22,7 +22,7 @@ class DirectionArrowSystem(
         private const val TAG = "DirectionArrowSystem"
         private const val ARROW_SCALE = 0.3f
         private const val ARROW_HEIGHT_OFFSET = -5.0f
-        private const val MIN_SPEED_THRESHOLD = 1.0 // m/s minimum speed to show arrow
+        private const val MIN_SPEED_THRESHOLD = 0.9 // m/s minimum speed to show arrow
     }
 
     private var arrowEntity: Entity? = null
@@ -30,6 +30,10 @@ class DirectionArrowSystem(
     private var initialized = false
 
     override fun execute() {
+        if (!initialized) {
+            initializeDirectionArrow()
+        }
+
         updateArrowDirection()
     }
 
@@ -38,20 +42,29 @@ class DirectionArrowSystem(
         updateArrowDirection()
     }
 
+    private fun initializeDirectionArrow() {
+        // Create arrow using custom arrow.glb model
+        // The arrow points in the positive Z direction (forward)
+
+        arrowEntity = Entity.create(
+            Mesh("arrow.glb".toUri()),
+            Transform(Pose(Vector3(0f, 0f, 0f))),
+            Scale(Vector3(ARROW_SCALE)),
+            Visible(false) // Start invisible
+        )
+
+        initialized = true
+        Log.i(TAG, "DirectionArrowSystem initialized")
+    }
+
     private fun updateArrowDirection() {
         val loc = currentLocation ?: return
         
         // Only show arrow if moving fast enough (and not stale)
         val groundSpeed = loc.groundSpeed()
-        if (!initialized || groundSpeed < MIN_SPEED_THRESHOLD || !Services.location.isFresh) {
+        if (groundSpeed < MIN_SPEED_THRESHOLD || !Services.location.isFresh) {
             arrowEntity?.setComponent(Visible(false))
             return
-        }
-
-        // Create arrow entity if it doesn't exist
-        if (arrowEntity == null && !initialized) {
-            createArrowEntity()
-            initialized = true
         }
         
         // Position arrow below user
@@ -84,19 +97,6 @@ class DirectionArrowSystem(
         ))
     }
 
-    private fun createArrowEntity() {
-        // Create arrow using custom arrow.glb model
-        // The arrow points in the positive Z direction (forward)
-        
-        arrowEntity = Entity.create(
-            Mesh("arrow.glb".toUri()),
-            Transform(Pose(Vector3(0f, 0f, 0f))),
-            Scale(Vector3(ARROW_SCALE)),
-            Visible(false) // Start invisible
-        )
-
-        Log.i(TAG, "Direction arrow entity created")
-    }
 
     fun cleanup() {
         arrowEntity = null
