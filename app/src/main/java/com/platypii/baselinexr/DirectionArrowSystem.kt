@@ -27,6 +27,7 @@ class DirectionArrowSystem(
 
     private var arrowEntity: Entity? = null
     private var currentLocation: MLocation? = null
+    private var initialized = false
 
     override fun execute() {
         updateArrowDirection()
@@ -42,14 +43,15 @@ class DirectionArrowSystem(
         
         // Only show arrow if moving fast enough (and not stale)
         val groundSpeed = loc.groundSpeed()
-        if (groundSpeed < MIN_SPEED_THRESHOLD || !Services.location.isFresh) {
+        if (!initialized || groundSpeed < MIN_SPEED_THRESHOLD || !Services.location.isFresh) {
             arrowEntity?.setComponent(Visible(false))
             return
         }
 
         // Create arrow entity if it doesn't exist
-        if (arrowEntity == null) {
+        if (arrowEntity == null && !initialized) {
             createArrowEntity()
+            initialized = true
         }
         
         // Position arrow below user
@@ -98,6 +100,7 @@ class DirectionArrowSystem(
 
     fun cleanup() {
         arrowEntity = null
+        initialized = false
         Log.i(TAG, "DirectionArrowSystem cleaned up")
     }
 }

@@ -17,7 +17,7 @@ public class VROptions {
 //    public static final String dest = "kpowPrisonSouth";
 
     // Eiger mushroom BASE:
-//    public static final String mockTrack = "eiger-glacier.csv";
+//    public static final String mockTrack = "eiger-mushroom.csv";
 //    public static final String source = "eiger";
 //    public static final String dest = "eiger";
 
@@ -32,14 +32,14 @@ public class VROptions {
 //    public static final String dest = "kpow";
 
     // Kpow ground level:
-//    public static final String mockTrack = "kpow-hangar.csv";
-//    public static final String source = "kpow";
-//    public static final String dest = "kpow";
+    public static final String mockTrack = "kpow-hangar.csv";
+    public static final String source = "kpow";
+    public static final String dest = "kpow";
 
     // Jank:
-    public static final String mockTrack = "jank.csv";
-    public static final String source = "eiger";
-    public static final String dest = "kpowPrisonSouth";
+//    public static final String mockTrack = "jank.csv";
+//    public static final String source = "eiger";
+//    public static final String dest = "kpowPrisonSouth";
 
     public static Map<String, LatLngAlt> destinations = new HashMap<>();
 
