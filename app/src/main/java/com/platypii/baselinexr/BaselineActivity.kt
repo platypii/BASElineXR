@@ -67,6 +67,9 @@ class BaselineActivity : AppSystemActivity() {
 
     Services.create(this)
 
+    // Load saved yaw adjustment
+    gpsTransform.loadYawAdjustment(this)
+
     // Create systems
     hudSystem = HudSystem(gpsTransform)
     altimeterSystem = AltimeterSystem()
@@ -169,6 +172,7 @@ class BaselineActivity : AppSystemActivity() {
                 headTransform?.let { transform ->
                   val currentYaw = transform.transform.q.toEuler().y
                   gpsTransform.yawAdjustment = Math.toRadians(currentYaw.toDouble())
+                  gpsTransform.saveYawAdjustment(this@BaselineActivity)
                 }
               }
             })
@@ -177,12 +181,14 @@ class BaselineActivity : AppSystemActivity() {
             yawPlusButton?.setOnClickListener({
               // Increment yaw adjustment by 5 degrees (convert to radians)
               gpsTransform.yawAdjustment += Math.toRadians(5.0)
+              gpsTransform.saveYawAdjustment(this@BaselineActivity)
             })
 
             val yawMinusButton = rootView?.findViewById<Button>(R.id.yaw_minus_button)
             yawMinusButton?.setOnClickListener({
               // Decrement yaw adjustment by 5 degrees (convert to radians)
               gpsTransform.yawAdjustment -= Math.toRadians(5.0)
+              gpsTransform.saveYawAdjustment(this@BaselineActivity)
             })
 
             val fwdButton = rootView?.findViewById<Button>(R.id.fwd_button)
@@ -211,6 +217,7 @@ class BaselineActivity : AppSystemActivity() {
                     // We want: head_direction + yaw_adjustment = north (0)
                     // So: yaw_adjustment = -head_direction + velocity_to_north_correction
                     gpsTransform.yawAdjustment = Math.toRadians(currentHeadYaw.toDouble()) - velocityBearingRad
+                    gpsTransform.saveYawAdjustment(this@BaselineActivity)
                   }
                 }
               }
@@ -241,6 +248,7 @@ class BaselineActivity : AppSystemActivity() {
                     val oppositeVelocityBearingRad = velocityBearingRad + Math.PI
 
                     gpsTransform.yawAdjustment = Math.toRadians(currentHeadYaw.toDouble()) - oppositeVelocityBearingRad
+                    gpsTransform.saveYawAdjustment(this@BaselineActivity)
                   }
                 }
               }

@@ -1,5 +1,7 @@
 package com.platypii.baselinexr;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.meta.spatial.core.Vector3;
@@ -9,6 +11,8 @@ import com.platypii.baselinexr.location.MotionEstimator;
 public class GpsToWorldTransform {
     private static final String TAG = "GpsToWorldTransform";
     private static final double EARTH_RADIUS_METERS = 6371000.0;
+    private static final String PREF_NAME = "BASElineXRPrefs";
+    private static final String KEY_YAW_ADJUSTMENT = "yawAdjustment";
 
     public MLocation initialOrigin;
     public MLocation lastOrigin;
@@ -117,6 +121,19 @@ public class GpsToWorldTransform {
         }
 
         return new Vector3(extrapolatedX, extrapolatedY, extrapolatedZ);
+    }
+
+    public void loadYawAdjustment(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        yawAdjustment = Double.longBitsToDouble(prefs.getLong(KEY_YAW_ADJUSTMENT, 
+            Double.doubleToLongBits(0.0)));
+        Log.d(TAG, "Loaded yawAdjustment: " + Math.toDegrees(yawAdjustment) + " degrees");
+    }
+
+    public void saveYawAdjustment(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        prefs.edit().putLong(KEY_YAW_ADJUSTMENT, Double.doubleToLongBits(yawAdjustment)).apply();
+        Log.d(TAG, "Saved yawAdjustment: " + Math.toDegrees(yawAdjustment) + " degrees");
     }
 
 }
