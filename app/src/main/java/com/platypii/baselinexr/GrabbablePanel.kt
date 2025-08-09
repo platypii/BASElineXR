@@ -80,16 +80,13 @@ class GrabbablePanel(
             if ((controller.buttonState and (ButtonBits.ButtonTriggerL or ButtonBits.ButtonTriggerR)) == 0) {
                 isDragging = false
                 // Store the new offset relative to head
-                val head = getHmd()
-                if (head != null) {
-                    val headTransform = head.tryGetComponent<Transform>()
-                    if (headTransform != null) {
+                val headPose = getHeadPose()
+                if (headPose != null) {
                         val panelTransform = panelEntity.tryGetComponent<Transform>()
                         if (panelTransform != null) {
-                            val relativeToHead = headTransform.transform.inverse() * panelTransform.transform
+                            val relativeToHead = headPose.inverse() * panelTransform.transform
                             panelOffset = relativeToHead.t
                         }
-                    }
                 }
                 dragController = null
                 dragLocalOffset = null
@@ -102,9 +99,7 @@ class GrabbablePanel(
             targetPose.t = newPosition - dragLocalOffset!!
 
             // Make panel face the head
-            val head = getHmd() ?: return
-            val headTransform = head.tryGetComponent<Transform>() ?: return
-            val headPose = headTransform.transform
+            val headPose = getHeadPose() ?: return
 
             val toHead = headPose.t - targetPose.t
             val forwardVec = toHead.normalize()
@@ -119,9 +114,7 @@ class GrabbablePanel(
 
         } else {
             // Not dragging, follow head with stored offset
-            val head = getHmd() ?: return
-            val headTransform = head.tryGetComponent<Transform>() ?: return
-            val headPose = headTransform.transform
+            val headPose = getHeadPose() ?: return
             if (headPose == Pose()) return
 
             // Calculate the forward and right vectors from the head's rotation
@@ -145,10 +138,11 @@ class GrabbablePanel(
         }
     }
 
-    private fun getHmd(): Entity? {
-        return systemManager
+    private fun getHeadPose(): Pose? {
+        val head = systemManager
             .tryFindSystem<PlayerBodyAttachmentSystem>()
             ?.tryGetLocalPlayerAvatarBody()
-            ?.head
+            ?.head ?: return null
+        return head.tryGetComponent<Transform>()?.transform
     }
 }

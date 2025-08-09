@@ -42,9 +42,7 @@ class TargetPanel(private val gpsTransform: GpsToWorldTransform) : SystemBase() 
     private fun updateTargetPanelPosition() {
         if (!initialized || targetPanelEntity == null) return
         
-        val head = getHmd() ?: return
-        val headTransform = head.tryGetComponent<Transform>() ?: return
-        val headPose = headTransform.transform
+        val headPose = getHeadPose() ?: return
         if (headPose == Pose()) return
         
         // Convert target GPS coordinates to world space
@@ -55,7 +53,8 @@ class TargetPanel(private val gpsTransform: GpsToWorldTransform) : SystemBase() 
         )
         
         // Calculate direction from camera to target
-        val directionToTarget = (targetWorldPos - headPose.t).normalize()
+        val directionToTarget = if (VROptions.roomMovement)
+                (targetWorldPos - headPose.t).normalize() else targetWorldPos.normalize()
         
         // Position panel 4 meters from camera in direction of target
         val panelDistance = 4.0f
@@ -73,14 +72,15 @@ class TargetPanel(private val gpsTransform: GpsToWorldTransform) : SystemBase() 
         // Update panel transform
         targetPanelEntity?.setComponent(Transform(targetPose))
     }
-    
-    private fun getHmd(): Entity? {
-        return systemManager
+
+    private fun getHeadPose(): Pose? {
+        val head = systemManager
             .tryFindSystem<PlayerBodyAttachmentSystem>()
             ?.tryGetLocalPlayerAvatarBody()
-            ?.head
+            ?.head ?: return null
+        return head.tryGetComponent<Transform>()?.transform
     }
-    
+
     fun cleanup() {
         initialized = false
         targetPanelEntity = null

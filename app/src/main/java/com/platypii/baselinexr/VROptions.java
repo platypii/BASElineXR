@@ -17,9 +17,9 @@ public class VROptions {
 //    public static final String dest = "kpowPrisonSouth";
 
     // Eiger mushroom BASE:
-//    public static final String mockTrack = "eiger-mushroom.csv";
-//    public static final String source = "eiger";
-//    public static final String dest = "eiger";
+    public static final String mockTrack = "eiger-mushroom.csv";
+    public static final String source = "eiger";
+    public static final String dest = "eiger";
 
     // Eiger skydive:
 //    public static final String mockTrack = "kpow-prison.csv";
@@ -32,9 +32,14 @@ public class VROptions {
 //    public static final String dest = "kpow";
 
     // Kpow ground level:
-    public static final String mockTrack = "kpow-hangar.csv";
-    public static final String source = "kpow";
-    public static final String dest = "kpow";
+//    public static final String mockTrack = "kpow-student.csv";
+//    public static final String source = "kpow";
+//    public static final String dest = "kpow";
+
+    // Going-In-Simulator 2000
+//    public static final String mockTrack = "kpow-impact.csv";
+//    public static final String source = "kpow";
+//    public static final String dest = "kpow4500";
 
     // Jank:
 //    public static final String mockTrack = "jank.csv";
@@ -62,4 +67,8 @@ public class VROptions {
 
     // Kpow student field
     public static LatLngAlt target = new LatLngAlt(47.2375, -123.1458, 84);
+
+    // If true, allow user to "walk around" the map
+    // If false, map position ONLY comes from lat/lon/alt
+    public static boolean roomMovement = false;
 }

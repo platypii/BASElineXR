@@ -69,9 +69,7 @@ class DirectionArrowSystem(
         }
         
         // Get head position to place arrow below it
-        val head = getHmd() ?: return
-        val headTransform = head.tryGetComponent<Transform>() ?: return
-        val headPose = headTransform.transform
+        val headPose = getHeadPose() ?: return
         if (headPose == Pose()) return
         
         // Position arrow below the head
@@ -101,11 +99,12 @@ class DirectionArrowSystem(
     }
 
 
-    private fun getHmd(): Entity? {
-        return systemManager
+    private fun getHeadPose(): Pose? {
+        val head = systemManager
             .tryFindSystem<PlayerBodyAttachmentSystem>()
             ?.tryGetLocalPlayerAvatarBody()
-            ?.head
+            ?.head ?: return null
+        return head.tryGetComponent<Transform>()?.transform
     }
 
     fun cleanup() {

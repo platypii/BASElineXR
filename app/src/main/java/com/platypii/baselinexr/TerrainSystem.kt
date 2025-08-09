@@ -10,6 +10,7 @@ import com.meta.spatial.core.Quaternion
 import com.meta.spatial.core.SystemBase
 import com.meta.spatial.core.Vector3
 import com.meta.spatial.toolkit.Mesh
+import com.meta.spatial.toolkit.PlayerBodyAttachmentSystem
 import com.meta.spatial.toolkit.Transform
 import com.meta.spatial.toolkit.Visible
 
@@ -100,12 +101,20 @@ class TerrainSystem(
 
         val config = terrainConfig ?: return
 
+        // Get head pose for optional room movement translation
+        val headPose = getHeadPose()
+
         terrainTiles.forEach { tile ->
-            val worldPos = Vector3(
+            var worldPos = Vector3(
                 referencePos.x + (tile.config.gridX * 1000f) + config.offsetX.toFloat(),
                 referencePos.y + config.offsetY.toFloat(),
                 referencePos.z + (tile.config.gridZ * 1000f) + config.offsetZ.toFloat()
             )
+
+            // Apply room movement translation if enabled
+            if (VROptions.roomMovement && headPose != null) {
+                worldPos -= headPose.t
+            }
 
             // Update entity transform
             // Apply yaw adjustment to the terrain rotation
@@ -117,6 +126,14 @@ class TerrainSystem(
 
             tile.entity.setComponent(transform)
         }
+    }
+
+    private fun getHeadPose(): Pose? {
+        val head = systemManager
+            .tryFindSystem<PlayerBodyAttachmentSystem>()
+            ?.tryGetLocalPlayerAvatarBody()
+            ?.head ?: return null
+        return head.tryGetComponent<Transform>()?.transform
     }
 
     fun cleanup() {
