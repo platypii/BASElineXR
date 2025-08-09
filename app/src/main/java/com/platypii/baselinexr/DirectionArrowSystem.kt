@@ -60,31 +60,37 @@ class DirectionArrowSystem(
 
     private fun updateArrowDirection() {
         val loc = currentLocation ?: return
-        
+
+        // Check if direction arrow is enabled
+        if (!VROptions.showDirectionArrow) {
+            arrowEntity?.setComponent(Visible(false))
+            return
+        }
+
         // Only show arrow if moving fast enough (and not stale)
         val groundSpeed = loc.groundSpeed()
         if (groundSpeed < MIN_SPEED_THRESHOLD || !Services.location.isFresh) {
             arrowEntity?.setComponent(Visible(false))
             return
         }
-        
+
         // Get head position to place arrow below it
         val headPose = getHeadPose() ?: return
         if (headPose == Pose()) return
-        
+
         // Position arrow below the head
         val arrowPosition = headPose.t + Vector3(0f, ARROW_HEIGHT_OFFSET, 0f)
 
         // Calculate rotation based on velocity direction
         var bearingRad = Math.toRadians(loc.bearing() - 90)
-        
+
         // Apply yaw adjustment to align with world coordinate system
         bearingRad += gpsTransform.yawAdjustment
-        
+
         // Convert to quaternion rotation around Y-axis
         // Note: Meta Spatial uses Y-up coordinate system
         val yRotation = bearingRad.toFloat() // Negative because we want clockwise rotation for eastward bearing
-        
+
         // Create rotation quaternion for Y-axis rotation
         val cosHalfAngle = cos(yRotation / 2f)
         val sinHalfAngle = sin(yRotation / 2f)
