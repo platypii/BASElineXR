@@ -97,7 +97,6 @@ class DirectionArrowSystem(
     }
 
     fun cleanup() {
-        arrowEntity?.destroy()
         arrowEntity = null
         Log.i(TAG, "DirectionArrowSystem cleaned up")
     }

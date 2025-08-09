@@ -12,9 +12,9 @@ public class VROptions {
     public static final String shader = "data/shaders/terrain_bubble";
 
     // LIVE:
-    public static final String mockTrack = null;
-    public static final String source = "eiger";
-    public static final String dest = "kpowPrisonSouth";
+//    public static final String mockTrack = null;
+//    public static final String source = "eiger";
+//    public static final String dest = "kpowPrisonSouth";
 
     // Eiger mushroom BASE:
 //    public static final String mockTrack = "eiger-glacier.csv";
@@ -35,6 +35,11 @@ public class VROptions {
 //    public static final String mockTrack = "kpow-hangar.csv";
 //    public static final String source = "kpow";
 //    public static final String dest = "kpow";
+
+    // Jank:
+    public static final String mockTrack = "jank.csv";
+    public static final String source = "eiger";
+    public static final String dest = "kpowPrisonSouth";
 
     public static Map<String, LatLngAlt> destinations = new HashMap<>();
 
