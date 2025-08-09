@@ -8,6 +8,7 @@ import com.meta.spatial.core.Quaternion
 import com.meta.spatial.core.SystemBase
 import com.meta.spatial.core.Vector3
 import com.meta.spatial.toolkit.Mesh
+import com.meta.spatial.toolkit.PlayerBodyAttachmentSystem
 import com.meta.spatial.toolkit.Scale
 import com.meta.spatial.toolkit.Transform
 import com.meta.spatial.toolkit.Visible
@@ -67,12 +68,14 @@ class DirectionArrowSystem(
             return
         }
         
-        // Position arrow below user
-        val arrowPosition = Vector3(
-            0f,
-            ARROW_HEIGHT_OFFSET,
-            0f
-        )
+        // Get head position to place arrow below it
+        val head = getHmd() ?: return
+        val headTransform = head.tryGetComponent<Transform>() ?: return
+        val headPose = headTransform.transform
+        if (headPose == Pose()) return
+        
+        // Position arrow below the head
+        val arrowPosition = headPose.t + Vector3(0f, ARROW_HEIGHT_OFFSET, 0f)
 
         // Calculate rotation based on velocity direction
         var bearingRad = Math.toRadians(loc.bearing() - 90)
@@ -97,6 +100,13 @@ class DirectionArrowSystem(
         ))
     }
 
+
+    private fun getHmd(): Entity? {
+        return systemManager
+            .tryFindSystem<PlayerBodyAttachmentSystem>()
+            ?.tryGetLocalPlayerAvatarBody()
+            ?.head
+    }
 
     fun cleanup() {
         arrowEntity = null
