@@ -6,6 +6,7 @@
     android:orientation="vertical">
 
     <LinearLayout
+        android:id="@+id/hudPanel"
         android:layout_width="match_parent"
         android:layout_height="100dp"
         android:background="#000000"
@@ -56,11 +57,14 @@
         android:textSize="18sp" />
 
     <LinearLayout
+        android:id="@+id/extraControls"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="top|end"
         android:layout_marginTop="100dp"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:background="#000000"
+        android:visibility="gone">
 
         <Button
             android:id="@+id/yaw_minus_button"
@@ -69,7 +73,7 @@
             android:background="@drawable/button_bg"
             android:text="-5°"
             android:textColor="#ffffff"
-            android:textSize="18sp" />
+            android:textSize="20sp" />
 
         <Button
             android:id="@+id/yaw_plus_button"
@@ -78,7 +82,7 @@
             android:background="@drawable/button_bg"
             android:text="+5°"
             android:textColor="#ffffff"
-            android:textSize="18sp" />
+            android:textSize="20sp" />
 
         <Button
             android:id="@+id/reset_north_button"
@@ -87,7 +91,7 @@
             android:background="@drawable/button_bg"
             android:text="North"
             android:textColor="#ffffff"
-            android:textSize="18sp" />
+            android:textSize="20sp" />
 
         <Button
             android:id="@+id/fwd_button"
@@ -96,7 +100,7 @@
             android:background="@drawable/button_bg"
             android:text="Fwd"
             android:textColor="#ffffff"
-            android:textSize="18sp" />
+            android:textSize="20sp" />
 
         <Button
             android:id="@+id/tail_button"
@@ -105,7 +109,7 @@
             android:background="@drawable/button_bg"
             android:text="Tail"
             android:textColor="#ffffff"
-            android:textSize="18sp" />
+            android:textSize="20sp" />
 
     </LinearLayout>
 

@@ -2,6 +2,7 @@ package com.platypii.baselinexr
 
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import com.meta.spatial.castinputforward.CastInputForwardFeature
@@ -158,6 +159,19 @@ class BaselineActivity : AppSystemActivity() {
             exitButton?.setOnClickListener({
 //              Services.stop()
               finish()
+            })
+
+            // Add click listener to hudPanel to toggle extraControls visibility
+            val hudPanel = rootView?.findViewById<android.widget.LinearLayout>(R.id.hudPanel)
+            val extraControls = rootView?.findViewById<android.widget.LinearLayout>(R.id.extraControls)
+            hudPanel?.setOnClickListener({
+              extraControls?.let { controls ->
+                if (controls.visibility == View.VISIBLE) {
+                  controls.visibility = View.GONE
+                } else {
+                  controls.visibility = View.VISIBLE
+                }
+              }
             })
 
             val resetNorthButton = rootView?.findViewById<Button>(R.id.reset_north_button)
