@@ -62,7 +62,7 @@ class DirectionArrowSystem(
         val loc = currentLocation ?: return
 
         // Check if direction arrow is enabled
-        if (!VROptions.showDirectionArrow) {
+        if (!VROptions.current.showDirectionArrow) {
             arrowEntity?.setComponent(Visible(false))
             return
         }

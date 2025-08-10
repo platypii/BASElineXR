@@ -18,7 +18,7 @@ import java.util.List;
 public class MockLocationProvider extends LocationProvider {
     private static final String TAG = "MockLocationProvider";
 
-    private static final String filename = VROptions.mockTrack;
+    private static final String filename = VROptions.current.mockTrack;
 
     public static long systemStartTime = System.currentTimeMillis();
     private boolean started = false;

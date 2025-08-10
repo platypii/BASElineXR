@@ -46,7 +46,7 @@ class TerrainSystem(
     private fun loadTerrainConfiguration() {
         try {
             // Load JSON from assets
-            val jsonString = context.assets.open(VROptions.terrainModel)
+            val jsonString = context.assets.open(VROptions.current.getTerrainModel())
                 .bufferedReader()
                 .use { it.readText() }
 
@@ -79,9 +79,9 @@ class TerrainSystem(
         )
 
         // Also modify the mesh to use custom transparency shader
-        if (VROptions.shader != null) {
+        if (VROptions.current.shader != null) {
             val mesh = entity.getComponent<Mesh>()
-            mesh.defaultShaderOverride = VROptions.shader
+            mesh.defaultShaderOverride = VROptions.current.shader
             entity.setComponent(mesh)
         }
 
@@ -95,7 +95,7 @@ class TerrainSystem(
 
         // Find nearest origin
         val motionEstimator = Services.location.motionEstimator
-        val dest = VROptions.destination()
+        val dest = VROptions.current.getDestination()
         // Pass motion estimator to toWorldCoordinates for better prediction
         val referencePos = gpsToWorldTransform.toWorldCoordinates(dest.lat, dest.lng, dest.alt, currentTime, motionEstimator)
 
@@ -112,7 +112,7 @@ class TerrainSystem(
             )
 
             // Apply room movement translation if enabled
-            if (VROptions.roomMovement && headPose != null) {
+            if (VROptions.current.roomMovement && headPose != null) {
                 worldPos -= headPose.t
             }
 

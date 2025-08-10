@@ -7,44 +7,98 @@ import java.util.Map;
 
 public class VROptions {
 
-//    public static final String shader = null;
-//    public static final String shader = "data/shaders/terrain_transparent";
-    public static final String shader = "data/shaders/terrain_bubble";
+    public final String shader;
+    public final String mockTrack;
+    public final String source;
+    public final String dest;
+    public final boolean roomMovement;
+    public final boolean showDirectionArrow;
+    public final boolean showTarget;
 
-    // LIVE:
-//    public static final String mockTrack = null;
-//    public static final String source = "eiger";
-//    public static final String dest = "kpowPrisonSouth";
+    public VROptions(String shader, String mockTrack, String source, String dest, 
+                    boolean roomMovement, boolean showDirectionArrow, boolean showTarget) {
+        this.shader = shader;
+        this.mockTrack = mockTrack;
+        this.source = source;
+        this.dest = dest;
+        this.roomMovement = roomMovement;
+        this.showDirectionArrow = showDirectionArrow;
+        this.showTarget = showTarget;
+    }
 
-    // Eiger mushroom BASE:
-//    public static final String mockTrack = "eiger-mushroom.csv";
-//    public static final String source = "eiger";
-//    public static final String dest = "eiger";
+    // Predefined configurations
+    public static final VROptions LIVE = new VROptions(
+        "data/shaders/terrain_bubble",
+        null,
+        "eiger",
+        "kpowPrisonSouth",
+        false,
+        true,
+        true
+    );
 
-    // Eiger skydive:
-//    public static final String mockTrack = "kpow-prison.csv";
-//    public static final String source = "eiger";
-//    public static final String dest = "kpowPrison";
+    public static final VROptions EIGER_MUSHROOM_BASE = new VROptions(
+        null,
+        "eiger.csv",
+        "eiger",
+        "eiger",
+        false,
+        true,
+        true
+    );
 
-    // Kpow skydive landing:
-//    public static final String mockTrack = "kpow-landing.csv";
-//    public static final String source = "kpow";
-//    public static final String dest = "kpow";
+    public static final VROptions EIGER_SKYDIVE = new VROptions(
+        null,
+        "kpow-prison.csv",
+        "eiger",
+        "kpowPrison",
+        false,
+        true,
+        true
+    );
 
-    // Kpow ground level:
-//    public static final String mockTrack = "kpow-student.csv";
-//    public static final String source = "kpow";
-//    public static final String dest = "kpow";
+    public static final VROptions KPOW_SKYDIVE_LANDING = new VROptions(
+        null,
+        "kpow-landing.csv",
+        "kpow",
+        "kpow",
+        false,
+        true,
+        true
+    );
 
-    // Going-In-Simulator 2000
-    public static final String mockTrack = "kpow-impact.csv";
-    public static final String source = "kpow";
-    public static final String dest = "kpow4500";
+    public static final VROptions KPOW_GROUND_LEVEL = new VROptions(
+        "data/shaders/terrain_bubble",
+        "kpow-student.csv",
+        "kpow",
+        "kpow",
+        false,
+        true,
+        true
+    );
 
-    // Jank:
-//    public static final String mockTrack = "jank.csv";
-//    public static final String source = "eiger";
-//    public static final String dest = "kpowPrisonSouth";
+    public static final VROptions GOING_IN_SIMULATOR = new VROptions(
+        null,
+        "kpow-impact.csv",
+        "kpow",
+        "kpow4500",
+        true,
+        false,
+        false
+    );
+
+    public static final VROptions JANK = new VROptions(
+        "data/shaders/terrain_bubble",
+        "jank.csv",
+        "eiger",
+        "kpowPrisonSouth",
+        false,
+        true,
+        true
+    );
+
+    // Current active configuration
+    public static VROptions current = GOING_IN_SIMULATOR;
 
     public static Map<String, LatLngAlt> destinations = new HashMap<>();
 
@@ -59,19 +113,14 @@ public class VROptions {
         destinations.put("kpowLake", new LatLngAlt(47.2375, -123.166, -900.0));
     }
 
-    public static String terrainModel = "terrain/" + source + "_tile.json";
+    public String getTerrainModel() {
+        return "terrain/" + source + "_tile.json";
+    }
 
-    public static LatLngAlt destination() {
-        return VROptions.destinations.get(VROptions.dest);
+    public LatLngAlt getDestination() {
+        return VROptions.destinations.get(this.dest);
     }
 
     // Kpow student field
     public static LatLngAlt target = new LatLngAlt(47.2375, -123.1458, 84);
-
-    // If true, allow user to "walk around" the map
-    // If false, map position ONLY comes from lat/lon/alt
-    public static boolean roomMovement = false;
-
-    public static boolean showDirectionArrow = true;
-    public static boolean showTarget = true;
 }

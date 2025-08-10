@@ -44,7 +44,7 @@ class TargetPanel(private val gpsTransform: GpsToWorldTransform) : SystemBase() 
         if (!initialized || targetPanelEntity == null) return
 
         // Check if target panel is enabled
-        if (!VROptions.showTarget) {
+        if (!VROptions.current.showTarget) {
             targetPanelEntity?.setComponent(Visible(false))
             return
         }
@@ -61,7 +61,7 @@ class TargetPanel(private val gpsTransform: GpsToWorldTransform) : SystemBase() 
         )
         
         // Calculate direction from camera to target
-        val directionToTarget = if (VROptions.roomMovement)
+        val directionToTarget = if (VROptions.current.roomMovement)
                 (targetWorldPos - headPose.t).normalize() else targetWorldPos.normalize()
         
         // Position panel 4 meters from camera in direction of target
