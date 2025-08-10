@@ -112,7 +112,7 @@ public class VROptions {
     public static Map<String, LatLngAlt> destinations = new HashMap<>();
 
     static {
-        destinations.put("eiger", new LatLngAlt(46.56314640, 7.94727628, 0.0));
+        destinations.put("eiger", new LatLngAlt(46.56297, 7.9472762, 7.0));
         destinations.put("capitolHillFoot", new LatLngAlt(47.59, -122.36, -2100.0));
         destinations.put("capitolHillSummit", new LatLngAlt(47.5967, -122.3818, -3790.0));
         destinations.put("kpow", new LatLngAlt(47.22966825, -123.16380949, 0.0));

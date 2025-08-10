@@ -14,10 +14,7 @@ data class TerrainTileConfig(
 )
 
 data class TerrainConfiguration(
-    val tiles: List<TerrainTileConfig>,
-    val offsetX: Double = 0.0,
-    val offsetY: Double = 0.0,
-    val offsetZ: Double = 0.0
+    val tiles: List<TerrainTileConfig>
 )
 
 data class TerrainTileEntity(

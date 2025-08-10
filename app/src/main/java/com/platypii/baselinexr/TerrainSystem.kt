@@ -106,9 +106,9 @@ class TerrainSystem(
 
         terrainTiles.forEach { tile ->
             var worldPos = Vector3(
-                referencePos.x + (tile.config.gridX * 1000f) + config.offsetX.toFloat(),
-                referencePos.y + config.offsetY.toFloat(),
-                referencePos.z + (tile.config.gridZ * 1000f) + config.offsetZ.toFloat()
+                referencePos.x + (tile.config.gridX * 1000f),
+                referencePos.y,
+                referencePos.z + (tile.config.gridZ * 1000f)
             )
 
             // Apply room movement translation if enabled
