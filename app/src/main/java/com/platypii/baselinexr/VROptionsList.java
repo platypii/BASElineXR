@@ -76,7 +76,7 @@ public class VROptionsList {
     public static final VROptions JANK = new VROptions(
         "Jank",
         "data/shaders/terrain_bubble",
-        "jank2.csv",
+        "jank.csv",
         "eiger",
         "kpowPrisonSouth",
         false,

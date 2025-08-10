@@ -1,14 +1,18 @@
 package com.platypii.baselinexr.location;
 
+import android.util.Log;
+
 import com.platypii.baselinexr.measurements.MLocation;
 import com.platypii.baselinexr.util.tensor.Vector3;
 
 public final class MotionEstimator {
+    private static final String TAG = "MotionEstimator";
+
     private static final double alpha = 0.1; // 0..1, picked once
     public Vector3 p = new Vector3();        // metres ENU
     public Vector3 v = new Vector3();        // m s⁻¹ ENU
     public Vector3 a = new Vector3();        // m s⁻² ENU
-    private MLocation lastUpdate = null;     // last GPS update
+    public MLocation lastUpdate = null;     // last GPS update
     private Vector3 positionDelta = null;    // Difference between last gps point and last estimated position
     private MLocation origin = null;         // GPS origin for ENU conversion
     private static final double EARTH_RADIUS_METERS = 6371000.0;
@@ -39,7 +43,7 @@ public final class MotionEstimator {
     /** Call every time a fresh GPS sample arrives */
     public void update(MLocation gps) {
         long tNow = gps.millis;
-        if (lastUpdate == null) {            // first fix sets origin
+        if (lastUpdate == null) {             // first fix sets origin
             origin = gps;                     // set GPS origin
             p = new Vector3();                // new origin = (0,0,0)
             v = new Vector3(gps.vE, gps.climb, gps.vN);
@@ -58,13 +62,15 @@ public final class MotionEstimator {
 
         // 1) predict (constant-acceleration)
         Vector3 pPred = p.plus(v.mul(dt)).plus(a.mul(0.5 * dt * dt));
-        Vector3 vPred = v.plus(a.mul(dt));
+//        Vector3 vPred = v.plus(a.mul(dt));
 
         // 2) update using measurement as evidence (complementary filter)
         p = pPred.mul(1 - alpha).plus(lastPosition.mul(alpha));
-        v = vPred.mul(1 - alpha).plus(vNew.mul(alpha));
+//        v = vPred.mul(1 - alpha).plus(vNew.mul(alpha));
+        v = vNew; // Take velocity straight from gps
 
         positionDelta = p.minus(lastPosition);
+//        Log.i(TAG, "ppred: " + pPred.y + " lastpos: " + lastPosition.y + " v: " + v.y + " err: " + (pPred.y - lastPosition.y));
 
         lastUpdate = gps;
     }
@@ -74,6 +80,7 @@ public final class MotionEstimator {
 
         double dt = (tQueryMillis - lastUpdate.millis) * 1e-3;
         if (dt < 0) dt = 0;                  // clamp if asked for the past
+//        Log.i(TAG, "lastUpdate = " + lastUpdate.millis + " now = " + tQueryMillis + " dt = " + dt);
         return positionDelta
                 .plus(v.mul(dt))
                 .plus(a.mul(0.5 * dt * dt));
