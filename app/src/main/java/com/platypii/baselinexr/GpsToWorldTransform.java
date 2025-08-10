@@ -3,6 +3,7 @@ package com.platypii.baselinexr;
 import android.util.Log;
 
 import com.meta.spatial.core.Vector3;
+import com.platypii.baselinexr.measurements.LatLngAlt;
 import com.platypii.baselinexr.measurements.MLocation;
 import com.platypii.baselinexr.location.MotionEstimator;
 
@@ -79,24 +80,17 @@ public class GpsToWorldTransform {
             double aN = motionEstimator.a.y;
             double aU = motionEstimator.a.z;
 
-//            Log.i(TAG, "dt " + deltaTime + " vE " + vE + " vN " + vN + " vU " + vU + " aE " + aE  + " aN " + aN + " aU " + aU);
-//            Log.i(TAG, "gps vE " + lastOrigin.vE + " vN " + lastOrigin.vN + " vU " + lastOrigin.climb);
+            // TODO:
+//            LatLngAlt lla = motionEstimator.predictLatLng(currentTimeMillis);
+//            Vector3 predictedPosition = toWorldCoordinates(lla.lat, lla.lng, lla.alt);
 
-            // Calculate position update using velocity
-            // position = basePosition + velocity * deltaTime
-//            float extrapolatedX = basePosition.getX() - (float)(vE * deltaTime);
-//            float extrapolatedY = basePosition.getY() - (float)(vU * deltaTime);
-//            float extrapolatedZ = basePosition.getZ() - (float)(vN * deltaTime);
-
-                    // Calculate position update using velocity and acceleration
+            // Calculate position update using velocity and acceleration
             // position = basePosition + velocity * deltaTime + 0.5 * acceleration * deltaTime^2
             extrapolatedX = basePosition.getX() - (float)(vE * deltaTime + 0.5 * aE * deltaTime * deltaTime);
             extrapolatedY = basePosition.getY() - (float)(vU * deltaTime + 0.5 * aU * deltaTime * deltaTime);
             extrapolatedZ = basePosition.getZ() - (float)(vN * deltaTime + 0.5 * aN * deltaTime * deltaTime);
-        }
-
-        // Fall back to original velocity-based extrapolation if no motion estimator
-        if (lastOrigin.millis > 0 && currentTimeMillis > lastOrigin.millis) {
+        } else if (lastOrigin.millis > 0 && currentTimeMillis > lastOrigin.millis) {
+            // Fall back to original velocity-based extrapolation if no motion estimator
             double deltaTime = (currentTimeMillis - lastOrigin.millis) / 1000.0;
             extrapolatedX = basePosition.getX() - (float)(lastOrigin.vE * deltaTime);
             extrapolatedY = basePosition.getY() - (float)(lastOrigin.climb * deltaTime);

@@ -1,5 +1,6 @@
 package com.platypii.baselinexr.location;
 
+import com.platypii.baselinexr.measurements.LatLngAlt;
 import com.platypii.baselinexr.measurements.MLocation;
 import com.platypii.baselinexr.util.tensor.Vector3;
 
@@ -64,10 +65,43 @@ public final class MotionEstimator {
         double dt = (tQueryMillis - tLastMillis) * 1e-3;
         if (dt < 0) dt = 0;                  // clamp if asked for the past
         Vector3 pos = p
-            .plus(v.mul(dt))
-            .plus(a.mul(0.5 * dt * dt));
+                .plus(v.mul(dt))
+                .plus(a.mul(0.5 * dt * dt));
         Vector3 vel = v.plus(a.mul(dt));
         return new State(pos, vel, a);
+    }
+
+    /** Predict state at an arbitrary near-future instant */
+    public LatLngAlt predictLatLng(long tQueryMillis) {
+        double dt = (tQueryMillis - tLastMillis) * 1e-3;
+        if (dt < 0) dt = 0;                  // clamp if asked for the past
+        Vector3 position = p
+                .plus(v.mul(dt))
+                .plus(a.mul(0.5 * dt * dt));
+
+        return positionToLatLng(position);
+    }
+
+    private LatLngAlt positionToLatLng(Vector3 position) {
+        if (origin == null) {
+            return new LatLngAlt(0.0, 0.0, 0.0);
+        }
+
+        double originLatRad = Math.toRadians(origin.latitude);
+        double originLonRad = Math.toRadians(origin.longitude);
+
+        double north = position.y;
+        double east = position.x;
+        double up = position.z;
+
+        double deltaLat = north / EARTH_RADIUS_METERS;
+        double deltaLon = east / (EARTH_RADIUS_METERS * Math.cos(originLatRad));
+
+        double latitude = Math.toDegrees(originLatRad + deltaLat);
+        double longitude = Math.toDegrees(originLonRad + deltaLon);
+        double altitude = origin.altitude_gps + up;
+
+        return new LatLngAlt(latitude, longitude, altitude);
     }
 
     /**
