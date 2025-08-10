@@ -3,10 +3,15 @@
     {
       "model": "terrain/kpow.glb",
       "lat": 47.22966825,
-      "lon": -123.16380949,
+      "lng": -123.16380949,
       "alt": 0,
       "gridX": 0,
-      "gridZ": 0
+      "gridZ": 0,
+      "pointOfInterest": {
+        "lat": 47.2375,
+        "lng": -123.1458,
+        "alt": 84
+      }
     }
   ],
   "offsetX": 0,

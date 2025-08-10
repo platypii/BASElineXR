@@ -34,7 +34,7 @@ class SpeedometerSystem : SystemBase() {
         val panel = composition.tryGetNodeByName("SpeedometerPanel")
         if (panel?.entity != null) {
             // Position speedometer on the left side, slightly lower than main HUD
-            val speedometerOffset = Vector3(1.2f, -2.2f, 3f)
+            val speedometerOffset = Vector3(1.2f, -2.6f, 3f)
             grabbablePanel = GrabbablePanel(systemManager, panel.entity, speedometerOffset)
             initialized = true
         }

@@ -3,10 +3,15 @@
     {
       "model": "terrain/eiger_terrain_0.5m.glb",
       "lat": 46.56314640,
-      "lon": 7.94727628,
+      "lng": 7.94727628,
       "alt": 0,
       "gridX": 0,
-      "gridZ": 0
+      "gridZ": 0,
+      "pointOfInterest": {
+        "lat": 46.5775,
+        "lng": 8.0053,
+        "alt": 3967
+      }
     }
   ],
   "offsetX": 2,

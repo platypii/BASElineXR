@@ -7,19 +7,21 @@ import java.util.Map;
 
 public class VROptions {
 
+    public final String name;
     public final String shader;
     public final String mockTrack;
-    public final String source;
+    public final String sourceModel;
     public final String dest;
     public final boolean roomMovement;
     public final boolean showDirectionArrow;
     public final boolean showTarget;
 
-    public VROptions(String shader, String mockTrack, String source, String dest, 
-                    boolean roomMovement, boolean showDirectionArrow, boolean showTarget) {
+    public VROptions(String name, String shader, String mockTrack, String sourceModel, String dest,
+                     boolean roomMovement, boolean showDirectionArrow, boolean showTarget) {
+        this.name = name;
         this.shader = shader;
         this.mockTrack = mockTrack;
-        this.source = source;
+        this.sourceModel = sourceModel;
         this.dest = dest;
         this.roomMovement = roomMovement;
         this.showDirectionArrow = showDirectionArrow;
@@ -28,6 +30,7 @@ public class VROptions {
 
     // Predefined configurations
     public static final VROptions LIVE = new VROptions(
+        "Live",
         "data/shaders/terrain_bubble",
         null,
         "eiger",
@@ -38,6 +41,7 @@ public class VROptions {
     );
 
     public static final VROptions EIGER_MUSHROOM_BASE = new VROptions(
+        "Eiger Base",
         null,
         "eiger.csv",
         "eiger",
@@ -48,6 +52,7 @@ public class VROptions {
     );
 
     public static final VROptions EIGER_SKYDIVE = new VROptions(
+        "Eiger Skydive",
         null,
         "kpow-prison.csv",
         "eiger",
@@ -58,6 +63,7 @@ public class VROptions {
     );
 
     public static final VROptions KPOW_SKYDIVE_LANDING = new VROptions(
+        "Kpow Landing",
         null,
         "kpow-landing.csv",
         "kpow",
@@ -68,6 +74,7 @@ public class VROptions {
     );
 
     public static final VROptions KPOW_GROUND_LEVEL = new VROptions(
+        "Kpow Ground",
         "data/shaders/terrain_bubble",
         "kpow-student.csv",
         "kpow",
@@ -78,6 +85,7 @@ public class VROptions {
     );
 
     public static final VROptions GOING_IN_SIMULATOR = new VROptions(
+        "Going-In",
         null,
         "kpow-impact.csv",
         "kpow",
@@ -88,6 +96,7 @@ public class VROptions {
     );
 
     public static final VROptions JANK = new VROptions(
+        "Jank",
         "data/shaders/terrain_bubble",
         "jank.csv",
         "eiger",
@@ -114,7 +123,7 @@ public class VROptions {
     }
 
     public String getTerrainModel() {
-        return "terrain/" + source + "_tile.json";
+        return "terrain/" + sourceModel + "_tile.json";
     }
 
     public LatLngAlt getDestination() {

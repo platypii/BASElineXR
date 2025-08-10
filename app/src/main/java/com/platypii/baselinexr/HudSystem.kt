@@ -1,11 +1,9 @@
 package com.platypii.baselinexr
 
-import android.graphics.Color
 import android.widget.TextView
 import com.meta.spatial.core.SystemBase
 import com.meta.spatial.toolkit.SpatialActivityManager
 import com.platypii.baselinexr.location.LocationStatus
-import com.platypii.baselinexr.measurements.MLocation
 import com.platypii.baselinexr.util.Convert
 import com.platypii.baselinexr.util.GpsFreshnessColor
 
@@ -55,7 +53,7 @@ class HudSystem(private val gpsTransform: GpsToWorldTransform) : SystemBase() {
     val loc = Services.location.lastLoc
     latlngLabel?.setCompoundDrawablesWithIntrinsicBounds(LocationStatus.icon, 0, 0, 0)
     if (loc != null) {
-      latlngLabel?.text = provider + " " + loc.toStringSimple() + " (" + VROptions.current.source + " -> " + VROptions.current.dest + ")"
+      latlngLabel?.text = provider + " " + loc.toStringSimple() + " (" + VROptions.current.sourceModel + " -> " + VROptions.current.dest + ")"
       speedLabel?.text = Convert.speed(loc.groundSpeed()) + "  " + Convert.distance(loc.altitude_gps)
     } else {
       latlngLabel?.text = LocationStatus.message
