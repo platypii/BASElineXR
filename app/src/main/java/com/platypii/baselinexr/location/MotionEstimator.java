@@ -1,19 +1,17 @@
 package com.platypii.baselinexr.location;
 
-import com.platypii.baselinexr.measurements.LatLngAlt;
 import com.platypii.baselinexr.measurements.MLocation;
 import com.platypii.baselinexr.util.tensor.Vector3;
 
 public final class MotionEstimator {
-    private final double alpha;              // 0..1, picked once
+    private final double alpha = 0.1;              // 0..1, picked once
     public Vector3 p = new Vector3();       // metres ENU
     public Vector3 v = new Vector3();       // m s⁻¹ ENU
     public Vector3 a = new Vector3();       // m s⁻² ENU
-    private long tLastMillis = -1;           // monotonic clock
+    private MLocation lastUpdate = null;     // last GPS update
+    private Vector3 lastPosition = null;     // ENU position of last GPS point (exact position not estimated)
     private MLocation origin = null;         // GPS origin for ENU conversion
     private static final double EARTH_RADIUS_METERS = 6371000.0;
-
-    public MotionEstimator(double alpha) { this.alpha = alpha; }
 
     /**
      * Converts GPS lat/lon/alt to ENU coordinates relative to the origin
@@ -35,73 +33,49 @@ public final class MotionEstimator {
         double east = deltaLon * EARTH_RADIUS_METERS * Math.cos(originLatRad);
         double up = gps.altitude_gps - origin.altitude_gps;
 
-        return new Vector3(east, north, up);
+        return new Vector3(east, up, north);
     }
 
     /** Call every time a fresh GPS sample arrives */
     public void update(MLocation gps) {
         long tNow = gps.millis;
-        if (tLastMillis < 0) {               // first fix sets origin
+        if (lastUpdate == null) {            // first fix sets origin
             origin = gps;                     // set GPS origin
             p = new Vector3();                // new origin = (0,0,0)
-            v = new Vector3(gps.vE, gps.vN, gps.climb);
+            v = new Vector3(gps.vE, gps.climb, gps.vN);
             a = new Vector3();
-            tLastMillis = tNow;
+            lastUpdate = gps;
+            lastPosition = gpsToEnu(gps);
             return;
         }
 
-        double dt = (tNow - tLastMillis) * 1e-3;
-        Vector3 vNew = new Vector3(gps.vE, gps.vN, gps.climb);
+        double dt = (tNow - lastUpdate.millis) * 1e-3;
+        Vector3 vNew = new Vector3(gps.vE, gps.climb, gps.vN);
         Vector3 aRaw = vNew.minus(v).div(dt);
         a = a.mul(1 - alpha).plus(aRaw.mul(alpha));
 
-        p = gpsToEnu(gps);                    // convert GPS to ENU coordinates
-        v = vNew;
-        tLastMillis = tNow;
+        lastPosition = gpsToEnu(gps);
+
+        // 1) predict (constant-acceleration)
+        Vector3 pPred = p.plus(v.mul(dt)).plus(a.mul(0.5 * dt * dt));
+        Vector3 vPred = v.plus(a.mul(dt));
+
+        // 2) update using measurement as evidence (complementary filter)
+        p = pPred.mul(1 - alpha).plus(lastPosition.mul(alpha));
+        v = vPred.mul(1 - alpha).plus(vNew.mul(alpha));
+
+        lastUpdate = gps;
     }
 
-    /** Predict state at an arbitrary near-future instant */
-    public State predict(long tQueryMillis) {
-        double dt = (tQueryMillis - tLastMillis) * 1e-3;
+    public Vector3 predictDelta(long tQueryMillis) {
+        if (lastUpdate == null) return new Vector3();
+
+        double dt = (tQueryMillis - lastUpdate.millis) * 1e-3;
         if (dt < 0) dt = 0;                  // clamp if asked for the past
-        Vector3 pos = p
+        return p
                 .plus(v.mul(dt))
-                .plus(a.mul(0.5 * dt * dt));
-        Vector3 vel = v.plus(a.mul(dt));
-        return new State(pos, vel, a);
-    }
-
-    /** Predict state at an arbitrary near-future instant */
-    public LatLngAlt predictLatLng(long tQueryMillis) {
-        double dt = (tQueryMillis - tLastMillis) * 1e-3;
-        if (dt < 0) dt = 0;                  // clamp if asked for the past
-        Vector3 position = p
-                .plus(v.mul(dt))
-                .plus(a.mul(0.5 * dt * dt));
-
-        return positionToLatLng(position);
-    }
-
-    private LatLngAlt positionToLatLng(Vector3 position) {
-        if (origin == null) {
-            return new LatLngAlt(0.0, 0.0, 0.0);
-        }
-
-        double originLatRad = Math.toRadians(origin.latitude);
-        double originLonRad = Math.toRadians(origin.longitude);
-
-        double north = position.y;
-        double east = position.x;
-        double up = position.z;
-
-        double deltaLat = north / EARTH_RADIUS_METERS;
-        double deltaLon = east / (EARTH_RADIUS_METERS * Math.cos(originLatRad));
-
-        double latitude = Math.toDegrees(originLatRad + deltaLat);
-        double longitude = Math.toDegrees(originLonRad + deltaLon);
-        double altitude = origin.altitude_gps + up;
-
-        return new LatLngAlt(latitude, longitude, altitude);
+                .plus(a.mul(0.5 * dt * dt))
+                .minus(lastPosition);
     }
 
     /**
