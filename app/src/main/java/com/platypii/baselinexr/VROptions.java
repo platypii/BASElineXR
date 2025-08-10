@@ -107,7 +107,7 @@ public class VROptions {
     );
 
     // Current active configuration
-    public static VROptions current = JANK;
+    public static VROptions current = EIGER_SKYDIVE;
 
     public static Map<String, LatLngAlt> destinations = new HashMap<>();
 
@@ -127,7 +127,22 @@ public class VROptions {
     }
 
     public LatLngAlt getDestination() {
-        return VROptions.destinations.get(this.destinationName);
+        LatLngAlt baseDestination = VROptions.destinations.get(this.destinationName);
+        if (baseDestination == null) {
+            return null;
+        }
+
+        // Convert north/east adjustments (in meters) to lat/lng offsets
+        double latRad = Math.toRadians(baseDestination.lat);
+        double deltaLat = Adjustments.northAdjustment / 6371000.0; // Convert north meters to radians
+        double deltaLon = Adjustments.eastAdjustment / (6371000.0 * Math.cos(latRad)); // Convert east meters to radians
+
+        // Apply adjustments and return new LatLngAlt
+        return new LatLngAlt(
+            baseDestination.lat + Math.toDegrees(deltaLat),
+            baseDestination.lng + Math.toDegrees(deltaLon),
+            baseDestination.alt
+        );
     }
 
     // Kpow student field
