@@ -174,22 +174,22 @@ class BaselineActivity : AppSystemActivity() {
               }
             })
 
-            val resetNorthButton = rootView?.findViewById<Button>(R.id.reset_north_button)
-            resetNorthButton?.setOnClickListener({
-              // Get current head transform to determine yaw
-              val head = systemManager
-                  .tryFindSystem<PlayerBodyAttachmentSystem>()
-                  ?.tryGetLocalPlayerAvatarBody()
-                  ?.head
-              head?.let {
-                val headTransform = it.tryGetComponent<Transform>()
-                headTransform?.let { transform ->
-                  val currentYaw = transform.transform.q.toEuler().y
-                  gpsTransform.yawAdjustment = Math.toRadians(currentYaw.toDouble())
-                  gpsTransform.saveYawAdjustment(this@BaselineActivity)
-                }
-              }
-            })
+//            val resetNorthButton = rootView?.findViewById<Button>(R.id.reset_north_button)
+//            resetNorthButton?.setOnClickListener({
+//              // Get current head transform to determine yaw
+//              val head = systemManager
+//                  .tryFindSystem<PlayerBodyAttachmentSystem>()
+//                  ?.tryGetLocalPlayerAvatarBody()
+//                  ?.head
+//              head?.let {
+//                val headTransform = it.tryGetComponent<Transform>()
+//                headTransform?.let { transform ->
+//                  val currentYaw = transform.transform.q.toEuler().y
+//                  gpsTransform.yawAdjustment = Math.toRadians(currentYaw.toDouble())
+//                  gpsTransform.saveYawAdjustment(this@BaselineActivity)
+//                }
+//              }
+//            })
 
             val yawPlusButton = rootView?.findViewById<Button>(R.id.yaw_plus_button)
             yawPlusButton?.setOnClickListener({

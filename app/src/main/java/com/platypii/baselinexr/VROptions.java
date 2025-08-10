@@ -107,7 +107,7 @@ public class VROptions {
     );
 
     // Current active configuration
-    public static VROptions current = GOING_IN_SIMULATOR;
+    public static VROptions current = EIGER_MUSHROOM_BASE;
 
     public static Map<String, LatLngAlt> destinations = new HashMap<>();
 
