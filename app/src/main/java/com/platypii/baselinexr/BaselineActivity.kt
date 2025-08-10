@@ -68,8 +68,8 @@ class BaselineActivity : AppSystemActivity() {
 
     Services.create(this)
 
-    // Load saved yaw adjustment
-    gpsTransform.loadYawAdjustment(this)
+    // Load saved adjustments
+    Adjustments.loadAdjustments(this)
 
     // Create systems
     hudSystem = HudSystem(gpsTransform)
@@ -194,15 +194,15 @@ class BaselineActivity : AppSystemActivity() {
             val yawPlusButton = rootView?.findViewById<Button>(R.id.yaw_plus_button)
             yawPlusButton?.setOnClickListener({
               // Increment yaw adjustment by 5 degrees (convert to radians)
-              gpsTransform.yawAdjustment += Math.toRadians(5.0)
-              gpsTransform.saveYawAdjustment(this@BaselineActivity)
+              Adjustments.yawAdjustment += Math.toRadians(5.0)
+              Adjustments.saveYawAdjustment(this@BaselineActivity)
             })
 
             val yawMinusButton = rootView?.findViewById<Button>(R.id.yaw_minus_button)
             yawMinusButton?.setOnClickListener({
               // Decrement yaw adjustment by 5 degrees (convert to radians)
-              gpsTransform.yawAdjustment -= Math.toRadians(5.0)
-              gpsTransform.saveYawAdjustment(this@BaselineActivity)
+              Adjustments.yawAdjustment -= Math.toRadians(5.0)
+              Adjustments.saveYawAdjustment(this@BaselineActivity)
             })
 
             val fwdButton = rootView?.findViewById<Button>(R.id.fwd_button)
@@ -230,8 +230,8 @@ class BaselineActivity : AppSystemActivity() {
                     // Set yaw adjustment so that when looking in velocity direction, world is oriented north
                     // We want: head_direction + yaw_adjustment = north (0)
                     // So: yaw_adjustment = -head_direction + velocity_to_north_correction
-                    gpsTransform.yawAdjustment = Math.toRadians(currentHeadYaw.toDouble()) - velocityBearingRad
-                    gpsTransform.saveYawAdjustment(this@BaselineActivity)
+                    Adjustments.yawAdjustment = Math.toRadians(currentHeadYaw.toDouble()) - velocityBearingRad
+                    Adjustments.saveYawAdjustment(this@BaselineActivity)
                   }
                 }
               }
@@ -261,11 +261,35 @@ class BaselineActivity : AppSystemActivity() {
                     // Add π (180 degrees) to the velocity bearing to get the opposite direction
                     val oppositeVelocityBearingRad = velocityBearingRad + Math.PI
 
-                    gpsTransform.yawAdjustment = Math.toRadians(currentHeadYaw.toDouble()) - oppositeVelocityBearingRad
-                    gpsTransform.saveYawAdjustment(this@BaselineActivity)
+                    Adjustments.yawAdjustment = Math.toRadians(currentHeadYaw.toDouble()) - oppositeVelocityBearingRad
+                    Adjustments.saveYawAdjustment(this@BaselineActivity)
                   }
                 }
               }
+            })
+
+            val northButton = rootView?.findViewById<Button>(R.id.north_button)
+            northButton?.setOnClickListener({
+              Adjustments.northAdjustment += 500.0
+              Adjustments.saveAdjustments(this@BaselineActivity)
+            })
+
+            val southButton = rootView?.findViewById<Button>(R.id.south_button)
+            southButton?.setOnClickListener({
+              Adjustments.northAdjustment -= 500.0
+              Adjustments.saveAdjustments(this@BaselineActivity)
+            })
+
+            val eastButton = rootView?.findViewById<Button>(R.id.east_button)
+            eastButton?.setOnClickListener({
+              Adjustments.eastAdjustment += 500.0
+              Adjustments.saveAdjustments(this@BaselineActivity)
+            })
+
+            val westButton = rootView?.findViewById<Button>(R.id.west_button)
+            westButton?.setOnClickListener({
+              Adjustments.eastAdjustment -= 500.0
+              Adjustments.saveAdjustments(this@BaselineActivity)
             })
 
             // Set up HUD references

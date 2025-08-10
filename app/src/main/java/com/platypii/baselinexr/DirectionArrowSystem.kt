@@ -85,7 +85,7 @@ class DirectionArrowSystem(
         var bearingRad = Math.toRadians(loc.bearing() - 90)
 
         // Apply yaw adjustment to align with world coordinate system
-        bearingRad += gpsTransform.yawAdjustment
+        bearingRad += Adjustments.yawAdjustment
 
         // Convert to quaternion rotation around Y-axis
         // Note: Meta Spatial uses Y-up coordinate system
