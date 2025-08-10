@@ -9,12 +9,12 @@ data class TerrainTileConfig(
     val lng: Double,      // Longitude of tile center/origin
     val alt: Double,      // Altitude offset in meters
     val gridX: Int = 0,   // Grid position X (multiples of 1000m)
-    val gridZ: Int = 0,   // Grid position Z (multiples of 1000m)
-    val pointOfInterest: LatLngAlt
+    val gridZ: Int = 0    // Grid position Z (multiples of 1000m)
 )
 
 data class TerrainConfiguration(
-    val tiles: List<TerrainTileConfig>
+    val tiles: List<TerrainTileConfig>,
+    val pointOfInterest: LatLngAlt
 )
 
 data class TerrainTileEntity(

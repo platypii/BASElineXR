@@ -93,13 +93,11 @@ class TerrainSystem(
 
         val currentTime = System.currentTimeMillis()
 
-        // Find nearest origin
+        // We need the lat/lng of where to put the model corner translated to world space
         val motionEstimator = Services.location.motionEstimator
         val dest = VROptions.current.getDestination()
         // Pass motion estimator to toWorldCoordinates for better prediction
         val referencePos = gpsToWorldTransform.toWorldCoordinates(dest.lat, dest.lng, dest.alt, currentTime, motionEstimator)
-
-        val config = terrainConfig ?: return
 
         // Get head pose for optional room movement translation
         val headPose = getHeadPose()
