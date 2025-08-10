@@ -81,7 +81,7 @@ public class VROptionsList {
         "kpowPrisonSouth",
         false,
         true,
-        true
+        false
     );
 
     public static VROptions current = LIVE;

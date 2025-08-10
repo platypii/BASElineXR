@@ -80,15 +80,20 @@ public class GpsToWorldTransform {
             double aN = motionEstimator.a.y;
             double aU = motionEstimator.a.z;
 
-            // TODO:
-//            LatLngAlt lla = motionEstimator.predictLatLng(currentTimeMillis);
-//            Vector3 predictedPosition = toWorldCoordinates(lla.lat, lla.lng, lla.alt);
+            LatLngAlt lla = motionEstimator.predictLatLng(currentTimeMillis);
+            Log.i(TAG, "base: " + lat + " " + lon + " " + alt + " pred: " + lla.lat + " " + lla.lng + " " + lla.alt);
+
+            Vector3 predictedPosition = toWorldCoordinates(lla.lat, lla.lng, lla.alt);
+
+//            Log.i(TAG, "pred x " + predictedPosition.getX() + " y " + predictedPosition.getY() + " z " + predictedPosition.getZ());
 
             // Calculate position update using velocity and acceleration
             // position = basePosition + velocity * deltaTime + 0.5 * acceleration * deltaTime^2
             extrapolatedX = basePosition.getX() - (float)(vE * deltaTime + 0.5 * aE * deltaTime * deltaTime);
             extrapolatedY = basePosition.getY() - (float)(vU * deltaTime + 0.5 * aU * deltaTime * deltaTime);
             extrapolatedZ = basePosition.getZ() - (float)(vN * deltaTime + 0.5 * aN * deltaTime * deltaTime);
+
+//            Log.i(TAG, "extra x " + extrapolatedX + " y " + extrapolatedY + " z " + extrapolatedZ);
         } else if (lastOrigin.millis > 0 && currentTimeMillis > lastOrigin.millis) {
             // Fall back to original velocity-based extrapolation if no motion estimator
             double deltaTime = (currentTimeMillis - lastOrigin.millis) / 1000.0;

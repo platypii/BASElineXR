@@ -13,6 +13,9 @@ public class VROptions {
     public final boolean showDirectionArrow;
     public final boolean showTarget;
 
+    // Current active configuration
+    public static VROptions current = VROptionsList.JANK;
+
     public VROptions(String name, String shader, String mockTrack, String sourceModel, String destinationName,
                      boolean roomMovement, boolean showDirectionArrow, boolean showTarget) {
         this.name = name;
@@ -24,10 +27,6 @@ public class VROptions {
         this.showDirectionArrow = showDirectionArrow;
         this.showTarget = showTarget;
     }
-
-    // Current active configuration
-    public static VROptions current = VROptionsList.LIVE;
-
 
     public String getTerrainModel() {
         return "terrain/" + sourceModel + "_tile.json";

@@ -292,6 +292,13 @@ class BaselineActivity : AppSystemActivity() {
               Adjustments.saveAdjustments(this@BaselineActivity)
             })
 
+            val centerButton = rootView?.findViewById<Button>(R.id.center_button)
+            centerButton?.setOnClickListener({
+              Adjustments.northAdjustment = 0.0
+              Adjustments.eastAdjustment = 0.0
+              Adjustments.saveAdjustments(this@BaselineActivity)
+            })
+
             // Set up HUD references
             val latlngLabel = rootView?.findViewById<TextView>(R.id.lat_lng)
             val speedLabel = rootView?.findViewById<TextView>(R.id.speed)
