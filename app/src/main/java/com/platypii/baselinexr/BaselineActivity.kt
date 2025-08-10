@@ -344,6 +344,8 @@ class BaselineActivity : AppSystemActivity() {
 
   private fun setupLocationUpdates() {
     locationSubscriber = { loc ->
+      log("Location: $loc")
+
       // Update GPS transform origin
       gpsTransform.setOrigin(loc)
 
