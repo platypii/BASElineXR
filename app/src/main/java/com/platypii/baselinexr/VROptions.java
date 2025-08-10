@@ -11,18 +11,20 @@ public class VROptions {
     public final String shader;
     public final String mockTrack;
     public final String sourceModel;
-    public final String dest;
+    public final String destinationName;
+    public final LatLngAlt destination;
     public final boolean roomMovement;
     public final boolean showDirectionArrow;
     public final boolean showTarget;
 
-    public VROptions(String name, String shader, String mockTrack, String sourceModel, String dest,
+    public VROptions(String name, String shader, String mockTrack, String sourceModel, String destinationName,
                      boolean roomMovement, boolean showDirectionArrow, boolean showTarget) {
         this.name = name;
         this.shader = shader;
         this.mockTrack = mockTrack;
         this.sourceModel = sourceModel;
-        this.dest = dest;
+        this.destinationName = destinationName;
+        this.destination = VROptions.destinations.get(this.destinationName);
         this.roomMovement = roomMovement;
         this.showDirectionArrow = showDirectionArrow;
         this.showTarget = showTarget;
@@ -124,10 +126,6 @@ public class VROptions {
 
     public String getTerrainModel() {
         return "terrain/" + sourceModel + "_tile.json";
-    }
-
-    public LatLngAlt getDestination() {
-        return VROptions.destinations.get(this.dest);
     }
 
     // Kpow student field
