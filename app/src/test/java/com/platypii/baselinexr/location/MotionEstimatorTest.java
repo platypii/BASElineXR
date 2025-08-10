@@ -1,5 +1,6 @@
 package com.platypii.baselinexr.location;
 
+import com.platypii.baselinexr.measurements.LatLngAlt;
 import com.platypii.baselinexr.measurements.MLocation;
 import com.platypii.baselinexr.util.tensor.Vector3;
 
@@ -219,6 +220,92 @@ public class MotionEstimatorTest {
         assertEquals(0.0, eastState.position().y, 0.2);
     }
 
+
+    @Test
+    public void testPredictLatLngWithZeroDeltaTime() {
+        MotionEstimator estimator = new MotionEstimator(0.5);
+
+        MLocation gps1 = new MLocation(1000L, 40.0, -105.0, 1500.0, 0.0, 10.0, 5.0, 1.0f, 1.0f, 1.0f, 1.0f, 10, 12);
+        estimator.update(gps1);
+
+        LatLngAlt predicted = estimator.predictLatLng(1000L);
+
+        assertEquals(40.0, predicted.lat, EPSILON);
+        assertEquals(-105.0, predicted.lng, EPSILON);
+        assertEquals(1500.0, predicted.alt, EPSILON);
+    }
+
+    @Test
+    public void testPredictLatLngWithSmallDeltaTime() {
+        MotionEstimator estimator = new MotionEstimator(0.5);
+
+        MLocation gps1 = new MLocation(0L, 40.0, -105.0, 1500.0, 5.0, 10.0, 5.0, 1.0f, 1.0f, 1.0f, 1.0f, 10, 12);
+        estimator.update(gps1);
+
+        MLocation gps2 = new MLocation(1000L, 40.0001, -104.9999, 1505.0, 5.0, 10.0, 5.0, 1.0f, 1.0f, 1.0f, 1.0f, 10, 12);
+        estimator.update(gps2);
+
+        LatLngAlt predicted = estimator.predictLatLng(2000L);
+
+        assertTrue(predicted.lat > 40.0001);
+        assertTrue(predicted.lng > -104.9999);
+        assertTrue(predicted.alt > 1505.0);
+
+        assertEquals(40.0002, predicted.lat, 0.00005);
+        assertEquals(-104.9998, predicted.lng, 0.00005);
+        assertEquals(1510.0, predicted.alt, 0.5);
+    }
+
+    @Test
+    public void testPredictLatLngWithConstantVelocity() {
+        MotionEstimator estimator = new MotionEstimator(0.1);
+
+        MLocation gps1 = new MLocation(0L, 40.0, -105.0, 1500.0, 10.0, 10.0, 5.0, 1.0f, 1.0f, 1.0f, 1.0f, 10, 12);
+        estimator.update(gps1);
+
+        MLocation gps2 = new MLocation(1000L, 40.0001, -104.9999, 1510.0, 10.0, 10.0, 5.0, 1.0f, 1.0f, 1.0f, 1.0f, 10, 12);
+        estimator.update(gps2);
+
+        LatLngAlt predicted1sec = estimator.predictLatLng(2000L);
+        LatLngAlt predicted2sec = estimator.predictLatLng(3000L);
+
+        double latDiff1 = predicted1sec.lat - 40.0001;
+        double lngDiff1 = predicted1sec.lng - (-104.9999);
+        double altDiff1 = predicted1sec.alt - 1510.0;
+
+        double latDiff2 = predicted2sec.lat - 40.0001;
+        double lngDiff2 = predicted2sec.lng - (-104.9999);
+        double altDiff2 = predicted2sec.alt - 1510.0;
+
+        assertTrue(Math.abs(latDiff2 - 2 * latDiff1) < 0.00001);
+        assertTrue(Math.abs(lngDiff2 - 2 * lngDiff1) < 0.00001);
+        assertTrue(Math.abs(altDiff2 - 2 * altDiff1) < 0.1);
+    }
+
+    @Test
+    public void testPredictLatLngBeforeFirstUpdate() {
+        MotionEstimator estimator = new MotionEstimator(0.5);
+
+        LatLngAlt predicted = estimator.predictLatLng(1000L);
+
+        assertEquals(0.0, predicted.lat, EPSILON);
+        assertEquals(0.0, predicted.lng, EPSILON);
+        assertEquals(0.0, predicted.alt, EPSILON);
+    }
+
+    @Test
+    public void testPredictLatLngWithNegativeTime() {
+        MotionEstimator estimator = new MotionEstimator(0.5);
+
+        MLocation gps1 = new MLocation(1000L, 40.0, -105.0, 1500.0, 0.0, 10.0, 5.0, 1.0f, 1.0f, 1.0f, 1.0f, 10, 12);
+        estimator.update(gps1);
+
+        LatLngAlt predicted = estimator.predictLatLng(500L);
+
+        assertEquals(40.0, predicted.lat, EPSILON);
+        assertEquals(-105.0, predicted.lng, EPSILON);
+        assertEquals(1500.0, predicted.alt, EPSILON);
+    }
 
     private void assertVector3Equals(Vector3 expected, Vector3 actual) {
         assertEquals(expected.x, actual.x, EPSILON);
