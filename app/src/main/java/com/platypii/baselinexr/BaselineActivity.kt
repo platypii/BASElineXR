@@ -366,7 +366,7 @@ class BaselineActivity : AppSystemActivity() {
   }
 
   companion object {
-    const val TAG = "BaselineActivityDebug"
+    const val TAG = "BaselineActivity"
     const val GLXF_SCENE = "GLXF_SCENE"
   }
 }

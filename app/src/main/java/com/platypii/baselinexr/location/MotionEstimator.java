@@ -4,12 +4,12 @@ import com.platypii.baselinexr.measurements.MLocation;
 import com.platypii.baselinexr.util.tensor.Vector3;
 
 public final class MotionEstimator {
-    private final double alpha = 0.1;              // 0..1, picked once
-    public Vector3 p = new Vector3();       // metres ENU
-    public Vector3 v = new Vector3();       // m s⁻¹ ENU
-    public Vector3 a = new Vector3();       // m s⁻² ENU
+    private static final double alpha = 0.1; // 0..1, picked once
+    public Vector3 p = new Vector3();        // metres ENU
+    public Vector3 v = new Vector3();        // m s⁻¹ ENU
+    public Vector3 a = new Vector3();        // m s⁻² ENU
     private MLocation lastUpdate = null;     // last GPS update
-    private Vector3 lastPosition = null;     // ENU position of last GPS point (exact position not estimated)
+    private Vector3 positionDelta = null;    // Difference between last gps point and last estimated position
     private MLocation origin = null;         // GPS origin for ENU conversion
     private static final double EARTH_RADIUS_METERS = 6371000.0;
 
@@ -45,7 +45,7 @@ public final class MotionEstimator {
             v = new Vector3(gps.vE, gps.climb, gps.vN);
             a = new Vector3();
             lastUpdate = gps;
-            lastPosition = gpsToEnu(gps);
+            positionDelta = new Vector3();
             return;
         }
 
@@ -54,7 +54,7 @@ public final class MotionEstimator {
         Vector3 aRaw = vNew.minus(v).div(dt);
         a = a.mul(1 - alpha).plus(aRaw.mul(alpha));
 
-        lastPosition = gpsToEnu(gps);
+        Vector3 lastPosition = gpsToEnu(gps);
 
         // 1) predict (constant-acceleration)
         Vector3 pPred = p.plus(v.mul(dt)).plus(a.mul(0.5 * dt * dt));
@@ -64,6 +64,8 @@ public final class MotionEstimator {
         p = pPred.mul(1 - alpha).plus(lastPosition.mul(alpha));
         v = vPred.mul(1 - alpha).plus(vNew.mul(alpha));
 
+        positionDelta = p.minus(lastPosition);
+
         lastUpdate = gps;
     }
 
@@ -72,10 +74,9 @@ public final class MotionEstimator {
 
         double dt = (tQueryMillis - lastUpdate.millis) * 1e-3;
         if (dt < 0) dt = 0;                  // clamp if asked for the past
-        return p
+        return positionDelta
                 .plus(v.mul(dt))
-                .plus(a.mul(0.5 * dt * dt))
-                .minus(lastPosition);
+                .plus(a.mul(0.5 * dt * dt));
     }
 
     /**
