@@ -76,15 +76,13 @@ public class VROptionsList {
     public static final VROptions JANK = new VROptions(
         "Jank",
         "data/shaders/terrain_bubble",
-        "jank.csv",
+        "jank-longer.csv",
         "eiger",
         "kpowPrisonSouth",
         false,
         true,
         false
     );
-
-    public static VROptions current = LIVE;
 
     public static Map<String, LatLngAlt> destinations = new HashMap<>();
 

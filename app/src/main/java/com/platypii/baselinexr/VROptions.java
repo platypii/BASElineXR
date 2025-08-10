@@ -14,7 +14,7 @@ public class VROptions {
     public final boolean showTarget;
 
     // Current active configuration
-    public static VROptions current = VROptionsList.JANK;
+    public static VROptions current = VROptionsList.LIVE;
 
     public VROptions(String name, String shader, String mockTrack, String sourceModel, String destinationName,
                      boolean roomMovement, boolean showDirectionArrow, boolean showTarget) {

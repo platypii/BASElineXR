@@ -15,7 +15,7 @@ void main() {
     // Distance fade parameters
     float minDistance = 400.0; // Full opacity until this distance
     float maxDistance = 500.0; // Fully transparent at this distance
-    float minAlpha = 0.8; // Alpha value at minDistance and closer
+    float minAlpha = 0.9; // Alpha value at minDistance and closer
     float maxAlpha = 0.1; // Alpha value at maxDistance and farther
 
     // Distance-based alpha: minAlpha until minDistance, then fade to maxAlpha at maxDistance

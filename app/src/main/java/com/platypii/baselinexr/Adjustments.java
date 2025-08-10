@@ -12,7 +12,7 @@ public class Adjustments {
     private static final String KEY_EAST_ADJUSTMENT = "eastAdjustment";
 
     // Yaw adjustment in radians for north orientation reset
-    public static double yawAdjustment = 0.0;
+    public static double yawAdjustment = 0.0; // radians
     public static double northAdjustment = 0.0;
     public static double eastAdjustment = 0.0;
 
@@ -42,6 +42,13 @@ public class Adjustments {
     }
 
     public static void saveYawAdjustment(Context context) {
+        // Normalize yawAdjustment to +/- Math.PI range
+        while (yawAdjustment > 2 * Math.PI) {
+            yawAdjustment -= 2 * Math.PI;
+        }
+        while (yawAdjustment < 0) {
+            yawAdjustment += 2 * Math.PI;
+        }
         saveAdjustments(context);
     }
 
