@@ -8,7 +8,7 @@ import com.platypii.baselinexr.util.tensor.Vector3;
 public final class MotionEstimator {
     private static final String TAG = "MotionEstimator";
 
-    private static final double alpha = 0.1; // 0..1, picked once
+    private static final double alpha = 0.2; // 0..1
     public Vector3 p = new Vector3();        // metres ENU
     public Vector3 v = new Vector3();        // m s⁻¹ ENU
     public Vector3 a = new Vector3();        // m s⁻² ENU

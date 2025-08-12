@@ -41,7 +41,7 @@ obj2gltf \
 gltf-transform etc1s \
     build/eiger_terrain_${RES}m.glb \
     build/eiger_terrain_${RES}m_etc1s.glb \
-    --quality 75 \
+    --quality 100 \
     --rdo \
     --slots baseColorTexture \
     --jobs 8 \

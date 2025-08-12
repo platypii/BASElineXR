@@ -119,8 +119,6 @@ class TargetPanel(private val gpsTransform: GpsToWorldTransform) : SystemBase() 
                 // Format and update TextView
                 val distanceText = String.format("%.1f mi", distanceMiles)
                 distanceTextView?.text = distanceText
-                
-                Log.d("TargetPanel", "Distance to target: $distanceText")
             } catch (e: Exception) {
                 Log.w("TargetPanel", "Error calculating distance: ${e.message}")
                 distanceTextView?.text = "-- mi"

@@ -9,7 +9,7 @@ public class VROptionsList {
 
     public static final VROptions LIVE = new VROptions(
         "Live",
-        "data/shaders/terrain_bubble",
+        "data/shaders/terrain_cinema",
         null,
         "eiger",
         "kpowPrisonSouth",

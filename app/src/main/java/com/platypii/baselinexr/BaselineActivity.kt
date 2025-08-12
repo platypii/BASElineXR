@@ -139,10 +139,10 @@ class BaselineActivity : AppSystemActivity() {
     super.onSceneReady()
 
     scene.setLightingEnvironment(
-      ambientColor = Vector3(0.9f),
+      ambientColor = Vector3(01.4f),
       sunColor     = Vector3(1f),
-      sunDirection = Vector3(1f,10f,1f),
-      environmentIntensity = 0.02f
+      sunDirection = Vector3(-4f,10f,-2f),
+      environmentIntensity = 0.01f
     )
     scene.updateIBLEnvironment("environment.env")
   }
