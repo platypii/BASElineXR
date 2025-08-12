@@ -2,8 +2,6 @@ package com.platypii.baselinexr
 
 import android.os.Bundle
 import android.util.Log
-import android.view.View
-import android.widget.Button
 import android.widget.TextView
 import com.meta.spatial.castinputforward.CastInputForwardFeature
 import com.meta.spatial.core.Entity
@@ -26,6 +24,7 @@ import com.meta.spatial.core.PerformanceLevel
 import com.meta.spatial.toolkit.PlayerBodyAttachmentSystem
 import com.meta.spatial.toolkit.Transform
 import com.platypii.baselinexr.location.LocationStatus
+import com.platypii.baselinexr.ui.HudPanelController
 
 class BaselineActivity : AppSystemActivity() {
 
@@ -34,12 +33,13 @@ class BaselineActivity : AppSystemActivity() {
   private var gltfxEntity: Entity? = null
   private var terrainSystem: TerrainSystem? = null
   private var directionArrowSystem: DirectionArrowSystem? = null
-  private var hudSystem: HudSystem? = null
+  var hudSystem: HudSystem? = null
   private var altimeterSystem: AltimeterSystem? = null
   private var speedometerSystem: SpeedometerSystem? = null
   private var targetPanelSystem: TargetPanel? = null
   private val gpsTransform = GpsToWorldTransform()
   private var locationSubscriber: ((com.platypii.baselinexr.measurements.MLocation) -> Unit)? = null
+  private var hudPanelController: com.platypii.baselinexr.ui.HudPanelController? = null
 
   override fun registerFeatures(): List<SpatialFeature> {
     val features =
@@ -66,6 +66,9 @@ class BaselineActivity : AppSystemActivity() {
 
     // Load saved adjustments
     Adjustments.loadAdjustments(this)
+
+    // Initialize panel controllers
+    hudPanelController = HudPanelController(this)
 
     // Create systems
     hudSystem = HudSystem(gpsTransform)
@@ -126,6 +129,9 @@ class BaselineActivity : AppSystemActivity() {
     directionArrowSystem?.cleanup()
     targetPanelSystem?.cleanup()
 
+    // Clean up panel controllers to prevent memory leaks
+    hudPanelController = null
+
     super.onDestroy()
   }
 
@@ -147,105 +153,10 @@ class BaselineActivity : AppSystemActivity() {
           config {
             themeResourceId = R.style.PanelAppThemeTransparent
             includeGlass = false
-//            layerConfig = LayerConfig()
             enableTransparent = true
           }
           panel {
-            val exitButton = rootView?.findViewById<Button>(R.id.exit_button)
-            exitButton?.setOnClickListener({
-//              Services.stop()
-              finish()
-            })
-
-            // Add click listener to hudPanel to toggle extraControls visibility
-            val hudPanel = rootView?.findViewById<android.widget.LinearLayout>(R.id.hudPanel)
-            val extraControls = rootView?.findViewById<android.widget.LinearLayout>(R.id.extraControls)
-            hudPanel?.setOnClickListener({
-              extraControls?.let { controls ->
-                if (controls.visibility == View.VISIBLE) {
-                  controls.visibility = View.GONE
-                } else {
-                  controls.visibility = View.VISIBLE
-                }
-              }
-            })
-
-//            val resetNorthButton = rootView?.findViewById<Button>(R.id.reset_north_button)
-//            resetNorthButton?.setOnClickListener({
-//              // Get current head transform to determine yaw
-//              val head = systemManager
-//                  .tryFindSystem<PlayerBodyAttachmentSystem>()
-//                  ?.tryGetLocalPlayerAvatarBody()
-//                  ?.head
-//              head?.let {
-//                val headTransform = it.tryGetComponent<Transform>()
-//                headTransform?.let { transform ->
-//                  val currentYaw = transform.transform.q.toEuler().y
-//                  gpsTransform.yawAdjustment = Math.toRadians(currentYaw.toDouble())
-//                  gpsTransform.saveYawAdjustment(this@BaselineActivity)
-//                }
-//              }
-//            })
-
-            val yawPlusButton = rootView?.findViewById<Button>(R.id.yaw_plus_button)
-            yawPlusButton?.setOnClickListener({
-              // Increment yaw adjustment by 5 degrees (convert to radians)
-              Adjustments.yawAdjustment += Math.toRadians(5.0)
-              Adjustments.saveYawAdjustment(this@BaselineActivity)
-            })
-
-            val yawMinusButton = rootView?.findViewById<Button>(R.id.yaw_minus_button)
-            yawMinusButton?.setOnClickListener({
-              // Decrement yaw adjustment by 5 degrees (convert to radians)
-              Adjustments.yawAdjustment -= Math.toRadians(5.0)
-              Adjustments.saveYawAdjustment(this@BaselineActivity)
-            })
-
-            val fwdButton = rootView?.findViewById<Button>(R.id.fwd_button)
-            fwdButton?.setOnClickListener({
-              handleForwardOrientationButton()
-            })
-
-            val tailButton = rootView?.findViewById<Button>(R.id.tail_button)
-            tailButton?.setOnClickListener({
-                handleTailOrientationButton()
-            })
-
-            val northButton = rootView?.findViewById<Button>(R.id.north_button)
-            northButton?.setOnClickListener({
-              Adjustments.northAdjustment += 500.0
-              Adjustments.saveAdjustments(this@BaselineActivity)
-            })
-
-            val southButton = rootView?.findViewById<Button>(R.id.south_button)
-            southButton?.setOnClickListener({
-              Adjustments.northAdjustment -= 500.0
-              Adjustments.saveAdjustments(this@BaselineActivity)
-            })
-
-            val eastButton = rootView?.findViewById<Button>(R.id.east_button)
-            eastButton?.setOnClickListener({
-              Adjustments.eastAdjustment += 500.0
-              Adjustments.saveAdjustments(this@BaselineActivity)
-            })
-
-            val westButton = rootView?.findViewById<Button>(R.id.west_button)
-            westButton?.setOnClickListener({
-              Adjustments.eastAdjustment -= 500.0
-              Adjustments.saveAdjustments(this@BaselineActivity)
-            })
-
-            val centerButton = rootView?.findViewById<Button>(R.id.center_button)
-            centerButton?.setOnClickListener({
-              Adjustments.northAdjustment = 0.0
-              Adjustments.eastAdjustment = 0.0
-              Adjustments.saveAdjustments(this@BaselineActivity)
-            })
-
-            // Set up HUD references
-            val latlngLabel = rootView?.findViewById<TextView>(R.id.lat_lng)
-            val speedLabel = rootView?.findViewById<TextView>(R.id.speed)
-            hudSystem?.setLabels(latlngLabel, speedLabel)
+            hudPanelController?.setupPanel(rootView)
           }
         },
         PanelRegistration(R.layout.altimeter) {
@@ -292,7 +203,7 @@ class BaselineActivity : AppSystemActivity() {
     }
   }
 
-    private fun handleForwardOrientationButton() {
+    fun handleForwardOrientationButton() {
         // Get current head transform to determine yaw
         val head = systemManager
             .tryFindSystem<PlayerBodyAttachmentSystem>()
@@ -301,7 +212,7 @@ class BaselineActivity : AppSystemActivity() {
         head?.let {
             val headTransform = it.tryGetComponent<Transform>()
             headTransform?.let { transform ->
-                val currentHeadYaw = extractYawFromQuaternion(transform.transform.q)
+                val currentHeadYaw = SpatialUtils.extractYawFromQuaternion(transform.transform.q)
 
                 // Get current location with velocity data
                 val currentLocation = Services.location.lastLoc
@@ -317,13 +228,13 @@ class BaselineActivity : AppSystemActivity() {
                     Adjustments.yawAdjustment = headBearingRad - velocityBearingRad
                     Adjustments.saveYawAdjustment(this@BaselineActivity)
 
-//                    log("Orient head: " + headBearingRad + " vel: " + velocityBearingRad + " yawAdj: " + Adjustments.yawAdjustment)
+//                    Log.d(TAG, "Orient head: " + headBearingRad + " vel: " + velocityBearingRad + " yawAdj: " + Adjustments.yawAdjustment)
                 }
             }
         }
     }
 
-    private fun handleTailOrientationButton() {
+    fun handleTailOrientationButton() {
         // Get current head transform to determine yaw
         val head = systemManager
             .tryFindSystem<PlayerBodyAttachmentSystem>()
@@ -332,7 +243,7 @@ class BaselineActivity : AppSystemActivity() {
         head?.let {
             val headTransform = it.tryGetComponent<Transform>()
             headTransform?.let { transform ->
-                val currentHeadYaw = extractYawFromQuaternion(transform.transform.q)
+                val currentHeadYaw = SpatialUtils.extractYawFromQuaternion(transform.transform.q)
 
                 // Get current location with velocity data
                 val currentLocation = Services.location.lastLoc
@@ -354,7 +265,7 @@ class BaselineActivity : AppSystemActivity() {
 
   private fun setupLocationUpdates() {
     locationSubscriber = { loc ->
-      log("Location: $loc")
+      Log.d(TAG, "Location: $loc")
 
       // Update GPS transform origin
       gpsTransform.setOrigin(loc)
@@ -373,23 +284,4 @@ class BaselineActivity : AppSystemActivity() {
     const val GLXF_SCENE = "GLXF_SCENE"
   }
 
-  /**
-   * Extract yaw (Y rotation) from quaternion using atan2 to avoid euler angle discontinuities
-   * Returns yaw in radians, continuous and without flipping
-   */
-  private fun extractYawFromQuaternion(q: com.meta.spatial.core.Quaternion): Double {
-    val x = q.x.toDouble()
-    val y = q.y.toDouble()
-    val z = q.z.toDouble()
-    val w = q.w.toDouble()
-
-    // Convert quaternion to yaw using atan2 - this avoids discontinuities
-    // Formula: yaw = atan2(2*(w*y + x*z), 1 - 2*(y*y + z*z))
-    val yaw = Math.atan2(2.0 * (w * y + x * z), 1.0 - 2.0 * (y * y + z * z))
-    return yaw
-  }
-}
-
-fun log(msg: String) {
-  Log.d(BaselineActivity.TAG, msg)
 }
