@@ -80,21 +80,21 @@ In Spatial SDK, layers render above the scene unless you enable hole punching by
 
 If you only enable hole punching and use the layers config, you will no longer be able to see your panels, because you haven’t punched holes in the scene yet. To punch the required holes, you can use `panelShader = SceneMaterial.HOLE_PUNCH_PANEL_SHADER` and `alphaMode = AlphaMode.HOLE_PUNCH`. These two calls do the following:
 
-* Tells the panel mesh in the scene to only write to the depth of the mesh.
-* Clears all color and alpha values, which causes the scene to show through to the layers beneath.
+- Tells the panel mesh in the scene to only write to the depth of the mesh.
+- Clears all color and alpha values, which causes the scene to show through to the layers beneath.
 
 You can get creative with layers and blending modes (set in the layer config) to achieve interesting effects like masking and additive blending.
 
 ## Restrictions
 
-* **Transparency**: Transparencies are challenging because you need to have your panel punch holes in the places where your panel has transparency. This hole punching is hard to do arbitrarily. You can sometimes use `panelShader = SceneMaterial.HOLE_PUNCH_PANEL_SHADER` to get around the difficulty of ad hoc hole-punching.
-* **Overlapping or intersecting layers**: Spatial SDK writes layers one-by-one and does not write depth. This can sometimes make overlapping panels an issue.
-* **Shader capabilities**: You can attach an effect process to our panel, but the compositor handles the final image rather than our shaders, so we cannot edit the panel with a custom shader after the fact.
+- **Transparency**: Transparencies are challenging because you need to have your panel punch holes in the places where your panel has transparency. This hole punching is hard to do arbitrarily. You can sometimes use `panelShader = SceneMaterial.HOLE_PUNCH_PANEL_SHADER` to get around the difficulty of ad hoc hole-punching.
+- **Overlapping or intersecting layers**: Spatial SDK writes layers one-by-one and does not write depth. This can sometimes make overlapping panels an issue.
+- **Shader capabilities**: You can attach an effect process to our panel, but the compositor handles the final image rather than our shaders, so we cannot edit the panel with a custom shader after the fact.
 
 ## Design guidelines
 
-* [Window affordances](/horizon/design/windows/)
-* [Tooltips](/horizon/design/tooltips/)
-* [Fonts and Icons](/horizon/design/fonts-icons/)
-* [Cards](/horizon/design/cards/)
-* [Dialogs](/horizon/design/dialogs/)
+- [Window affordances](/horizon/design/windows/)
+- [Tooltips](/horizon/design/tooltips/)
+- [Fonts and Icons](/horizon/design/fonts-icons/)
+- [Cards](/horizon/design/cards/)
+- [Dialogs](/horizon/design/dialogs/)

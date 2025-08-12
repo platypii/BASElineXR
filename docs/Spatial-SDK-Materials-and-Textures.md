@@ -30,4 +30,4 @@ Other options, under **PBR Material Component**, determine textures and how ligh
 
 ## Design guidelines
 
-* [Materials and textures](/horizon/design/art-assets#uvs-textures-and-materials)
+- [Materials and textures](/horizon/design/art-assets#uvs-textures-and-materials)

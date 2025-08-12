@@ -28,11 +28,11 @@ Another built-in shader can be found at `SceneMaterial.UNLIT_SHADER`. This shade
 
 To use these shaders, you can specify location strings as arguments in a number of Spatial SDK APIs.
 
- * In the `Mesh` component, specify a `defaultShaderOverride` to set the deafult shader for all materials loaded from the associated glTF. 
- * If you want to change the shader of a specific material in your glTF, you can utilize the [extras](https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#reference-extras) properties on your glTF material with the `"meta_spatial_sdk_shader"` key. For example, you can set a material shader to be unlit with the following key/value pair: `"meta_spatial_sdk_shader": "data/shaders/unlit/unlit"`.
- * You can specify the shader on the `Material` component with the `shader` attribute. This lets you set the shaders for mesh creators like `mesh://box` and `mesh://sphere`.
- * You can set the shader path directly on `SceneMaterial`, either in the constructor, or through a custom `SceneMaterial` (described later in this guide).
- * For advanced cases, use this to manage a direct reference to a material.
+ - In the `Mesh` component, specify a `defaultShaderOverride` to set the deafult shader for all materials loaded from the associated glTF. 
+ - If you want to change the shader of a specific material in your glTF, you can utilize the [extras](https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#reference-extras) properties on your glTF material with the `"meta_spatial_sdk_shader"` key. For example, you can set a material shader to be unlit with the following key/value pair: `"meta_spatial_sdk_shader": "data/shaders/unlit/unlit"`.
+ - You can specify the shader on the `Material` component with the `shader` attribute. This lets you set the shaders for mesh creators like `mesh://box` and `mesh://sphere`.
+ - You can set the shader path directly on `SceneMaterial`, either in the constructor, or through a custom `SceneMaterial` (described later in this guide).
+ - For advanced cases, use this to manage a direct reference to a material.
 
 ## Plugin setup
 
@@ -404,6 +404,6 @@ void main() {
 
 ## Design guidelines
 
- * [Balancing art and performance](/horizon/design/art-and-performance/)
- * [Art direction](/horizon/design/art-direction/)
+ - [Balancing art and performance](/horizon/design/art-and-performance/)
+ - [Art direction](/horizon/design/art-direction/)
  
