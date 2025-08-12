@@ -1,92 +1,50 @@
 # BASEline XR
 
-BASEline Augmented Reality.
+BASEline Mixed Reality.
 
-To setup:
+Uses the Meta Quest 3 headset to overlay a 3D terrain model over the real world.
+Location comes from a FlySight2 bluetooth GPS unit.
+Orientation comes from the Quest headset.
 
-1. Pair FlySight with Quest: Double-tap FlySight, Pair in Quest Settings.
-2. Use Android Studio to install on Quest.
-3. Do NOT enable travel mode!
-4. On final approach, put on headset, when tracking freaks out, click "Continue without tracking"
-5. Ensure alignment with direction of flight
+## Ground Setup
+
+1. Pair FlySight with Quest:
+  - Double-tap FlySight button (LED should be pulsing)
+  - Quest Settings > Bluetooth > Scan
+  - Click your FlySight in the list to pair it with the quest
+2. Install app:
+  - Install Android Studio
+  - Open BASElineXR project in Android Studio
+  - Use ▶️ run button to install
+3. Configure Quest (IMPORTANT):
+  - Travel Mode: DISABLED
+  - Settings > Movement Tracking > Headset Tracking: DISABLED
+
+![Quest Movement Tracking Settings](quest-movement-tracking.jpg)
+![Quest Quick Settings](quest-quick-settings.jpg)
+
+## Flight Setup
+
+WARNING: The Quest does NOT know which way is north in relation to the direction you are looking.
+
+This means that the headset and the 3D model are by default NOT aligned.
+This results in unexpected behavior where you flying forward results in terrain approaching from the side, or backwards.
+
+BASElineXR has a complicated system to fix alignment before flight.
+The blue arrow is always below you, and points toward what the headset _thinks_ is the direction of flight.
+
+**The blue arrow MUST point toward the front of the plane before exit.**
+
+1. On final approach, put on headset
+2. Click on BASElineXR HUD to show options menu
+3. LOOK at the nose or tail of the plane and click Nose or Tail
+4. Use +/- 5° to fine tune the orientation
+5. Click on BASElineXR HUD to hide options menu
 
 Notes:
 
-Left controller hamburger is the ONLY way to force return to home.
-
-## Advanced administration
-
-Set BASElineXR as the default home activity:
-
-Register for BOOT_COMPLETED.
- - `<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>`
- - Receive `android.intent.action.BOOT_COMPLETED`
-
-Off to Meta Home -> 18s
-Off to BaselineXR -> 28s
-
-List boot services:
-
-```
-adb shell pm query-receivers --user 0 --components -a android.intent.action.BOOT_COMPLETED
-```
-
-Disable unnecessary services:
-
-```
-adb shell pm disable-user --user 0 com.facebook.orca
-adb shell pm disable-user --user 0 com.google.android.apps.youtube.vr.oculus
-adb shell pm disable-user --user 0 com.oculus.assistant
-adb shell pm disable-user --user 0 com.oculus.avatareditor
-adb shell pm disable-user --user 0 com.oculus.firsttimenux
-adb shell pm disable-user --user 0 com.oculus.igvr
-adb shell pm disable-user --user 0 com.oculus.panelapp.library
-adb shell pm disable-user --user 0 com.oculus.store
-adb shell pm disable-user --user 0 com.oculus.tv
-adb shell pm disable-user --user 0 com.whatsapp
-Package com.oculus.socialplatform new state: disabled-user
-```
-
-Get GPU memory usage:
-
-```
-adb shell gpumeminfo -l
-```
-
-### Things that don't work:
-
-```
-./gradlew assembleRelease
-adb uninstall com.platypii.baselinexr
-adb install ./app/build/intermediates/apk/debug/app-debug.apk
-
-adb shell cmd role add-role-holder --user 0 android.app.role.HOME com.platypii.baselinexr
-
-adb shell pm disable-user com.oculus.vrshell
-adb shell cmd package set-home-activity com.platypii.baselinexr/.BaselineActivity
-
-adb shell setprop persist.debug.oculus.autolaunch com.platypii.baselinexr/.BaselineActivity
-```
-
-Restore Oculus Home as the default home activity:
-
-```
-adb shell pm enable com.oculus.vrshell
-adb shell cmd package set-home-activity com.oculus.vrshell/com.oculus.vrshell.MainActivity
-```
-
-Current home:
-
-```
-$ adb shell cmd role get-role-holders --user 0 android.app.role.HOME
-com.oculus.systemux
-```
-
-Causes "social features disabled" popup
-
-```
-adb shell pm disable-user --user 0 com.oculus.socialplatform
-```
+ - Left controller hamburger is the ONLY way to force return to home.
+ - Meta button + long-press trigger to start/stop recording.
 
 ## Imagery
 
