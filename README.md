@@ -9,19 +9,38 @@ Orientation comes from the Quest headset.
 ## Ground Setup
 
 1. Pair FlySight with Quest:
-  - Double-tap FlySight button (LED should be pulsing)
-  - Quest Settings > Bluetooth > Scan
-  - Click your FlySight in the list to pair it with the quest
+   - Double-tap FlySight button (LED should be pulsing)
+   - Quest Settings > Bluetooth > Scan
+   - Click your FlySight in the list to pair it with the quest
 2. Install app:
-  - Install Android Studio
-  - Open BASElineXR project in Android Studio
-  - Use ▶️ run button to install
+   - Install Android Studio
+   - Open BASElineXR project in Android Studio
+   - Click run button ▶️ to install
 3. Configure Quest (IMPORTANT):
-  - Travel Mode: DISABLED
-  - Settings > Movement Tracking > Headset Tracking: DISABLED
+   - Travel Mode: DISABLED
+   - Settings > Movement Tracking > Headset Tracking: DISABLED
 
 ![Quest Movement Tracking Settings](quest-movement-tracking.jpg)
 ![Quest Quick Settings](quest-quick-settings.jpg)
+
+### Headset Tracking
+
+You should disable headset tracking.
+
+Disabling headset tracking puts the device in 3DOF instead of 6DOF mode. [[source]](https://www.meta.com/en-gb/help/quest/598701621088668/)
+This has the unfortunate side-effect of disabling pass-through on the quest home screen (but passthrough still works in BASEline).
+Disabling headset tracking prevents the Tracking Lost screen.
+
+If "Headset Tracking" is enabled, the device will lose tracking in flight (or on the plane) and show the tracking lost screen.
+
+WARNING: When the headset loses tracking, it will show a popup **AND DISABLE PASSTHROUGH CAMERA**.
+
+If you're on the plane, you can use a controller to click "continue without tracking".
+But it can be hard to hit, and it is important that you do NOT click "turn on travel mode".
+
+WARNING: Do NOT turn on travel mode! It will disable headset rotation that is needed for BASElineXR. 
+
+![Quest Tracking Lost](quest-tracking-lost.jpg)
 
 ## Flight Setup
 
