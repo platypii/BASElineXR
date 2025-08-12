@@ -142,7 +142,7 @@ public class MotionEstimatorTest {
         assertEquals(0.0, estimator.p.x, EPSILON); // East
         assertEquals(0.0, estimator.p.z, EPSILON); // North
         assertEquals(0.55, estimator.p.y, 0.1); // Up is positive (with smoothing and prediction)
-        assertEquals(-1.9, estimator.v.y, 0.2); // Climb rate (smoothed with prediction effects)
+        assertEquals(-10.0, estimator.v.y, 0.1); // Climb rate (taken directly from GPS)
     }
 
     @Test

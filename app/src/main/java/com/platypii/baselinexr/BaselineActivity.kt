@@ -189,6 +189,11 @@ class BaselineActivity : AppSystemActivity() {
             includeGlass = false
             enableTransparent = true
           }
+          panel {
+            // Set up target panel distance label
+            val distanceLabel = rootView?.findViewById<TextView>(R.id.distance_text)
+            targetPanelSystem?.setLabel(distanceLabel)
+          }
         })
   }
 

@@ -6,9 +6,13 @@
     android:gravity="center"
     android:background="@android:color/transparent">
 
-    <ImageView
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:src="@drawable/reticle" />
+    <TextView
+        android:id="@+id/distance_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:drawableTop="@drawable/reticle"
+        android:textColor="#00cc00"
+        android:textSize="80sp"
+        android:gravity="center" />
 
 </LinearLayout>
