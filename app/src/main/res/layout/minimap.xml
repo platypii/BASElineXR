@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:clipToOutline="true">
+
+    <ImageView
+        android:id="@+id/minimap_image"
+        android:layout_width="400dp"
+        android:layout_height="272dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/minimap"
+        android:background="#00000000" />
+
+    <!-- Red dot overlay at center -->
+    <View
+        android:id="@+id/red_dot"
+        android:layout_width="12dp"
+        android:layout_height="12dp"
+        android:layout_gravity="center"
+        android:background="#ffff0000"
+        android:elevation="2dp" />
+
+</FrameLayout>

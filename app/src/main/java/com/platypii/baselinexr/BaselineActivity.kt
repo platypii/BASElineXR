@@ -38,6 +38,7 @@ class BaselineActivity : AppSystemActivity() {
   private var speedometerSystem: SpeedometerSystem? = null
   private var targetPanelSystem: TargetPanel? = null
   private var portalSystem: PortalSystem? = null
+  private var miniMapPanel: MiniMapPanel? = null
   private val gpsTransform = GpsToWorldTransform()
   private var locationSubscriber: ((com.platypii.baselinexr.measurements.MLocation) -> Unit)? = null
   private var hudPanelController: com.platypii.baselinexr.ui.HudPanelController? = null
@@ -78,6 +79,7 @@ class BaselineActivity : AppSystemActivity() {
     directionArrowSystem = DirectionArrowSystem()
     targetPanelSystem = TargetPanel(gpsTransform)
     portalSystem = PortalSystem(gpsTransform, this, this)
+    miniMapPanel = MiniMapPanel()
 
     // Register systems
     systemManager.registerSystem(hudSystem!!)
@@ -86,6 +88,7 @@ class BaselineActivity : AppSystemActivity() {
     systemManager.registerSystem(directionArrowSystem!!)
     systemManager.registerSystem(targetPanelSystem!!)
     systemManager.registerSystem(portalSystem!!)
+    systemManager.registerSystem(miniMapPanel!!)
 
     // Set up centralized location updates
     setupLocationUpdates()
@@ -132,6 +135,7 @@ class BaselineActivity : AppSystemActivity() {
     directionArrowSystem?.cleanup()
     targetPanelSystem?.cleanup()
     portalSystem?.cleanup()
+    miniMapPanel?.cleanup()
 
     // Clean up panel controllers to prevent memory leaks
     hudPanelController = null
@@ -197,6 +201,19 @@ class BaselineActivity : AppSystemActivity() {
             // Set up target panel distance label
             val distanceLabel = rootView?.findViewById<TextView>(R.id.distance_text)
             targetPanelSystem?.setLabel(distanceLabel)
+          }
+        },
+        PanelRegistration(R.layout.minimap) {
+          config {
+            themeResourceId = R.style.PanelAppThemeTransparent
+            includeGlass = false
+            enableTransparent = true
+          }
+          panel {
+            // Set up minimap references
+            val minimapImage = rootView?.findViewById<android.widget.ImageView>(R.id.minimap_image)
+            val redDot = rootView?.findViewById<android.view.View>(R.id.red_dot)
+            miniMapPanel?.setViews(minimapImage, redDot)
           }
         })
   }
