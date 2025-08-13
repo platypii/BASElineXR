@@ -12,12 +12,13 @@ public class VROptions {
     public final boolean roomMovement;
     public final boolean showDirectionArrow;
     public final boolean showTarget;
+    public final boolean showPortal;
 
     // Current active configuration
-    public static VROptions current = VROptionsList.LIVE;
+    public static VROptions current = VROptionsList.PORTAL_RUN;
 
     public VROptions(String name, String shader, String mockTrack, String sourceModel, String destinationName,
-                     boolean roomMovement, boolean showDirectionArrow, boolean showTarget) {
+                     boolean roomMovement, boolean showDirectionArrow, boolean showTarget, boolean showPortal) {
         this.name = name;
         this.shader = shader;
         this.mockTrack = mockTrack;
@@ -26,6 +27,7 @@ public class VROptions {
         this.roomMovement = roomMovement;
         this.showDirectionArrow = showDirectionArrow;
         this.showTarget = showTarget;
+        this.showPortal = showPortal;
     }
 
     public String getTerrainModel() {

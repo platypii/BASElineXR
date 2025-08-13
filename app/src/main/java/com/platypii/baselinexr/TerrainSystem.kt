@@ -3,7 +3,6 @@ package com.platypii.baselinexr
 import android.content.Context
 import android.util.Log
 import androidx.core.net.toUri
-import com.google.gson.Gson
 import com.meta.spatial.core.Entity
 import com.meta.spatial.core.Pose
 import com.meta.spatial.core.Quaternion
@@ -44,19 +43,8 @@ class TerrainSystem(
 
     // Load from terrain json
     private fun loadTerrainConfiguration() {
-        try {
-            // Load JSON from assets
-            val jsonString = context.assets.open(VROptions.current.terrainModel)
-                .bufferedReader()
-                .use { it.readText() }
-
-            // Parse JSON using Gson
-            val gson = Gson()
-            val terrainConfig = gson.fromJson(
-                jsonString,
-                TerrainConfiguration::class.java
-            )
-
+        val terrainConfig = TerrainConfigLoader.loadConfig(context)
+        if (terrainConfig != null) {
             // Store configuration for offset access
             this.terrainConfig = terrainConfig
 
@@ -66,8 +54,8 @@ class TerrainSystem(
             }
 
             isInitialized = true
-        } catch (e: Exception) {
-            Log.e("TerrainSystem", "Failed to load terrain configuration", e)
+        } else {
+            Log.e("TerrainSystem", "Failed to load terrain configuration")
         }
     }
 

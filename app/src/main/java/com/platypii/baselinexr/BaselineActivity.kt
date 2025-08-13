@@ -37,6 +37,7 @@ class BaselineActivity : AppSystemActivity() {
   private var altimeterSystem: AltimeterSystem? = null
   private var speedometerSystem: SpeedometerSystem? = null
   private var targetPanelSystem: TargetPanel? = null
+  private var portalSystem: PortalSystem? = null
   private val gpsTransform = GpsToWorldTransform()
   private var locationSubscriber: ((com.platypii.baselinexr.measurements.MLocation) -> Unit)? = null
   private var hudPanelController: com.platypii.baselinexr.ui.HudPanelController? = null
@@ -76,6 +77,7 @@ class BaselineActivity : AppSystemActivity() {
     speedometerSystem = SpeedometerSystem()
     directionArrowSystem = DirectionArrowSystem()
     targetPanelSystem = TargetPanel(gpsTransform)
+    portalSystem = PortalSystem(gpsTransform, this, this)
 
     // Register systems
     systemManager.registerSystem(hudSystem!!)
@@ -83,6 +85,7 @@ class BaselineActivity : AppSystemActivity() {
     systemManager.registerSystem(speedometerSystem!!)
     systemManager.registerSystem(directionArrowSystem!!)
     systemManager.registerSystem(targetPanelSystem!!)
+    systemManager.registerSystem(portalSystem!!)
 
     // Set up centralized location updates
     setupLocationUpdates()
@@ -128,6 +131,7 @@ class BaselineActivity : AppSystemActivity() {
     terrainSystem?.cleanup()
     directionArrowSystem?.cleanup()
     targetPanelSystem?.cleanup()
+    portalSystem?.cleanup()
 
     // Clean up panel controllers to prevent memory leaks
     hudPanelController = null

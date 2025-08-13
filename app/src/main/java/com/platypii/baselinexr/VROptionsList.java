@@ -15,10 +15,11 @@ public class VROptionsList {
         "kpowPrisonSouth",
         false,
         true,
-        true
+        true,
+        false
     );
 
-    public static final VROptions EIGER_MUSHROOM_BASE = new VROptions(
+    public static final VROptions EIGER_BASE = new VROptions(
         "Eiger Base",
         null,
         "eiger.csv",
@@ -26,7 +27,8 @@ public class VROptionsList {
         "eiger",
         false,
         true,
-        true
+        true,
+        false
     );
 
     public static final VROptions EIGER_SKYDIVE = new VROptions(
@@ -37,7 +39,8 @@ public class VROptionsList {
             "kpowPrison",
             false,
             true,
-            true
+            true,
+            false
     );
 
     public static final VROptions EIGER_SKYDIVE_LAKE = new VROptions(
@@ -48,7 +51,8 @@ public class VROptionsList {
             "kpowLake",
             false,
             true,
-            true
+            true,
+            false
     );
 
     public static final VROptions KPOW_SKYDIVE_LANDING = new VROptions(
@@ -59,7 +63,8 @@ public class VROptionsList {
         "kpow",
         false,
         true,
-        true
+        true,
+        false
     );
 
     public static final VROptions KPOW_GROUND_LEVEL = new VROptions(
@@ -70,7 +75,8 @@ public class VROptionsList {
         "kpow",
         false,
         true,
-        true
+        true,
+        false
     );
 
     public static final VROptions GOING_IN_SIMULATOR = new VROptions(
@@ -80,6 +86,7 @@ public class VROptionsList {
         "kpow",
         "kpow4500",
         true,
+        false,
         false,
         false
     );
@@ -92,7 +99,20 @@ public class VROptionsList {
         "kpowPrisonSouth",
         false,
         true,
+        false,
         false
+    );
+
+    public static final VROptions PORTAL_RUN = new VROptions(
+            "Portal Run",
+            null,
+            "kpow-north-run.csv",
+            "eiger",
+            "kpowNorthRun",
+            false,
+            true,
+            true,
+            true
     );
 
     public static Map<String, LatLngAlt> destinations = new HashMap<>();
@@ -105,7 +125,8 @@ public class VROptionsList {
         destinations.put("kpow", new LatLngAlt(47.2375, -123.1458, 84.0));
         destinations.put("kpow4500", new LatLngAlt(47.2375, -123.1458, 1584.0)); // 84 + 1500
         destinations.put("kpowPrison", new LatLngAlt(47.23453, -123.16697620, 3710.0));
-        destinations.put("kpowPrisonSouth", new LatLngAlt(47.22453, -123.16697620, 3710.0));
+        destinations.put("kpowPrisonSouth", new LatLngAlt(47.22453, -123.1669762, 3710.0));
+        destinations.put("kpowNorthRun", new LatLngAlt(47.2288, -123.112, 3710.0));
         destinations.put("kpowLake", new LatLngAlt(47.25203, -123.10797620, 3060.0));
     }
 }
