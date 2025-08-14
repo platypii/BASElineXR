@@ -31,7 +31,7 @@ class BaselineActivity : AppSystemActivity() {
   var glxfLoaded = false
   private val activityScope = CoroutineScope(Dispatchers.Main)
   private var gltfxEntity: Entity? = null
-  private var terrainSystem: TerrainSystem? = null
+  var terrainSystem: TerrainSystem? = null
   private var directionArrowSystem: DirectionArrowSystem? = null
   var hudSystem: HudSystem? = null
   private var altimeterSystem: AltimeterSystem? = null

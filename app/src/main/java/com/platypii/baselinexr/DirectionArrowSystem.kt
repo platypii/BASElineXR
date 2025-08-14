@@ -105,13 +105,29 @@ class DirectionArrowSystem : SystemBase() {
 
     private fun getHeadPose(): Pose? {
         try {
-            val head = systemManager
-                .tryFindSystem<PlayerBodyAttachmentSystem>()
-                ?.tryGetLocalPlayerAvatarBody()
-                ?.head ?: return null
-            return head.tryGetComponent<Transform>()?.transform
+            val playerBodySystem = systemManager.tryFindSystem<PlayerBodyAttachmentSystem>()
+            if (playerBodySystem == null) {
+                return null
+            }
+
+            val avatarBody = playerBodySystem.tryGetLocalPlayerAvatarBody()
+            if (avatarBody == null) {
+                return null
+            }
+
+            val head = avatarBody.head
+            if (head == null) {
+                return null
+            }
+
+            val headPose = head.tryGetComponent<Transform>()?.transform
+            if (headPose == null || headPose == Pose()) {
+                return null
+            }
+
+            return headPose
         } catch (e: Exception) {
-            Log.e(TAG, "Error getting head pose", e)
+            Log.w(TAG, "Avatar body not ready yet, skipping head pose")
             return null
         }
     }

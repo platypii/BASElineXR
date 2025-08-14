@@ -125,6 +125,12 @@ class TerrainSystem(
         return head.tryGetComponent<Transform>()?.transform
     }
 
+    fun setVisible(visible: Boolean) {
+        terrainTiles.forEach { tile ->
+            tile.entity.setComponent(Visible(visible))
+        }
+    }
+
     fun cleanup() {
 //        terrainTiles.forEach { it.entity.destroy() }
         terrainTiles.clear()

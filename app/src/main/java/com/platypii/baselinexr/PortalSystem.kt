@@ -30,6 +30,7 @@ class PortalSystem(
         private const val TAG = "PortalSystem"
         private const val PORTAL_SCALE = 2.0f
         private const val TRIGGER_RADIUS = 3.0f // Radius for collision detection
+        private const val SPACE_DURATION_MS = 5000L // Duration to stay in space (milliseconds)
 
         // Fixed portal location and orientation
         private val PORTAL_LOCATION = LatLngAlt(46.57835, 7.984, 2674.0) // meters
@@ -40,22 +41,31 @@ class PortalSystem(
     private var isInSpace = false
     private var lastHeadPosition: Vector3? = null
     private var initialized = false
-    private val spaceEnvironment = SpaceEnvironment()
+    private val spaceSystem = SpaceSystem(context)
+    private var spaceStartTime: Long = 0
 
     override fun execute() {
         if (!initialized) {
             initializePortal()
+            // Register the space system with the system manager
+            systemManager.registerSystem(spaceSystem)
         }
 
         updatePortalPosition()
         checkPortalCollision()
+        
+        // Check if we need to return from space after specified duration
+        if (isInSpace && System.currentTimeMillis() - spaceStartTime >= SPACE_DURATION_MS) {
+            exitSpace()
+            isInSpace = false
+        }
     }
 
     private fun initializePortal() {
-        // Create portal entity using portal.glb model
+        // Create portal entity using portal.gltf model
         // The portal allows users to fly through and transition to space
         portalEntity = Entity.create(
-            Mesh("portal.glb".toUri()),
+            Mesh("portal.gltf".toUri()),
             Transform(Pose(Vector3(0f, 0f, 0f))),
             Scale(Vector3(PORTAL_SCALE, PORTAL_SCALE, PORTAL_SCALE)),
             Visible(false)
@@ -151,15 +161,19 @@ class PortalSystem(
         if (!isInSpace) {
             // Transition TO space
             enterSpace()
-        } else {
-            // Transition BACK from space
-            exitSpace()
+            isInSpace = true
+            spaceStartTime = System.currentTimeMillis()
         }
-
-        isInSpace = !isInSpace
+        // Note: We don't handle manual exit anymore, the 3-second timer will handle it
     }
 
     private fun enterSpace() {
+        // Hide the terrain system
+        activity.terrainSystem?.let { terrainSystem ->
+            // Set all terrain tiles to invisible
+            terrainSystem.setVisible(false)
+        }
+        
         // Change environment to space (black with stars)
         activity.scene.setLightingEnvironment(
             ambientColor = Vector3(0.01f, 0.01f, 0.02f), // Very dark blue ambient
@@ -168,17 +182,24 @@ class PortalSystem(
             environmentIntensity = 0.0f // No environment lighting
         )
 
-        // Create star field around user
+        // Show the space system cubemap
         val headPose = getHeadPose()
         val userPosition = headPose?.t ?: Vector3(0f, 0f, 0f)
-        spaceEnvironment.createStarField(userPosition)
+        spaceSystem.createSpaceEnvironment(userPosition)
+        spaceSystem.showSpace()
 
-        Log.i(TAG, "Entered space environment with ${spaceEnvironment.getStarCount()} stars")
+        Log.i(TAG, "Entered space environment")
     }
 
     private fun exitSpace() {
-        // Destroy star field
-        spaceEnvironment.destroyStarField()
+        // Hide the space system
+        spaceSystem.hideSpace()
+        
+        // Show the terrain system again
+        activity.terrainSystem?.let { terrainSystem ->
+            // Set all terrain tiles back to visible
+            terrainSystem.setVisible(true)
+        }
 
         // Restore normal environment
         activity.scene.setLightingEnvironment(
@@ -207,10 +228,10 @@ class PortalSystem(
     }
 
     fun cleanup() {
-        // Clean up space environment
-        spaceEnvironment.destroyStarField()
+        // Clean up space system
+        spaceSystem.cleanup()
 
-        portalEntity?.destroy()
+//        portalEntity?.destroy()
         portalEntity = null
         initialized = false
         isInSpace = false
