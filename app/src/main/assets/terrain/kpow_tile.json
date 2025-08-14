@@ -2,13 +2,20 @@
   "tiles": [
     {
       "model": "terrain/kpow.glb",
-      "lat": 47.22966825,
-      "lng": -123.16380949,
-      "alt": 0,
+      "tileOrigin": {
+        "lat": 47.22966825,
+        "lng": -123.16380949,
+        "alt": 0
+      },
       "gridX": 0,
       "gridZ": 0
     }
   ],
+  "terrainOrigin": {
+    "lat": 47.22966825,
+    "lng": -123.16380949,
+    "alt": 0
+  },
   "pointOfInterest": {
     "lat": 47.2375,
     "lng": -123.1458,

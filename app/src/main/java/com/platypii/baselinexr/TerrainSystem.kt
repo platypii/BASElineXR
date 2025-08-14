@@ -46,7 +46,7 @@ class TerrainSystem(
     private fun loadTerrainConfiguration() {
         try {
             // Load JSON from assets
-            val jsonString = context.assets.open(VROptions.current.getTerrainModel())
+            val jsonString = context.assets.open(VROptions.current.terrainModel)
                 .bufferedReader()
                 .use { it.readText() }
 
