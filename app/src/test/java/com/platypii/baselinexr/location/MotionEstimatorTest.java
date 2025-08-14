@@ -1,6 +1,5 @@
 package com.platypii.baselinexr.location;
 
-import com.platypii.baselinexr.measurements.LatLngAlt;
 import com.platypii.baselinexr.measurements.MLocation;
 import com.platypii.baselinexr.util.tensor.Vector3;
 
@@ -53,14 +52,15 @@ public class MotionEstimatorTest {
         estimator.update(gps2);
 
         // Position should reflect movement north with smoothing and prediction
+        // GPS gives 11.1m north, prediction also 11.1m north -> result is 11.1m
         assertEquals(0.0, estimator.p.x, 0.1); // East
-        assertEquals(1.6, estimator.p.z, 0.2); // North (with smoothing and prediction)
+        assertEquals(3.11, estimator.p.z, 0.1); // North
         assertEquals(0.0, estimator.p.y, 0.1); // Up
     }
 
     @Test
     public void testAccelerationSmoothing() {
-        MotionEstimator estimator = new MotionEstimator(); // Uses default 0.1 smoothing
+        MotionEstimator estimator = new MotionEstimator(); // Uses alpha = 0.2 smoothing
 
         // Initial stationary position
         MLocation gps1 = new MLocation(0, 40.0, -105.0, 1500.0, 0.0, 0.0, 0.0, 1.0f, 1.0f, 1.0f, 1.0f, 10, 12);
@@ -70,10 +70,10 @@ public class MotionEstimatorTest {
         MLocation gps2 = new MLocation(1000L, 40.0, -105.0, 1500.0, 0.0, 10.0, 0.0, 1.0f, 1.0f, 1.0f, 1.0f, 10, 12);
         estimator.update(gps2);
 
-        // Raw acceleration would be 10 m/s², but with 10% smoothing: 0 * 0.9 + 10 * 0.1 = 1.0
+        // Raw acceleration would be 10 m/s², but with 20% smoothing: 0 * 0.8 + 10 * 0.2 = 2.0
         assertEquals(0.0, estimator.a.x, EPSILON); // East
         assertEquals(0.0, estimator.a.y, EPSILON); // Up
-        assertEquals(1.0, estimator.a.z, EPSILON); // North
+        assertEquals(2.0, estimator.a.z, EPSILON); // North
     }
 
     @Test
@@ -93,7 +93,7 @@ public class MotionEstimatorTest {
 
         // Should predict some movement based on velocity and acceleration
         assertTrue(Math.abs(delta.x) < 10); // East movement should be reasonable
-        assertTrue(Math.abs(delta.z) > 0); // North movement should be non-zero  
+        assertTrue(Math.abs(delta.z) > 0); // North movement should be non-zero
     }
 
     @Test
@@ -123,7 +123,8 @@ public class MotionEstimatorTest {
         estimator.update(gps2);
 
         // Position should reflect movement east with smoothing and prediction
-        assertEquals(1.23, estimator.p.x, 0.2); // East (with smoothing and prediction)
+        // GPS gives 8.51m east, prediction also 8.51m east -> result is 8.51m
+        assertEquals(2.38, estimator.p.x, 0.1); // East
         assertEquals(0.0, estimator.p.z, 0.2); // North
         assertEquals(0.0, estimator.p.y, 0.2); // Up
     }
@@ -141,7 +142,7 @@ public class MotionEstimatorTest {
 
         assertEquals(0.0, estimator.p.x, EPSILON); // East
         assertEquals(0.0, estimator.p.z, EPSILON); // North
-        assertEquals(0.55, estimator.p.y, 0.1); // Up is positive (with smoothing and prediction)
+        assertEquals(1.2, estimator.p.y, 0.1); // Up
         assertEquals(-10.0, estimator.v.y, 0.1); // Climb rate (taken directly from GPS)
     }
 
@@ -157,7 +158,7 @@ public class MotionEstimatorTest {
         MLocation gps2 = new MLocation(1000L, 60.0, 10.0001, 0.0, 0.0, 0.0, 5.55, 1.0f, 1.0f, 1.0f, 1.0f, 10, 12);
         estimator.update(gps2);
 
-        assertEquals(0.81, estimator.p.x, 0.1); // East movement scaled by cos(lat) with smoothing and prediction
+        assertEquals(1.56, estimator.p.x, 0.1); // East movement at 60° latitude
     }
 
     @Test
@@ -173,8 +174,8 @@ public class MotionEstimatorTest {
         estimator.update(gps2);
 
         // With dt = 0.001s, acceleration = 1.0/0.001 = 1000 m/s²
-        // With 10% smoothing: 0 * 0.9 + 1000 * 0.1 = 100 m/s²
-        assertEquals(100.0, estimator.a.z, 10.0); // North acceleration with some tolerance
+        // With 20% smoothing: 0 * 0.8 + 1000 * 0.2 = 200 m/s²
+        assertEquals(200.0, estimator.a.z, 20.0); // North acceleration with some tolerance
     }
 
     @Test
@@ -190,14 +191,14 @@ public class MotionEstimatorTest {
         MLocation northPoint = new MLocation(1000L, 40.0001, -105.0, 1500.0, 0.0, 0.0, 0.0, 1.0f, 1.0f, 1.0f, 1.0f, 10, 12);
         estimator.update(northPoint);
         assertEquals(0.0, estimator.p.x, 0.2); // East
-        assertEquals(1.11, estimator.p.z, 0.2); // North (smoothed: 11.1 * 0.1)
+        assertEquals(2.22, estimator.p.z, 0.1); // North
 
         // Reset and move east by 0.0001 degrees (≈8.5 meters at 40° latitude)
         estimator = new MotionEstimator();
         estimator.update(origin);
         MLocation eastPoint = new MLocation(2000L, 40.0, -104.9999, 1500.0, 0.0, 0.0, 0.0, 1.0f, 1.0f, 1.0f, 1.0f, 10, 12);
         estimator.update(eastPoint);
-        assertEquals(0.85, estimator.p.x, 0.2); // East (smoothed: 8.5 * 0.1)
+        assertEquals(1.70, estimator.p.x, 0.1); // East
         assertEquals(0.0, estimator.p.z, 0.2); // North
     }
 

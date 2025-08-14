@@ -53,7 +53,7 @@ class HudSystem(private val gpsTransform: GpsToWorldTransform) : SystemBase() {
     val loc = Services.location.lastLoc
     latlngLabel?.setCompoundDrawablesWithIntrinsicBounds(LocationStatus.icon, 0, 0, 0)
     if (loc != null) {
-      latlngLabel?.text = provider + " " + loc.toStringSimple() + " (" + VROptions.current.sourceModel + " -> " + VROptions.current.destinationName + ")"
+      latlngLabel?.text = provider + " " + loc.toStringSimple() + " (" + VROptions.current.name + ")"
       speedLabel?.text = Convert.speed(loc.groundSpeed()) + "  " + Convert.distance(loc.altitude_gps)
     } else {
       latlngLabel?.text = LocationStatus.message

@@ -15,13 +15,11 @@ import com.meta.spatial.toolkit.Visible
 import com.platypii.baselinexr.measurements.MLocation
 import kotlin.math.*
 
-class DirectionArrowSystem(
-    private val gpsTransform: GpsToWorldTransform
-) : SystemBase() {
+class DirectionArrowSystem : SystemBase() {
 
     companion object {
         private const val TAG = "DirectionArrowSystem"
-        private const val ARROW_SCALE = 0.3f
+        private const val ARROW_SCALE = 0.2f
         private const val ARROW_HEIGHT_OFFSET = -5.0f
         private const val MIN_SPEED_THRESHOLD = 0.9 // m/s minimum speed to show arrow
     }

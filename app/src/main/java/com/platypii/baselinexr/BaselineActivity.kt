@@ -74,7 +74,7 @@ class BaselineActivity : AppSystemActivity() {
     hudSystem = HudSystem(gpsTransform)
     altimeterSystem = AltimeterSystem()
     speedometerSystem = SpeedometerSystem()
-    directionArrowSystem = DirectionArrowSystem(gpsTransform)
+    directionArrowSystem = DirectionArrowSystem()
     targetPanelSystem = TargetPanel(gpsTransform)
 
     // Register systems
