@@ -30,14 +30,25 @@ public class VROptionsList {
     );
 
     public static final VROptions EIGER_SKYDIVE = new VROptions(
-        "Eiger Skydive",
-        null,
-        "kpow-prison.csv",
-        "eiger",
-        "kpowPrison",
-        false,
-        true,
-        true
+            "Eiger Skydive",
+            null,
+            "kpow-prison.csv",
+            "eiger",
+            "kpowPrison",
+            false,
+            true,
+            true
+    );
+
+    public static final VROptions EIGER_SKYDIVE_LAKE = new VROptions(
+            "Eiger Skydive",
+            null,
+            "kpow.csv",
+            "eiger",
+            "kpowLake",
+            false,
+            true,
+            true
     );
 
     public static final VROptions KPOW_SKYDIVE_LANDING = new VROptions(
@@ -87,6 +98,7 @@ public class VROptionsList {
     public static Map<String, LatLngAlt> destinations = new HashMap<>();
 
     static {
+        // Small offset to align mushroom:
         destinations.put("eiger", new LatLngAlt(46.57731, 8.0053, 3973.0));
         destinations.put("capitolHillFoot", new LatLngAlt(47.60453, -122.30197620, 1860.0));
         destinations.put("capitolHillSummit", new LatLngAlt(47.61123, -122.32377620, 170.0));
