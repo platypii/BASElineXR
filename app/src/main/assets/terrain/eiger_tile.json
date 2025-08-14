@@ -7,8 +7,16 @@
         "lng": 7.94727628,
         "alt": 0
       },
-      "gridX": 0,
-      "gridZ": 0
+      "rotation": 0
+    },
+    {
+      "model": "billboard.glb",
+      "tileOrigin": {
+        "lat": 46.5778,
+        "lng": 8.0053,
+        "alt": 3990
+      },
+      "rotation": -120
     }
   ],
   "terrainOrigin": {

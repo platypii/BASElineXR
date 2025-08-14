@@ -62,7 +62,7 @@ class TerrainSystem(
     private fun createTerrainTile(config: TerrainTileConfig) {
         val entity = Entity.create(
             Mesh(config.model.toUri()),
-            Visible(true),
+            Visible(false),
             Transform(Pose())  // Initial transform, updated in execute()
         )
 
@@ -78,6 +78,7 @@ class TerrainSystem(
 
     private fun updateTilePositions() {
         if (!isInitialized || terrainTiles.isEmpty() || terrainConfig == null) return
+        if (gpsToWorldTransform.initialOrigin == null) return
 
         val currentTime = System.currentTimeMillis()
         val motionEstimator = Services.location.motionEstimator
@@ -93,7 +94,7 @@ class TerrainSystem(
 
         terrainTiles.forEach { tile ->
             // Calculate offset from tileOrigin to terrainOrigin using geographic math
-            val tileToTerrainOffset = GeoUtils.calculateOffset(tile.config.tileOrigin, terrainConfig!!.terrainOrigin)
+            val tileToTerrainOffset = GeoUtils.calculateOffset(terrainConfig!!.terrainOrigin, tile.config.tileOrigin)
 
             // Apply offsets to destination using helper function
             val offsetDest = GeoUtils.applyOffset(dest, terrainToPoiOffset, tileToTerrainOffset)
@@ -106,14 +107,18 @@ class TerrainSystem(
             }
 
             // Update entity transform
-            // Apply yaw adjustment to the terrain rotation
+            // Apply yaw adjustment and tile-specific rotation to the terrain rotation
             val yawDegrees = Math.toDegrees(Adjustments.yawAdjustment).toFloat()
+            val totalRotation = 180f + yawDegrees + tile.config.rotation
             val transform = Transform(Pose(
                 tilePosition,
-                Quaternion(0f, 180f + yawDegrees, 0f)  // Apply yaw adjustment
+                Quaternion(0f, totalRotation, 0f)  // Apply yaw adjustment + tile rotation
             ))
 
-            tile.entity.setComponent(transform)
+            tile.entity.setComponents(listOf(
+                transform,
+                Visible(true)
+            ))
         }
     }
 

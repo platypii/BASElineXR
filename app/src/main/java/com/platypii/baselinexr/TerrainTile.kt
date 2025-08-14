@@ -6,8 +6,7 @@ import com.platypii.baselinexr.measurements.LatLngAlt
 data class TerrainTileConfig(
     val model: String,         // Path to GLB file relative to assets folder
     val tileOrigin: LatLngAlt, // Origin point (lat, lng, alt) of tile corner
-    val gridX: Int = 0,        // Grid position X (multiples of 1000m)
-    val gridZ: Int = 0         // Grid position Z (multiples of 1000m)
+    val rotation: Float = 0f   // Rotation in degrees to apply to this tile
 )
 
 data class TerrainConfiguration(

@@ -12,7 +12,7 @@ public class VROptionsList {
         "data/shaders/terrain_cinema",
         null,
         "eiger",
-        "kpowPrisonSouth",
+        "kpowSouth",
         false,
         true,
         true,
@@ -96,7 +96,7 @@ public class VROptionsList {
         "data/shaders/terrain_bubble",
         "jank-longer.csv",
         "eiger",
-        "kpowPrisonSouth",
+        "kpowSouth",
         false,
         true,
         false,
@@ -124,8 +124,8 @@ public class VROptionsList {
         destinations.put("capitolHillSummit", new LatLngAlt(47.61123, -122.32377620, 170.0));
         destinations.put("kpow", new LatLngAlt(47.2375, -123.1458, 84.0));
         destinations.put("kpow4500", new LatLngAlt(47.2375, -123.1458, 1584.0)); // 84 + 1500
-        destinations.put("kpowPrison", new LatLngAlt(47.23453, -123.16697620, 3710.0));
-        destinations.put("kpowPrisonSouth", new LatLngAlt(47.22453, -123.1669762, 3710.0));
+        destinations.put("kpowPrison", new LatLngAlt(47.2338, -123.16697620, 3800.0));
+        destinations.put("kpowSouth", new LatLngAlt(47.22453, -123.1669762, 3710.0));
         destinations.put("kpowNorthRun", new LatLngAlt(47.2288, -123.112, 3710.0));
         destinations.put("kpowLake", new LatLngAlt(47.25203, -123.10797620, 3060.0));
     }

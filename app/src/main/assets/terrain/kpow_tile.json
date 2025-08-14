@@ -7,8 +7,7 @@
         "lng": -123.16380949,
         "alt": 0
       },
-      "gridX": 0,
-      "gridZ": 0
+      "rotation": 0
     }
   ],
   "terrainOrigin": {
