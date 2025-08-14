@@ -87,13 +87,13 @@ public class VROptionsList {
     public static Map<String, LatLngAlt> destinations = new HashMap<>();
 
     static {
-        destinations.put("eiger", new LatLngAlt(46.56297, 7.9472762, 7.0));
-        destinations.put("capitolHillFoot", new LatLngAlt(47.59, -122.36, -2100.0));
-        destinations.put("capitolHillSummit", new LatLngAlt(47.5967, -122.3818, -3790.0));
-        destinations.put("kpow", new LatLngAlt(47.22966825, -123.16380949, 0.0));
-        destinations.put("kpow4500", new LatLngAlt(47.22966825, -123.16380949, 1500.0));
-        destinations.put("kpowPrison", new LatLngAlt(47.22, -123.225, -250.0));
-        destinations.put("kpowPrisonSouth", new LatLngAlt(47.21, -123.225, -250.0));
-        destinations.put("kpowLake", new LatLngAlt(47.2375, -123.166, -900.0));
+        destinations.put("eiger", new LatLngAlt(46.57731, 8.0053, 3973.0));
+        destinations.put("capitolHillFoot", new LatLngAlt(47.60453, -122.30197620, 1860.0));
+        destinations.put("capitolHillSummit", new LatLngAlt(47.61123, -122.32377620, 170.0));
+        destinations.put("kpow", new LatLngAlt(47.2375, -123.1458, 84.0));
+        destinations.put("kpow4500", new LatLngAlt(47.2375, -123.1458, 1584.0)); // 84 + 1500
+        destinations.put("kpowPrison", new LatLngAlt(47.23453, -123.16697620, 3710.0));
+        destinations.put("kpowPrisonSouth", new LatLngAlt(47.22453, -123.16697620, 3710.0));
+        destinations.put("kpowLake", new LatLngAlt(47.25203, -123.10797620, 3060.0));
     }
 }

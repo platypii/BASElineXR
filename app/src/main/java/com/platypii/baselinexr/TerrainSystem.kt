@@ -89,36 +89,39 @@ class TerrainSystem(
     }
 
     private fun updateTilePositions() {
-        if (!isInitialized || terrainTiles.isEmpty()) return
+        if (!isInitialized || terrainTiles.isEmpty() || terrainConfig == null) return
 
         val currentTime = System.currentTimeMillis()
-
-        // We need the lat/lng of where to put the model corner translated to world space
         val motionEstimator = Services.location.motionEstimator
+
+        // Get destination position in world coordinates (where user is)
         val dest = VROptions.current.destination
-        // Pass motion estimator to toWorldCoordinates for better prediction
-        val referencePos = gpsToWorldTransform.toWorldCoordinates(dest.lat, dest.lng, dest.alt, currentTime, motionEstimator)
+
+        // Calculate the offset from terrainOrigin to pointOfInterest using geographic math
+        val terrainToPoiOffset = GeoUtils.calculateOffset(terrainConfig!!.pointOfInterest, terrainConfig!!.terrainOrigin)
 
         // Get head pose for optional room movement translation
         val headPose = getHeadPose()
 
         terrainTiles.forEach { tile ->
-            var worldPos = Vector3(
-                referencePos.x + (tile.config.gridX * 1000f),
-                referencePos.y,
-                referencePos.z + (tile.config.gridZ * 1000f)
-            )
+            // Calculate offset from tileOrigin to terrainOrigin using geographic math
+            val tileToTerrainOffset = GeoUtils.calculateOffset(tile.config.tileOrigin, terrainConfig!!.terrainOrigin)
 
-            // Apply room movement translation if enabled
+            // Apply offsets to destination using helper function
+            val offsetDest = GeoUtils.applyOffset(dest, terrainToPoiOffset, tileToTerrainOffset)
+
+            var tilePosition = gpsToWorldTransform.toWorldCoordinates(offsetDest.lat, offsetDest.lng, offsetDest.alt, currentTime, motionEstimator)
+
+            // Apply room movement correction, if enabled
             if (VROptions.current.roomMovement && headPose != null) {
-                worldPos -= headPose.t
+                tilePosition -= headPose.t
             }
 
             // Update entity transform
             // Apply yaw adjustment to the terrain rotation
             val yawDegrees = Math.toDegrees(Adjustments.yawAdjustment).toFloat()
             val transform = Transform(Pose(
-                worldPos,
+                tilePosition,
                 Quaternion(0f, 180f + yawDegrees, 0f)  // Apply yaw adjustment
             ))
 
