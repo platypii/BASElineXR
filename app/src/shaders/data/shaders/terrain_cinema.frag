@@ -5,15 +5,11 @@
 #include <metaSpatialSdkFragmentBase.glsl>
 #include <Uniforms.glsl>
 
-const float OPACITY = 0.75;
-
-// userParam0.x = fadeStart (m), default 400
-// userParam0.y = fadeEnd   (m), default 600
-// userParam0.z = rimStrength (0..1), default 0.25
-// userParam0.w = exposure (0.5..2),   default 1.0
-// userParam1.x = specStrength (0..2), default 1.0
-// userParam1.y = diffuseWrap  (0..0.5), default 0.25
-// userParam1.z = ambientBoost (0..2), default 1.0
+const float OPACITY = 1.0;
+const float DEFAULT_FADE_START = 400.0;
+const float DEFAULT_FADE_END = 700.0;
+const float CLOSE_ALPHA = 0.9;
+const float FAR_ALPHA = 0.1;
 
 float saturate(float x) { return clamp(x, 0.0, 1.0); }
 vec3  saturate(vec3 v)  { return clamp(v, 0.0, 1.0); }
@@ -36,17 +32,8 @@ void main() {
     float alphaCutoff = g_MaterialUniform.alphaParams.y;
     if (albedo.a < alphaCutoff) discard;
 
-    // material params (roughness, metallic, AO)
-    float rmMix = getRoughnessMetallicMix();
-    vec2 rmTex = texture(roughnessMetallicTexture, vertexOut.roughnessMetallicCoord).rg;
-    float roughness = mix(g_MaterialUniform.matParams.x, rmTex.r, rmMix);
-    float metallic  = mix(g_MaterialUniform.matParams.y, rmTex.g, rmMix);
-
-    float aoMix = getOcclusionMix();
-    float ao = mix(1.0, texture(occlusion, vertexOut.occlusionCoord).r, aoMix);
-
-    // normal (supports normal map if available)
-    vec3 N = normalize(vertexOut.worldNormal);
+    // normal
+    vec3 N;
     #if VERTEX_FORMAT_TWOUV_TANGENT == 1
     {
         float nMix = getNormalMix();
@@ -59,23 +46,21 @@ void main() {
             N = normalize(mix(N, nW, saturate(nMix)));
         }
     }
+    #else
+        N = normalize(vertexOut.worldNormal);
     #endif
 
-    // lighting vectors
-    vec3 L = normalize(-g_ViewUniform.sunDirection.xyz); // flip sign if sun appears inverted
-    vec3 V = normalize(eyePos() - vertexOut.worldPosition);
-    vec3 H = normalize(L + V);
+    // light dir (keep normalized)
+    vec3 L = normalize(-g_ViewUniform.sunDirection.xyz); // flip sign if needed
 
     // tunables
     vec4 up0 = g_ViewUniform.userParam0;
     vec4 up1 = g_ViewUniform.userParam1;
 
-    float fadeStart   = (up0.x > 0.0) ? up0.x : 400.0;
-    float fadeEnd     = (up0.y > 0.0) ? up0.y : 600.0;
-    float rimStrength = (up0.z > 0.0) ? up0.z : 0.1;
+    float fadeStart   = (up0.x > 0.0) ? up0.x : DEFAULT_FADE_START;
+    float fadeEnd     = (up0.y > 0.0) ? up0.y : DEFAULT_FADE_END;
     float exposure    = (up0.w > 0.0) ? up0.w : 0.6;
 
-    float specStrength = (up1.x > 0.0) ? up1.x : 1.0;
     float diffuseWrap  = (up1.y > 0.0) ? up1.y : 0.25;
     float ambientBoost = (up1.z > 0.0) ? up1.z : 0.25;
 
@@ -83,41 +68,21 @@ void main() {
     float ndl  = dot(N, L);
     float diff = saturate((ndl + diffuseWrap) / (1.0 + diffuseWrap));
 
-    // specular (roughness -> gloss), Schlick Fresnel
-    float ndh = saturate(dot(N, H));
-    float specPower = mix(8.0, 128.0, 1.0 - saturate(roughness));
-    float specBRDF  = pow(ndh, specPower);
-
-    vec3  F0 = mix(vec3(0.04), albedo.rgb, metallic);
-    float hv = saturate(dot(H, V));
-    vec3  F  = F0 + (1.0 - F0) * pow(1.0 - hv, 5.0);
-
-    float kD = (1.0 - metallic);
-
-    // ambient * AO
-    vec3 ambient = g_ViewUniform.ambientColor.rgb * ao * ambientBoost;
-
-    // sun lighting
-    vec3 sunCol = g_ViewUniform.sunColor.rgb;
-    vec3 diffuseTerm  = kD * diff * sunCol;
-    vec3 specularTerm = specStrength * specBRDF * F * sunCol;
-
-    // rim light
-    float rim = pow(1.0 - saturate(dot(N, V)), 3.0);
-    vec3 rimTerm = rimStrength * rim * sunCol * (0.5 + 0.5 * (1.0 - roughness));
-
-    // combine
-    vec3 base = albedo.rgb;
-    vec3 lit  = base * (ambient + diffuseTerm) + specularTerm + rimTerm;
+    // ambient + sun diffuse only (no specular/Fresnel)
+    vec3 ambient = g_ViewUniform.ambientColor.rgb * ambientBoost;
+    vec3 sunCol  = g_ViewUniform.sunColor.rgb;
+    vec3 lit     = albedo.rgb * (ambient + diff * sunCol);
 
     // tone map
-    vec3 finalRGB = filmicTone(lit, exposure);
-    finalRGB = saturate(finalRGB);
+    vec3 finalRGB = saturate(filmicTone(lit, exposure));
 
-    // distance-based alpha fade (no fog)
-    float d = length(eyePos() - vertexOut.worldPosition);
-    float distFade = 1.0 - smoothstep(fadeStart, fadeEnd, d);
-    distFade = clamp(distFade, 0.1, 0.9);
+    // distance-based alpha fade (no sqrt)
+    vec3 toEye = eyePos() - vertexOut.worldPosition;
+    float d2 = dot(toEye, toEye);
+    float s2 = fadeStart * fadeStart;
+    float e2 = fadeEnd   * fadeEnd;
+    float distFade = 1.0 - smoothstep(s2, e2, d2);
+    distFade = clamp(distFade, FAR_ALPHA, CLOSE_ALPHA);
 
     // write
     outColor.rgb = finalRGB;
