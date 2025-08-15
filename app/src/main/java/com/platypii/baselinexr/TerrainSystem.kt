@@ -21,6 +21,7 @@ class TerrainSystem(
     private val terrainTiles = mutableListOf<TerrainTileEntity>()
     private var isInitialized = false
     private var terrainConfig: TerrainConfiguration? = null
+    private var isVisible = true
 
     fun initialize() {
         loadTerrainConfiguration()
@@ -117,7 +118,7 @@ class TerrainSystem(
 
             tile.entity.setComponents(listOf(
                 transform,
-                Visible(true)
+                Visible(isVisible)
             ))
         }
     }
@@ -131,6 +132,7 @@ class TerrainSystem(
     }
 
     fun setVisible(visible: Boolean) {
+        isVisible = visible
         terrainTiles.forEach { tile ->
             tile.entity.setComponent(Visible(visible))
         }

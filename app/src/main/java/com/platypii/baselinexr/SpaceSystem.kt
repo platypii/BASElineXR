@@ -41,11 +41,12 @@ class SpaceSystem(private val context: Context) : SystemBase() {
         
         // Create a large cube centered on the user position
         // The cube should have inward-facing normals to show textures on the inside
+        // Start invisible until showSpace() is called
         spaceCubeEntity = Entity.create(
             Mesh("space.glb".toUri(), hittable = MeshCollision.NoCollision),
             Transform(Pose(userPosition)),
             Scale(Vector3(SPACE_CUBE_SIZE, SPACE_CUBE_SIZE, SPACE_CUBE_SIZE)),
-            Visible(true)
+            Visible(false)
         )
         
         isActive = true
@@ -61,10 +62,13 @@ class SpaceSystem(private val context: Context) : SystemBase() {
             entity.setComponent(Visible(true))
             Log.i(TAG, "Space environment shown")
         } else {
-            // Create space environment if it doesn't exist
+            // Create space environment if it doesn't exist and show it
             val headPose = getHeadPose()
             val userPosition = headPose?.t ?: Vector3(0f, 0f, 0f)
             createSpaceEnvironment(userPosition)
+            // After creation, make it visible
+            spaceCubeEntity?.setComponent(Visible(true))
+            Log.i(TAG, "Space environment created and shown")
         }
     }
     

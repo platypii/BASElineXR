@@ -30,6 +30,7 @@ class PortalSystem(
         private const val TAG = "PortalSystem"
         private const val PORTAL_SCALE = 2.0f
         private const val TRIGGER_RADIUS = 3.0f // Radius for collision detection
+        private const val PRELOAD_RADIUS = 100.0f // Distance to preload space environment
         private const val SPACE_DURATION_MS = 5000L // Duration to stay in space (milliseconds)
 
         // Fixed portal location and orientation
@@ -43,6 +44,7 @@ class PortalSystem(
     private var initialized = false
     private val spaceSystem = SpaceSystem(context)
     private var spaceStartTime: Long = 0
+    private var spaceEnvironmentPreloaded = false
 
     override fun execute() {
         if (!initialized) {
@@ -53,7 +55,8 @@ class PortalSystem(
 
         updatePortalPosition()
         checkPortalCollision()
-        
+        preloadSpaceEnvironmentIfNear()
+
         // Check if we need to return from space after specified duration
         if (isInSpace && System.currentTimeMillis() - spaceStartTime >= SPACE_DURATION_MS) {
             exitSpace()
@@ -127,6 +130,30 @@ class PortalSystem(
         ))
     }
 
+    private fun preloadSpaceEnvironmentIfNear() {
+        if (spaceEnvironmentPreloaded || !VROptions.current.showPortal) {
+            return
+        }
+
+        val headPose = getHeadPose() ?: return
+        val portalEntity = this.portalEntity ?: return
+
+        // Get portal position
+        val portalTransform = portalEntity.getComponent<Transform>()
+        val portalPosition = portalTransform.transform.t
+        val headPosition = headPose.t
+
+        // Calculate distance between head and portal center
+        val distance = (headPosition - portalPosition).length()
+
+        // Preload space environment when within 100m
+        if (distance <= PRELOAD_RADIUS) {
+            Log.i(TAG, "Preloading space environment - distance: ${distance}m")
+            spaceSystem.createSpaceEnvironment(headPosition)
+            spaceEnvironmentPreloaded = true
+        }
+    }
+
     private fun checkPortalCollision() {
         val headPose = getHeadPose() ?: return
         val portalEntity = this.portalEntity ?: return
@@ -173,19 +200,16 @@ class PortalSystem(
             // Set all terrain tiles to invisible
             terrainSystem.setVisible(false)
         }
-        
+
         // Change environment to space (black with stars)
         activity.scene.setLightingEnvironment(
-            ambientColor = Vector3(0.01f, 0.01f, 0.02f), // Very dark blue ambient
+            ambientColor = Vector3(0.9f),
             sunColor = Vector3(0.5f, 0.5f, 0.6f), // Dim starlight
             sunDirection = Vector3(0f, 1f, 0f), // Light from above
             environmentIntensity = 0.0f // No environment lighting
         )
 
-        // Show the space system cubemap
-        val headPose = getHeadPose()
-        val userPosition = headPose?.t ?: Vector3(0f, 0f, 0f)
-        spaceSystem.createSpaceEnvironment(userPosition)
+        // Show the space system cubemap (already preloaded when within 100m)
         spaceSystem.showSpace()
 
         Log.i(TAG, "Entered space environment")
@@ -194,7 +218,7 @@ class PortalSystem(
     private fun exitSpace() {
         // Hide the space system
         spaceSystem.hideSpace()
-        
+
         // Show the terrain system again
         activity.terrainSystem?.let { terrainSystem ->
             // Set all terrain tiles back to visible
@@ -236,6 +260,7 @@ class PortalSystem(
         initialized = false
         isInSpace = false
         lastHeadPosition = null
+        spaceEnvironmentPreloaded = false
         Log.i(TAG, "Portal system cleaned up")
     }
 }
