@@ -7,8 +7,7 @@ entities:
           nodes:
             - ref:Panel
             - ref:TargetPanel
-            - ref:AltimeterPanel
-            - ref:SpeedometerPanel
+            - ref:FlightStatsPanel
             - ref:MiniMapPanel
       tag: Scene
   com.meta.models.SceneNode:
@@ -48,7 +47,7 @@ entities:
         com.meta.components.Animatable:
           {}
         com.meta.components.Name:
-          name: AltimeterPanel
+          name: FlightStatsPanel
         com.meta.components.PointerNodeInverseComponent:
           {}
         com.meta.components.SceneNode:
@@ -59,40 +58,8 @@ entities:
             - -3.74939976e-33
           rotation.format: Quaternion
           scale:
-            - 1
-            - 0.8
-            - 1
-          translation:
             - 1.5
-            - 1.10000002
-            - -1.70000005
-          componentVersion: 1
-        com.meta.spatial.toolkit.Grabbable:
-          type: 0
-          enabled: true
-        com.meta.spatial.toolkit.Panel:
-          panel: "@layout/altimeter"
-        com.meta.spatial.toolkit.PanelDimensions:
-          {}
-      tag: AltimeterPanel
-  com.meta.models.SceneNode:
-    - components:
-        com.meta.components.Animatable:
-          {}
-        com.meta.components.Name:
-          name: SpeedometerPanel
-        com.meta.components.PointerNodeInverseComponent:
-          {}
-        com.meta.components.SceneNode:
-          rotation.data:
-            - 6.12323426e-17
-            - 6.12323426e-17
-            - 1
-            - -3.74939976e-33
-          rotation.format: Quaternion
-          scale:
-            - 1
-            - 0.8
+            - 1.2
             - 1
           translation:
             - -1.5
@@ -103,10 +70,10 @@ entities:
           type: 0
           enabled: true
         com.meta.spatial.toolkit.Panel:
-          panel: "@layout/speedometer"
+          panel: "@layout/flight_stats"
         com.meta.spatial.toolkit.PanelDimensions:
           {}
-      tag: SpeedometerPanel
+      tag: FlightStatsPanel
   com.meta.models.SceneNode:
     - components:
         com.meta.components.Animatable:

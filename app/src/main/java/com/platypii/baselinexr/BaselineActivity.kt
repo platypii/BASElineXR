@@ -34,8 +34,7 @@ class BaselineActivity : AppSystemActivity() {
   var terrainSystem: TerrainSystem? = null
   private var directionArrowSystem: DirectionArrowSystem? = null
   var hudSystem: HudSystem? = null
-  private var altimeterSystem: AltimeterSystem? = null
-  private var speedometerSystem: SpeedometerSystem? = null
+  private var flightStatsSystem: FlightStatsSystem? = null
   private var targetPanelSystem: TargetPanel? = null
   private var portalSystem: PortalSystem? = null
   private var miniMapPanel: MiniMapPanel? = null
@@ -74,8 +73,7 @@ class BaselineActivity : AppSystemActivity() {
 
     // Create systems
     hudSystem = HudSystem(gpsTransform)
-    altimeterSystem = AltimeterSystem()
-    speedometerSystem = SpeedometerSystem()
+    flightStatsSystem = FlightStatsSystem()
     directionArrowSystem = DirectionArrowSystem()
     targetPanelSystem = TargetPanel(gpsTransform)
     portalSystem = PortalSystem(gpsTransform, this, this)
@@ -83,8 +81,7 @@ class BaselineActivity : AppSystemActivity() {
 
     // Register systems
     systemManager.registerSystem(hudSystem!!)
-    systemManager.registerSystem(altimeterSystem!!)
-    systemManager.registerSystem(speedometerSystem!!)
+    systemManager.registerSystem(flightStatsSystem!!)
     systemManager.registerSystem(directionArrowSystem!!)
     systemManager.registerSystem(targetPanelSystem!!)
     systemManager.registerSystem(portalSystem!!)
@@ -129,8 +126,7 @@ class BaselineActivity : AppSystemActivity() {
 
     // Clean up all systems that have cleanup methods
     hudSystem?.cleanup()
-    altimeterSystem?.cleanup()
-    speedometerSystem?.cleanup()
+    flightStatsSystem?.cleanup()
     terrainSystem?.cleanup()
     directionArrowSystem?.cleanup()
     targetPanelSystem?.cleanup()
@@ -167,28 +163,19 @@ class BaselineActivity : AppSystemActivity() {
             hudPanelController?.setupPanel(rootView)
           }
         },
-        PanelRegistration(R.layout.altimeter) {
+        PanelRegistration(R.layout.flight_stats) {
           config {
             themeResourceId = R.style.PanelAppThemeTransparent
             includeGlass = false
             enableTransparent = true
           }
           panel {
-            // Set up altimeter references
+            // Set up flight stats references
             val altitudeLabel = rootView?.findViewById<TextView>(R.id.altitude)
-            altimeterSystem?.setLabel(altitudeLabel)
-          }
-        },
-        PanelRegistration(R.layout.speedometer) {
-          config {
-            themeResourceId = R.style.PanelAppThemeTransparent
-            includeGlass = false
-            enableTransparent = true
-          }
-          panel {
-            // Set up speedometer references
-            val speedLabel = rootView?.findViewById<TextView>(R.id.speed)
-            speedometerSystem?.setLabel(speedLabel)
+            val horizontalSpeedLabel = rootView?.findViewById<TextView>(R.id.horizontal_speed)
+            val verticalSpeedLabel = rootView?.findViewById<TextView>(R.id.vertical_speed)
+            val glideLabel = rootView?.findViewById<TextView>(R.id.glide)
+            flightStatsSystem?.setLabels(altitudeLabel, horizontalSpeedLabel, verticalSpeedLabel, glideLabel)
           }
         },
         PanelRegistration(R.layout.target_panel) {

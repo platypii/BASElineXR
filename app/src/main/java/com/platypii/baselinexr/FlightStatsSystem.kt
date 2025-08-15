@@ -1,0 +1,112 @@
+package com.platypii.baselinexr
+
+import android.widget.TextView
+import com.meta.spatial.core.SystemBase
+import com.meta.spatial.core.Vector3
+import com.meta.spatial.toolkit.SpatialActivityManager
+import com.platypii.baselinexr.util.Convert
+import com.platypii.baselinexr.util.GpsFreshnessColor
+
+class FlightStatsSystem : SystemBase() {
+    private var initialized = false
+    private var grabbablePanel: GrabbablePanel? = null
+
+    // Flight stats content references
+    private var altitudeLabel: TextView? = null
+    private var horizontalSpeedLabel: TextView? = null
+    private var verticalSpeedLabel: TextView? = null
+    private var glideLabel: TextView? = null
+
+    override fun execute() {
+        val activity = SpatialActivityManager.getVrActivity<BaselineActivity>()
+        if (!activity.glxfLoaded) return
+
+        if (!initialized) {
+            initializePanel(activity)
+        }
+
+        if (initialized) {
+            grabbablePanel?.setupInteraction()
+            grabbablePanel?.updatePosition()
+        }
+
+        updateFlightStats()
+    }
+
+    private fun initializePanel(activity: BaselineActivity) {
+        val composition = activity.glXFManager.getGLXFInfo(BaselineActivity.GLXF_SCENE)
+        val panel = composition.tryGetNodeByName("FlightStatsPanel")
+        if (panel?.entity != null) {
+            // Position on bottom left where the altimeter was
+            val flightStatsOffset = Vector3(-1.6f, -1.2f, 3f)
+            grabbablePanel = GrabbablePanel(systemManager, panel.entity, flightStatsOffset)
+            initialized = true
+        }
+    }
+
+    fun setLabels(altitudeLabel: TextView?, horizontalSpeedLabel: TextView?, verticalSpeedLabel: TextView?, glideLabel: TextView?) {
+        this.altitudeLabel = altitudeLabel
+        this.horizontalSpeedLabel = horizontalSpeedLabel
+        this.verticalSpeedLabel = verticalSpeedLabel
+        this.glideLabel = glideLabel
+        updateFlightStats()
+    }
+
+    private fun updateFlightStats() {
+        val loc = Services.location.lastLoc
+        val millisecondsSinceLastFix = Services.location.lastFixDuration()
+        
+        if (loc != null) {
+            // Top left: Altitude
+            altitudeLabel?.text = Convert.distance(loc.altitude_gps)
+            
+            // Top right: Horizontal Speed
+            val groundSpeed = loc.groundSpeed()
+            horizontalSpeedLabel?.text = " H: ${Convert.speed(groundSpeed)}"
+            
+            // Bottom left: Vertical Speed
+            val climb = loc.climb
+            if (!climb.isNaN()) {
+                verticalSpeedLabel?.text = " V: ${Convert.speed(-climb)}" // Negative climb for fall rate display
+            } else {
+                verticalSpeedLabel?.text = " V: --- mph"
+            }
+            
+            // Bottom right: Glide ratio
+            if (!climb.isNaN()) {
+                glideLabel?.text = " " + Convert.glide(groundSpeed, climb, 1, true)
+            } else {
+                glideLabel?.text = " ---"
+            }
+        } else {
+            altitudeLabel?.text = "--- ft"
+            horizontalSpeedLabel?.text = " H: --- mph"
+            verticalSpeedLabel?.text = " V: --- mph"
+            glideLabel?.text = " ---"
+        }
+
+        // Set color based on GPS freshness
+        val color = GpsFreshnessColor.getColorForFreshness(millisecondsSinceLastFix)
+        altitudeLabel?.setTextColor(color)
+        
+        // Hide speed-related labels if GPS data is stale (3+ seconds)
+        if (millisecondsSinceLastFix >= 3000) {
+            horizontalSpeedLabel?.text = ""
+            verticalSpeedLabel?.text = ""
+            glideLabel?.text = ""
+        } else {
+            horizontalSpeedLabel?.setTextColor(color)
+            verticalSpeedLabel?.setTextColor(color)
+            glideLabel?.setTextColor(color)
+        }
+    }
+
+    fun cleanup() {
+        grabbablePanel = null
+        altitudeLabel = null
+        horizontalSpeedLabel = null
+        verticalSpeedLabel = null
+        glideLabel = null
+        initialized = false
+    }
+}

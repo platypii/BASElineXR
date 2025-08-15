@@ -53,7 +53,7 @@ class MiniMapPanel : SystemBase() {
                 miniMapEntity = miniMapNode.entity
 
                 // Position in bottom right (offset for bottom-right positioning)
-                val bottomRightOffset = Vector3(1.4f, -2.3f, 3f)
+                val bottomRightOffset = Vector3(-1.8f, -2.0f, 3f)
 
                 // Create grabbable panel with bottom-right positioning
                 grabbablePanel = GrabbablePanel(

@@ -8,7 +8,7 @@
     <LinearLayout
         android:id="@+id/hudPanel"
         android:layout_width="match_parent"
-        android:layout_height="100dp"
+        android:layout_height="80dp"
         android:background="#000000"
         android:padding="4dp"
         android:orientation="vertical">
@@ -42,14 +42,14 @@
             android:lineHeight="18dp"
             android:text=""
             android:textColor="#cccccc"
-            android:textSize="30sp" />
+            android:textSize="14sp" />
 
     </LinearLayout>
 
     <Button
         android:id="@+id/exit_button"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
         android:layout_gravity="top|end"
         android:background="@drawable/button_bg"
         android:text="Exit"
@@ -61,7 +61,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:layout_marginTop="100dp"
+        android:layout_marginTop="80dp"
         android:orientation="horizontal"
         android:visibility="gone">
 

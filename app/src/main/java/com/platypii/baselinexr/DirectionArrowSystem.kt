@@ -19,7 +19,7 @@ class DirectionArrowSystem : SystemBase() {
 
     companion object {
         private const val TAG = "DirectionArrowSystem"
-        private const val ARROW_SCALE = 0.2f
+        private const val ARROW_SCALE = 0.1f
         private const val ARROW_HEIGHT_OFFSET = -5.0f
         private const val MIN_SPEED_THRESHOLD = 0.9 // m/s minimum speed to show arrow
     }

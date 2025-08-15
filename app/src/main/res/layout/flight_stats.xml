@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:clipToOutline="true">
+
+    <!-- Altitude at top with big font -->
+    <TextView
+        android:id="@+id/altitude"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:text="--- ft"
+        android:textColor="#ffffff"
+        android:textSize="80sp"
+        android:typeface="monospace" />
+
+    <!-- Horizontal Speed with H: prefix -->
+    <TextView
+        android:id="@+id/horizontal_speed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:text="H: --- mph"
+        android:textColor="#ffffff"
+        android:textSize="40sp"
+        android:typeface="monospace" />
+
+    <!-- Vertical Speed with V: prefix -->
+    <TextView
+        android:id="@+id/vertical_speed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:text="V: --- mph"
+        android:textColor="#ffffff"
+        android:textSize="40sp"
+        android:typeface="monospace" />
+
+    <!-- Glide Ratio at bottom -->
+    <TextView
+        android:id="@+id/glide"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="---"
+        android:textColor="#ffffff"
+        android:textSize="40sp"
+        android:typeface="monospace" />
+
+</LinearLayout>

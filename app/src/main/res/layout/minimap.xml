@@ -15,8 +15,8 @@
     <!-- Red dot overlay at center -->
     <View
         android:id="@+id/red_dot"
-        android:layout_width="12dp"
-        android:layout_height="12dp"
+        android:layout_width="8dp"
+        android:layout_height="8dp"
         android:layout_gravity="center"
         android:background="#ffff0000"
         android:elevation="2dp" />
