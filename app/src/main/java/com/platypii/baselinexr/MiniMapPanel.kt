@@ -20,6 +20,7 @@ class MiniMapPanel : SystemBase() {
 
     // Minimap content references
     private var redDot: View? = null
+    private var blueDot: View? = null
     private var minimapImage: ImageView? = null
 
     // Minimap bounds - should be set based on the actual minimap image coordinates
@@ -41,6 +42,7 @@ class MiniMapPanel : SystemBase() {
             grabbablePanel?.updatePosition()
             updateMiniMapPosition()
             updateRedDotPosition()
+            updateBlueDotPosition()
         }
     }
 
@@ -80,9 +82,33 @@ class MiniMapPanel : SystemBase() {
         miniMapEntity?.setComponent(Visible(true))
     }
 
-    fun setViews(minimapImage: ImageView?, redDot: View?) {
+    fun setViews(minimapImage: ImageView?, redDot: View?, blueDot: View?) {
         this.minimapImage = minimapImage
         this.redDot = redDot
+        this.blueDot = blueDot
+    }
+
+    private fun translateLatLngToMinimapPixels(lat: Double, lng: Double): Pair<Int, Int>? {
+        minimapImage?.let { image ->
+            val imageWidth = image.width
+            val imageHeight = image.height
+
+            if (imageWidth > 0 && imageHeight > 0) {
+                // Calculate position relative to minimap bounds
+                val latNormalized = (lat - latMin) / (latMax - latMin)
+                val lngNormalized = (lng - lngMin) / (lngMax - lngMin)
+
+                // Clamp to [0, 1] range
+                val clampedLat = latNormalized.coerceIn(0.0, 1.0)
+                val clampedLng = lngNormalized.coerceIn(0.0, 1.0)
+
+                val xPos = (clampedLng * imageWidth).toInt()
+                val yPos = ((1.0 - clampedLat) * imageHeight).toInt() // Invert Y for screen coordinates
+
+                return Pair(xPos, yPos)
+            }
+        }
+        return null
     }
 
     private fun updateRedDotPosition() {
@@ -97,31 +123,39 @@ class MiniMapPanel : SystemBase() {
 
         redDot?.visibility = View.VISIBLE
 
-        // Calculate position relative to minimap bounds
-        val latNormalized = (loc.latitude - latMin) / (latMax - latMin)
-        val lngNormalized = (loc.longitude - lngMin) / (lngMax - lngMin)
-
-        // Clamp to [0, 1] range
-        val clampedLat = latNormalized.coerceIn(0.0, 1.0)
-        val clampedLng = lngNormalized.coerceIn(0.0, 1.0)
-
-        minimapImage?.let { image ->
+        val pixelPos = translateLatLngToMinimapPixels(loc.latitude, loc.longitude)
+        pixelPos?.let { (xPos, yPos) ->
             redDot?.let { dot ->
-                // Calculate pixel position within the image
-                val imageWidth = image.width
-                val imageHeight = image.height
+                // Update layout params to position the red dot
+                val layoutParams = dot.layoutParams as FrameLayout.LayoutParams
+                layoutParams.leftMargin = xPos - (dot.width / 2)
+                layoutParams.topMargin = yPos - (dot.height / 2)
+                layoutParams.gravity = 0 // Remove center gravity
+                dot.layoutParams = layoutParams
+            }
+        }
+    }
 
-                if (imageWidth > 0 && imageHeight > 0) {
-                    val xPos = (clampedLng * imageWidth).toInt()
-                    val yPos = ((1.0 - clampedLat) * imageHeight).toInt() // Invert Y for screen coordinates
+    private fun updateBlueDotPosition() {
+        val destination = VROptions.current.getDestination()
 
-                    // Update layout params to position the red dot
-                    val layoutParams = dot.layoutParams as FrameLayout.LayoutParams
-                    layoutParams.leftMargin = xPos - (dot.width / 2)
-                    layoutParams.topMargin = yPos - (dot.height / 2)
-                    layoutParams.gravity = 0 // Remove center gravity
-                    dot.layoutParams = layoutParams
-                }
+        // Hide blue dot if no destination is set
+        if (destination == null) {
+            blueDot?.visibility = View.INVISIBLE
+            return
+        }
+
+        blueDot?.visibility = View.VISIBLE
+
+        val pixelPos = translateLatLngToMinimapPixels(destination.lat, destination.lng)
+        pixelPos?.let { (xPos, yPos) ->
+            blueDot?.let { dot ->
+                // Update layout params to position the blue dot
+                val layoutParams = dot.layoutParams as FrameLayout.LayoutParams
+                layoutParams.leftMargin = xPos - (dot.width / 2)
+                layoutParams.topMargin = yPos - (dot.height / 2)
+                layoutParams.gravity = 0 // Remove center gravity
+                dot.layoutParams = layoutParams
             }
         }
     }
@@ -139,6 +173,7 @@ class MiniMapPanel : SystemBase() {
         miniMapEntity = null
         grabbablePanel = null
         redDot = null
+        blueDot = null
         minimapImage = null
     }
 }

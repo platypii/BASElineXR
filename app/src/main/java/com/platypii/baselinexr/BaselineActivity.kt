@@ -200,7 +200,8 @@ class BaselineActivity : AppSystemActivity() {
             // Set up minimap references
             val minimapImage = rootView?.findViewById<android.widget.ImageView>(R.id.minimap_image)
             val redDot = rootView?.findViewById<android.view.View>(R.id.red_dot)
-            miniMapPanel?.setViews(minimapImage, redDot)
+            val blueDot = rootView?.findViewById<android.view.View>(R.id.blue_dot)
+            miniMapPanel?.setViews(minimapImage, redDot, blueDot)
           }
         })
   }
