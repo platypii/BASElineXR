@@ -105,7 +105,7 @@ public class VROptionsList {
 
     public static final VROptions PORTAL_RUN = new VROptions(
             "Portal Run",
-            "data/shaders/terrain_cinema",
+            null,
             "kpow-north-run.csv",
             "eiger",
             "kpowNorthRun",

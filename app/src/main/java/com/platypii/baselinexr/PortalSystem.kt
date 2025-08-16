@@ -33,8 +33,7 @@ class PortalSystem(
         private const val PRELOAD_RADIUS = 100.0f // Distance to preload space environment
         private const val SPACE_DURATION_MS = 5000L // Duration to stay in space (milliseconds)
 
-        // Fixed portal location and orientation
-        private val PORTAL_LOCATION = LatLngAlt(46.57835, 7.984, 2674.0) // meters
+        // Portal orientation
         private const val PORTAL_ORIENTATION_YAW = 90.0 // degrees yaw
     }
 
@@ -42,7 +41,7 @@ class PortalSystem(
     private var isInSpace = false
     private var lastHeadPosition: Vector3? = null
     private var initialized = false
-    private val spaceSystem = SpaceSystem(context)
+    private val spaceSystem = SpaceSystem(context, gpsTransform)
     private var spaceStartTime: Long = 0
     private var spaceEnvironmentPreloaded = false
 
@@ -100,7 +99,7 @@ class PortalSystem(
         }
 
         // Calculate portal offset from terrain origin to point of interest, similar to TerrainSystem
-        val terrainToPortal = GeoUtils.calculateOffset(terrainConfig.pointOfInterest, PORTAL_LOCATION)
+        val terrainToPortal = GeoUtils.calculateOffset(terrainConfig.pointOfInterest, VROptions.portalLocation)
 
         // Apply offsets to destination to get portal position in user's reference frame
         val offsetDest = GeoUtils.applyOffset(VROptions.current.destination, terrainToPortal)
@@ -206,7 +205,7 @@ class PortalSystem(
             ambientColor = Vector3(0.9f),
             sunColor = Vector3(0.5f, 0.5f, 0.6f), // Dim starlight
             sunDirection = Vector3(0f, 1f, 0f), // Light from above
-            environmentIntensity = 0.0f // No environment lighting
+            environmentIntensity = 0.01f // Less environment lighting
         )
 
         // Show the space system cubemap (already preloaded when within 100m)
