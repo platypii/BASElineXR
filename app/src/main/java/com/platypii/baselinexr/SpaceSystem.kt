@@ -34,12 +34,32 @@ class SpaceSystem(
         // Trench rotation parameters (degrees)
         private const val TRENCH_ROLL = 0f
         private const val TRENCH_PITCH = 32f
-        private const val TRENCH_YAW = 15f
-        private val TRENCH_OFFSET = Vector3(20f, -61f, 100f)
+        private const val TRENCH_YAW = 70f
+        private const val TRENCH_SCALE = 5f
+        private val TRENCH_OFFSET_BASE = Vector3(-7.5f, -7.5f, 9f).multiply(TRENCH_SCALE)
+        private val TRENCH2_OFFSET_BASE = Vector3(-16.2f, -16.3f, 19.4f).multiply(TRENCH_SCALE)
+
+        // Apply yaw rotation to X,Z coordinates
+        private val trenchYawRadians = Math.toRadians(TRENCH_YAW.toDouble()).toFloat()
+        private val cosYaw = cos(trenchYawRadians)
+        private val sinYaw = sin(trenchYawRadians)
+
+        private val TRENCH_OFFSET = Vector3(
+            TRENCH_OFFSET_BASE.x * cosYaw - TRENCH_OFFSET_BASE.z * sinYaw,
+            TRENCH_OFFSET_BASE.y,
+            TRENCH_OFFSET_BASE.x * sinYaw + TRENCH_OFFSET_BASE.z * cosYaw
+        )
+
+        private val TRENCH2_OFFSET = Vector3(
+            TRENCH2_OFFSET_BASE.x * cosYaw - TRENCH2_OFFSET_BASE.z * sinYaw,
+            TRENCH2_OFFSET_BASE.y,
+            TRENCH2_OFFSET_BASE.x * sinYaw + TRENCH2_OFFSET_BASE.z * cosYaw
+        )
     }
 
     private var spaceCubeEntity: Entity? = null
     private var trenchEntity: Entity? = null
+    private var trenchEntity2: Entity? = null
     private var isActive = false
 
     /**
@@ -63,11 +83,22 @@ class SpaceSystem(
             Visible(false)
         )
 
+        // Create shared mesh instance for memory efficiency
+        val trenchMesh = Mesh("trench.glb".toUri(), hittable = MeshCollision.NoCollision)
+
         // Create trench model at portal location (world-locked)
         trenchEntity = Entity.create(
-            Mesh("trench.glb".toUri(), hittable = MeshCollision.NoCollision),
+            trenchMesh,
             Transform(Pose(Vector3(0f))), // Will be updated in updateTrenchPosition
-            Scale(Vector3(10f)),
+            Scale(Vector3(TRENCH_SCALE)),
+            Visible(false)
+        )
+
+        // Create second trench instance (shares same mesh instance)
+        trenchEntity2 = Entity.create(
+            trenchMesh,
+            Transform(Pose(Vector3(0f))), // Will be updated in updateTrenchPosition
+            Scale(Vector3(TRENCH_SCALE)),
             Visible(false)
         )
 
@@ -83,6 +114,7 @@ class SpaceSystem(
         if (entity != null) {
             entity.setComponent(Visible(true))
             trenchEntity?.setComponent(Visible(true))
+            trenchEntity2?.setComponent(Visible(true))
             Log.i(TAG, "Space environment shown")
         } else {
             // Create space environment if it doesn't exist and show it
@@ -92,6 +124,7 @@ class SpaceSystem(
             // After creation, make it visible
             spaceCubeEntity?.setComponent(Visible(true))
             trenchEntity?.setComponent(Visible(true))
+            trenchEntity2?.setComponent(Visible(true))
             Log.i(TAG, "Space environment created and shown")
         }
     }
@@ -102,6 +135,7 @@ class SpaceSystem(
     fun hideSpace() {
         spaceCubeEntity?.setComponent(Visible(false))
         trenchEntity?.setComponent(Visible(false))
+        trenchEntity2?.setComponent(Visible(false))
         Log.i(TAG, "Space environment hidden")
     }
 
@@ -124,18 +158,15 @@ class SpaceSystem(
 
     private fun updateTrenchPosition() {
         val entity = trenchEntity ?: return
-
-        // Get current GPS location for coordinate transformation
-        val currentLocation = Services.location.lastLoc ?: return
+        val entity2 = trenchEntity2 ?: return
 
         val terrainConfig = TerrainConfigLoader.loadConfig(context) ?: return
 
         // Calculate trench offset from terrain origin to portal location
-        val terrainToTrench = GeoUtils.calculateOffset(terrainConfig.pointOfInterest, VROptions.portalLocation)
+        val terrainToPortal = GeoUtils.calculateOffset(terrainConfig.pointOfInterest, VROptions.portalLocation)
 
         // Apply offsets to destination to get trench position in user's reference frame
-        val offsetDest = GeoUtils.applyOffset(VROptions.current.destination, terrainToTrench)
-        val trenchLocation = LatLngAlt(offsetDest.lat, offsetDest.lng, offsetDest.alt)
+        val trenchLocation = GeoUtils.applyOffset(VROptions.current.destination, terrainToPortal.add(TRENCH_OFFSET))
 
         // Convert to world coordinates
         val currentTime = System.currentTimeMillis()
@@ -146,13 +177,30 @@ class SpaceSystem(
             trenchLocation.alt,
             currentTime,
             motionEstimator
-        ).add(TRENCH_OFFSET)
+        )
 
-        // Apply trench rotation (only roll for now)
-        val rotation = Quaternion(TRENCH_PITCH, TRENCH_YAW, TRENCH_ROLL)
+        // Apply terrain rotation (same as terrain system) 
+        val yawDegrees = Math.toDegrees(Adjustments.yawAdjustment).toFloat()
+        val totalYaw = 180f + yawDegrees + TRENCH_YAW
+        val rotation = Quaternion(TRENCH_PITCH, totalYaw, TRENCH_ROLL)
 
-        val transform = Transform(Pose(trenchWorldPos, rotation))
-        entity.setComponent(transform)
+        // Position first trench
+        val transform1 = Transform(Pose(trenchWorldPos, rotation))
+        entity.setComponent(transform1)
+
+        // Calculate second trench position same way as first trench
+        val trenchLocation2 = GeoUtils.applyOffset(VROptions.current.destination, terrainToPortal.add(TRENCH2_OFFSET))
+
+        val trenchWorldPos2 = gpsTransform.toWorldCoordinates(
+            trenchLocation2.lat,
+            trenchLocation2.lng,
+            trenchLocation2.alt,
+            currentTime,
+            motionEstimator
+        )
+
+        val transform2 = Transform(Pose(trenchWorldPos2, rotation))
+        entity2.setComponent(transform2)
     }
 
     override fun execute() {
@@ -176,12 +224,14 @@ class SpaceSystem(
         try {
             spaceCubeEntity?.destroy()
             trenchEntity?.destroy()
+            trenchEntity2?.destroy()
         } catch (e: Exception) {
             Log.w(TAG, "Error destroying space entities: ${e.message}")
         }
 
         spaceCubeEntity = null
         trenchEntity = null
+        trenchEntity2 = null
         isActive = false
     }
 
@@ -206,6 +256,7 @@ class SpaceSystem(
     fun cleanup() {
         destroySpaceEnvironment()
         trenchEntity = null
+        trenchEntity2 = null
         Log.i(TAG, "SpaceSystem cleaned up")
     }
 }

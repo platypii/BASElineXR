@@ -14,7 +14,6 @@ import com.meta.spatial.toolkit.PlayerBodyAttachmentSystem
 import com.meta.spatial.toolkit.Scale
 import com.meta.spatial.toolkit.Transform
 import com.meta.spatial.toolkit.Visible
-import kotlin.math.abs
 
 /**
  * Portal system that detects when the user flies through a portal and transports them to space.
@@ -31,7 +30,7 @@ class PortalSystem(
         private const val PORTAL_SCALE = 2.0f
         private const val TRIGGER_RADIUS = 3.0f // Radius for collision detection
         private const val PRELOAD_RADIUS = 100.0f // Distance to preload space environment
-        private const val SPACE_DURATION_MS = 5000L // Duration to stay in space (milliseconds)
+        private const val SPACE_DURATION_MS = 5500L // Duration to stay in space (milliseconds)
 
         // Portal orientation
         private const val PORTAL_ORIENTATION_YAW = 90.0 // degrees yaw
@@ -219,14 +218,14 @@ class PortalSystem(
         spaceSystem.hideSpace()
 
         // Show the terrain system again
-        activity.terrainSystem?.let { terrainSystem ->
-            // Set all terrain tiles back to visible
-            terrainSystem.setVisible(true)
-        }
+//        activity.terrainSystem?.let { terrainSystem ->
+//            // Set all terrain tiles back to visible
+//            terrainSystem.setVisible(true)
+//        }
 
         // Restore normal environment
         activity.scene.setLightingEnvironment(
-            ambientColor = Vector3(0.9f),
+            ambientColor = Vector3(1.4f),
             sunColor = Vector3(1f),
             sunDirection = Vector3(1f, 10f, 1f),
             environmentIntensity = 0.02f

@@ -58,7 +58,7 @@ class FlightStatsSystem : SystemBase() {
         
         if (loc != null) {
             // Top left: Altitude
-            altitudeLabel?.text = Convert.distance(loc.altitude_gps)
+            altitudeLabel?.text = Convert.distance(loc.altitude_gps - VROptions.target.alt)
             
             // Top right: Horizontal Speed
             val groundSpeed = loc.groundSpeed()
