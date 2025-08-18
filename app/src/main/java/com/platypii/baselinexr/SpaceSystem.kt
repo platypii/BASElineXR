@@ -8,6 +8,8 @@ import com.meta.spatial.core.Pose
 import com.meta.spatial.core.Quaternion
 import com.meta.spatial.core.SystemBase
 import com.meta.spatial.core.Vector3
+import com.meta.spatial.toolkit.GLXFInfo
+import com.meta.spatial.toolkit.GLXFManager
 import com.meta.spatial.toolkit.Mesh
 import com.meta.spatial.toolkit.MeshCollision
 import com.meta.spatial.toolkit.PlayerBodyAttachmentSystem
@@ -15,6 +17,10 @@ import com.meta.spatial.toolkit.Scale
 import com.meta.spatial.toolkit.Transform
 import com.meta.spatial.toolkit.Visible
 import com.platypii.baselinexr.measurements.LatLngAlt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -24,7 +30,8 @@ import kotlin.math.sin
  */
 class SpaceSystem(
     private val context: Context,
-    private val gpsTransform: GpsToWorldTransform
+    private val gpsTransform: GpsToWorldTransform,
+    private val glXFManager: GLXFManager
 ) : SystemBase() {
 
     companion object {
@@ -33,99 +40,82 @@ class SpaceSystem(
 
         // Trench rotation parameters (degrees)
         private const val TRENCH_ROLL = 0f
-        private const val TRENCH_PITCH = 32f
+        private const val TRENCH_PITCH = -33f
         private const val TRENCH_YAW = 70f
-        private const val TRENCH_SCALE = 5f
-        private val TRENCH_OFFSET_BASE = Vector3(-7.5f, -7.5f, 9f).multiply(TRENCH_SCALE)
-        private val TRENCH2_OFFSET_BASE = Vector3(-16.2f, -16.3f, 19.4f).multiply(TRENCH_SCALE)
 
         // Apply yaw rotation to X,Z coordinates
         private val trenchYawRadians = Math.toRadians(TRENCH_YAW.toDouble()).toFloat()
         private val cosYaw = cos(trenchYawRadians)
         private val sinYaw = sin(trenchYawRadians)
-
-        private val TRENCH_OFFSET = Vector3(
-            TRENCH_OFFSET_BASE.x * cosYaw - TRENCH_OFFSET_BASE.z * sinYaw,
-            TRENCH_OFFSET_BASE.y,
-            TRENCH_OFFSET_BASE.x * sinYaw + TRENCH_OFFSET_BASE.z * cosYaw
-        )
-
-        private val TRENCH2_OFFSET = Vector3(
-            TRENCH2_OFFSET_BASE.x * cosYaw - TRENCH2_OFFSET_BASE.z * sinYaw,
-            TRENCH2_OFFSET_BASE.y,
-            TRENCH2_OFFSET_BASE.x * sinYaw + TRENCH2_OFFSET_BASE.z * cosYaw
-        )
     }
 
     private var spaceCubeEntity: Entity? = null
-    private var trenchEntity: Entity? = null
-    private var trenchEntity2: Entity? = null
+    private var spaceSceneEntity: Entity? = null
+    private var spaceComposition: GLXFInfo? = null
     private var isActive = false
+    private var visible = false
+    private val systemScope = CoroutineScope(Dispatchers.Main)
 
     /**
-     * Creates the space environment with a cubemap around the user
+     * Creates the space environment with separate spaceCube and trench composition
      */
-    fun createSpaceEnvironment(userPosition: Vector3 = Vector3(0f)) {
+    fun createSpaceEnvironment(userPosition: Vector3 = Vector3(0f)): Job {
         if (isActive) {
             Log.w(TAG, "Space environment already active")
-            return
+            return Job()
         }
 
-        Log.i(TAG, "Creating space cubemap environment")
+        Log.i(TAG, "Creating space environment with spaceCube and trench composition")
 
-        // Create a large cube centered on the user position
-        // The cube should have inward-facing normals to show textures on the inside
-        // Start invisible until showSpace() is called
+        // Create the space cube that follows the user
         spaceCubeEntity = Entity.create(
             Mesh("space.glb".toUri(), hittable = MeshCollision.NoCollision),
             Transform(Pose(userPosition)),
             Scale(Vector3(SPACE_CUBE_SIZE, SPACE_CUBE_SIZE, SPACE_CUBE_SIZE)),
+            Visible(false) // Start invisible until showSpace() is called
+        )
+
+        // Create the world-locked scene entity for trench models
+        spaceSceneEntity = Entity.create(
+            Transform(Pose(Vector3(0f))),
             Visible(false)
         )
 
-        // Create shared mesh instance for memory efficiency
-        val trenchMesh = Mesh("trench.glb".toUri(), hittable = MeshCollision.NoCollision)
-
-        // Create trench model at portal location (world-locked)
-        trenchEntity = Entity.create(
-            trenchMesh,
-            Transform(Pose(Vector3(0f))), // Will be updated in updateTrenchPosition
-            Scale(Vector3(TRENCH_SCALE)),
-            Visible(false)
-        )
-
-        // Create second trench instance (shares same mesh instance)
-        trenchEntity2 = Entity.create(
-            trenchMesh,
-            Transform(Pose(Vector3(0f))), // Will be updated in updateTrenchPosition
-            Scale(Vector3(TRENCH_SCALE)),
-            Visible(false)
-        )
-
-        isActive = true
-        Log.i(TAG, "Space environment created")
+        return systemScope.launch {
+            try {
+                glXFManager.inflateGLXF(
+                    "apk:///scenes/Space.glxf".toUri(),
+                    rootEntity = spaceSceneEntity!!,
+                    onLoaded = { composition ->
+                        spaceComposition = composition
+                        isActive = true
+                        Log.i(TAG, "Space scene loaded successfully")
+                    }
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to load Space scene: ${e.message}", e)
+            }
+        }
     }
 
     /**
      * Shows the space environment if it exists
      */
     fun showSpace() {
-        val entity = spaceCubeEntity
-        if (entity != null) {
-            entity.setComponent(Visible(true))
-            trenchEntity?.setComponent(Visible(true))
-            trenchEntity2?.setComponent(Visible(true))
+        visible = true
+        val spaceCube = spaceCubeEntity
+        val sceneEntity = spaceSceneEntity
+        if (spaceCube != null && sceneEntity != null && isActive) {
+            spaceCube.setComponent(Visible(true))
+            updateCompositionVisibility(true)
             Log.i(TAG, "Space environment shown")
         } else {
             // Create space environment if it doesn't exist and show it
             val headPose = getHeadPose()
             val userPosition = headPose?.t ?: Vector3(0f, 0f, 0f)
             createSpaceEnvironment(userPosition)
-            // After creation, make it visible
-            spaceCubeEntity?.setComponent(Visible(true))
-            trenchEntity?.setComponent(Visible(true))
-            trenchEntity2?.setComponent(Visible(true))
-            Log.i(TAG, "Space environment created and shown")
+            // Note: Visibility will be handled in updateSpacePosition after scene is loaded
+            Log.i(TAG, "Space environment creation started, will show when loaded")
         }
     }
 
@@ -133,74 +123,83 @@ class SpaceSystem(
      * Hides the space environment
      */
     fun hideSpace() {
+        visible = false
         spaceCubeEntity?.setComponent(Visible(false))
-        trenchEntity?.setComponent(Visible(false))
-        trenchEntity2?.setComponent(Visible(false))
+        updateCompositionVisibility(false)
         Log.i(TAG, "Space environment hidden")
     }
 
     /**
      * Updates space environment position relative to user (keeps it centered)
      */
-    fun updateSpacePosition() {
+    private fun updateSpacePosition() {
         if (!isActive) return
 
-        val entity = spaceCubeEntity ?: return
+        val spaceCube = spaceCubeEntity ?: return
         val headPose = getHeadPose() ?: return
 
         // Keep space cube centered on user's head position
         val transform = Transform(Pose(headPose.t))
-        entity.setComponent(transform)
+        spaceCube.setComponent(transform)
 
-        // Update trench position (world-locked at portal location)
-        updateTrenchPosition()
+        // Set visibility based on visible flag
+        spaceCube.setComponent(Visible(visible))
     }
 
     private fun updateTrenchPosition() {
-        val entity = trenchEntity ?: return
-        val entity2 = trenchEntity2 ?: return
-
         val terrainConfig = TerrainConfigLoader.loadConfig(context) ?: return
+        val rootEntity = spaceSceneEntity ?: return
 
-        // Calculate trench offset from terrain origin to portal location
-        val terrainToPortal = GeoUtils.calculateOffset(terrainConfig.pointOfInterest, VROptions.portalLocation)
+        try {
+            // Calculate trench offset from terrain origin to portal location
+            val terrainToPortal = GeoUtils.calculateOffset(terrainConfig.pointOfInterest, VROptions.portalLocation)
 
-        // Apply offsets to destination to get trench position in user's reference frame
-        val trenchLocation = GeoUtils.applyOffset(VROptions.current.destination, terrainToPortal.add(TRENCH_OFFSET))
+            // Apply offsets to destination to get trench position in user's reference frame
+            val trenchLocation = GeoUtils.applyOffset(VROptions.current.destination, terrainToPortal)
 
-        // Convert to world coordinates
-        val currentTime = System.currentTimeMillis()
-        val motionEstimator = Services.location.motionEstimator
-        val trenchWorldPos = gpsTransform.toWorldCoordinates(
-            trenchLocation.lat,
-            trenchLocation.lng,
-            trenchLocation.alt,
-            currentTime,
-            motionEstimator
-        )
+            // Convert to world coordinates
+            val currentTime = System.currentTimeMillis()
+            val motionEstimator = Services.location.motionEstimator
+            val trenchWorldPos = gpsTransform.toWorldCoordinates(
+                trenchLocation.lat,
+                trenchLocation.lng,
+                trenchLocation.alt,
+                currentTime,
+                motionEstimator
+            )
 
-        // Apply terrain rotation (same as terrain system) 
-        val yawDegrees = Math.toDegrees(Adjustments.yawAdjustment).toFloat()
-        val totalYaw = 180f + yawDegrees + TRENCH_YAW
-        val rotation = Quaternion(TRENCH_PITCH, totalYaw, TRENCH_ROLL)
+            // Apply terrain rotation (same as terrain system) 
+            val yawDegrees = Math.toDegrees(Adjustments.yawAdjustment).toFloat()
+            val totalYaw = yawDegrees + TRENCH_YAW
+            val rotation = Quaternion(TRENCH_PITCH, totalYaw, TRENCH_ROLL)
 
-        // Position first trench
-        val transform1 = Transform(Pose(trenchWorldPos, rotation))
-        entity.setComponent(transform1)
+            // Position the entire Space composition with world transform and yaw
+            val transform = Transform(Pose(trenchWorldPos, rotation))
+            rootEntity.setComponent(transform)
+            
+            // Set visibility on child entities in the composition, not just the root
+            updateCompositionVisibility(visible)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error updating composition position: ${e.message}", e)
+        }
+    }
 
-        // Calculate second trench position same way as first trench
-        val trenchLocation2 = GeoUtils.applyOffset(VROptions.current.destination, terrainToPortal.add(TRENCH2_OFFSET))
-
-        val trenchWorldPos2 = gpsTransform.toWorldCoordinates(
-            trenchLocation2.lat,
-            trenchLocation2.lng,
-            trenchLocation2.alt,
-            currentTime,
-            motionEstimator
-        )
-
-        val transform2 = Transform(Pose(trenchWorldPos2, rotation))
-        entity2.setComponent(transform2)
+    /**
+     * Updates visibility for all child entities in the GLXF composition
+     * This is necessary because setting Visible on the root entity doesn't affect children
+     */
+    private fun updateCompositionVisibility(isVisible: Boolean) {
+        val composition = spaceComposition ?: return
+        
+        try {
+            // Get all nodes in the composition and update their visibility
+            composition.nodes.forEach { node ->
+                node.entity.setComponent(Visible(isVisible))
+            }
+            Log.d(TAG, "Updated composition visibility: $isVisible for ${composition.nodes.size} nodes")
+        } catch (e: Exception) {
+            Log.w(TAG, "Error updating composition visibility: ${e.message}", e)
+        }
     }
 
     override fun execute() {
@@ -223,22 +222,17 @@ class SpaceSystem(
 
         try {
             spaceCubeEntity?.destroy()
-            trenchEntity?.destroy()
-            trenchEntity2?.destroy()
+            spaceSceneEntity?.destroy()
         } catch (e: Exception) {
             Log.w(TAG, "Error destroying space entities: ${e.message}")
         }
 
         spaceCubeEntity = null
-        trenchEntity = null
-        trenchEntity2 = null
+        spaceSceneEntity = null
+        spaceComposition = null
         isActive = false
+        visible = false
     }
-
-    /**
-     * Returns true if the space environment is currently active
-     */
-    fun isSpaceActive(): Boolean = isActive
 
     private fun getHeadPose(): Pose? {
         try {
@@ -255,8 +249,7 @@ class SpaceSystem(
 
     fun cleanup() {
         destroySpaceEnvironment()
-        trenchEntity = null
-        trenchEntity2 = null
+        spaceComposition = null
         Log.i(TAG, "SpaceSystem cleaned up")
     }
 }

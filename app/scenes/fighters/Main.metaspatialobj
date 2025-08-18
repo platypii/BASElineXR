@@ -1,0 +1,63 @@
+scene: docref:Main.scene
+entities:
+  com.meta.models.AssetFolder:
+    - components:
+        com.meta.components.AssetFolder:
+          assets:
+            - ref:blinn10SG
+            - ref:blinn8SG
+            - ref:Object_41
+        com.meta.components.Name:
+          name: fighters-darker
+  com.meta.models.AssetRoot:
+    - components:
+        com.meta.components.AssetMetadata:
+          {}
+        com.meta.components.AssetRoot:
+          defaultScene: ref:Scene
+          scenes:
+            - ref:Scene
+  com.meta.models.Geometry:
+    - components:
+        com.meta.components.Geometry:
+          data: binary/Geometry1.bin
+          mode: Triangles
+      tag: Geometry1
+    - components:
+        com.meta.components.Geometry:
+          data: binary/Geometry.bin
+          mode: Triangles
+      tag: Geometry
+  com.meta.models.Material:
+    - uri: docref:materials/blinn10SG.metaspatialmaterial
+      tag: blinn10SG
+    - uri: docref:materials/blinn8SG.metaspatialmaterial
+      tag: blinn8SG
+  com.meta.models.Mesh:
+    - components:
+        com.meta.components.Mesh:
+          morphTargetNames:
+            []
+          morphTargetWeights:
+            []
+          primitives:
+            - ref:Primitive1
+            - ref:Primitive
+        com.meta.components.Name:
+          name: Object_41
+        com.meta.components.PointerNodeInverseComponent:
+          {}
+      tag: Object_41
+  com.meta.models.Primitive:
+    - components:
+        com.meta.components.Primitive:
+          geometry: ref:Geometry
+          material: ref:blinn10SG
+      tag: Primitive1
+    - components:
+        com.meta.components.Primitive:
+          geometry: ref:Geometry1
+          material: ref:blinn8SG
+      tag: Primitive
+metadata:
+  version: 1.34

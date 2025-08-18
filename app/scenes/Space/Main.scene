@@ -1,0 +1,96 @@
+entities:
+  com.meta.models.Scene:
+    - components:
+        com.meta.components.Name:
+          {}
+        com.meta.components.Scene:
+          nodes:
+            - ref:trench8d1
+            - ref:trench8d
+            - ref:fighters-darker
+      tag: Scene
+  com.meta.models.SceneNode:
+    - components:
+        com.meta.components.Animatable:
+          {}
+        com.meta.components.DocumentReference:
+          transformType: None
+          documentReference: projref:fighters/Main.metaspatialobj
+        com.meta.components.Name:
+          name: fighters-darker
+        com.meta.components.PointerNodeInverseComponent:
+          {}
+        com.meta.components.SceneNode:
+          rotation.format: Euler
+          scale:
+            - 5
+            - 5
+            - 5
+          translation:
+            - 2.72177067e-06
+            - 0
+            - -78
+          componentVersion: 1
+        com.meta.components.Visibility:
+          visible: true
+      tag: fighters-darker
+    - components:
+        com.meta.components.Animatable:
+          {}
+        com.meta.components.DocumentReference:
+          transformType: None
+          documentReference: projref:trench8d/Main.metaspatialobj
+        com.meta.components.Name:
+          name: trench8d
+        com.meta.components.PointerNodeInverseComponent:
+          {}
+        com.meta.components.SceneNode:
+          rotation.data:
+            - 0
+            - 3.14159274
+            - 0
+            - 0
+          rotation.format: Euler
+          scale:
+            - 5
+            - 5
+            - 5
+          translation:
+            - 0
+            - 0
+            - -50
+          componentVersion: 1
+        com.meta.components.Visibility:
+          visible: true
+      tag: trench8d
+    - components:
+        com.meta.components.Animatable:
+          {}
+        com.meta.components.DocumentReference:
+          transformType: None
+          documentReference: projref:trench8d/Main.metaspatialobj
+        com.meta.components.Name:
+          name: trench8d
+        com.meta.components.PointerNodeInverseComponent:
+          {}
+        com.meta.components.SceneNode:
+          rotation.data:
+            - 0
+            - 3.14159274
+            - 0
+            - 0
+          rotation.format: Euler
+          scale:
+            - 5
+            - 5
+            - 5
+          translation:
+            - 0
+            - 0
+            - -130
+          componentVersion: 1
+        com.meta.components.Visibility:
+          visible: true
+      tag: trench8d1
+metadata:
+  version: 1.34

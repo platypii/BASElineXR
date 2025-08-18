@@ -1,0 +1,74 @@
+scene: docref:Main.scene
+entities:
+  com.meta.models.AssetFolder:
+    - components:
+        com.meta.components.AssetFolder:
+          assets:
+            - ref:trench8bake2
+            - ref:Material.002
+            - ref:deathstar
+        com.meta.components.Name:
+          name: trench8d
+  com.meta.models.AssetRoot:
+    - components:
+        com.meta.components.AssetMetadata:
+          {}
+        com.meta.components.AssetRoot:
+          defaultScene: ref:Scene
+          scenes:
+            - ref:Scene
+  com.meta.models.Geometry:
+    - components:
+        com.meta.components.Geometry:
+          data: binary/Geometry.bin
+          mode: Triangles
+      tag: Geometry
+  com.meta.models.Image:
+    - components:
+        com.meta.components.Asset:
+          path: assets/trench8bake2.png
+        com.meta.components.Image:
+          height: 4096
+          mimeType: image/png
+          width: 4096
+        com.meta.components.Name:
+          name: trench8bake2
+      tag: trench8bake2
+  com.meta.models.Material:
+    - uri: docref:materials/Material.metaspatialmaterial
+      tag: Material.002
+  com.meta.models.Mesh:
+    - components:
+        com.meta.components.Mesh:
+          morphTargetNames:
+            []
+          morphTargetWeights:
+            []
+          primitives:
+            - ref:Primitive
+        com.meta.components.Name:
+          name: deathstar
+        com.meta.components.PointerNodeInverseComponent:
+          {}
+      tag: deathstar
+  com.meta.models.Primitive:
+    - components:
+        com.meta.components.Primitive:
+          geometry: ref:Geometry
+          material: ref:Material.002
+      tag: Primitive
+  com.meta.models.Sampler:
+    - components:
+        com.meta.components.Name:
+          name: sampler0
+        com.meta.components.Sampler:
+          magFilter: Linear
+          minFilter: LinearMipmapLinear
+          wrapS: Repeat
+          wrapT: Repeat
+      tag: sampler0
+  com.meta.models.Texture:
+    - uri: docref:textures/texture1.metaspatialtexture
+      tag: texture1
+metadata:
+  version: 1.34

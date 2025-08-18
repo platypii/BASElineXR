@@ -30,7 +30,7 @@ class PortalSystem(
         private const val PORTAL_SCALE = 2.0f
         private const val TRIGGER_RADIUS = 3.0f // Radius for collision detection
         private const val PRELOAD_RADIUS = 100.0f // Distance to preload space environment
-        private const val SPACE_DURATION_MS = 5500L // Duration to stay in space (milliseconds)
+        private const val SPACE_DURATION_MS = 5200L // Duration to stay in space (milliseconds)
 
         // Portal orientation
         private const val PORTAL_ORIENTATION_YAW = 90.0 // degrees yaw
@@ -40,7 +40,7 @@ class PortalSystem(
     private var isInSpace = false
     private var lastHeadPosition: Vector3? = null
     private var initialized = false
-    private val spaceSystem = SpaceSystem(context, gpsTransform)
+    private val spaceSystem = SpaceSystem(context, gpsTransform, activity.glXFManager)
     private var spaceStartTime: Long = 0
     private var spaceEnvironmentPreloaded = false
 
@@ -201,9 +201,9 @@ class PortalSystem(
 
         // Change environment to space (black with stars)
         activity.scene.setLightingEnvironment(
-            ambientColor = Vector3(0.9f),
-            sunColor = Vector3(0.5f, 0.5f, 0.6f), // Dim starlight
-            sunDirection = Vector3(0f, 1f, 0f), // Light from above
+            ambientColor = Vector3(0.8f),
+            sunColor = Vector3(1.2f, 1.2f, 1.8f), // Dim starlight
+            sunDirection = Vector3(1f, -2f, -1f), // Light from above
             environmentIntensity = 0.01f // Less environment lighting
         )
 

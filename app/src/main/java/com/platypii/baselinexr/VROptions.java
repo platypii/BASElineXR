@@ -15,7 +15,7 @@ public class VROptions {
     public final boolean showPortal;
 
     // Current active configuration
-    public static VROptions current = VROptionsList.EIGER_SKYDIVE;
+    public static VROptions current = VROptionsList.PORTAL_RUN;
 
     public VROptions(String name, String shader, String mockTrack, String sourceModel, String destinationName,
                      boolean roomMovement, boolean showDirectionArrow, boolean showTarget, boolean showPortal) {
@@ -57,5 +57,5 @@ public class VROptions {
     public static LatLngAlt target = new LatLngAlt(47.2375, -123.1458, 84);
 
     // Portal location
-    public static LatLngAlt portalLocation = new LatLngAlt(46.57835, 7.984, 2674.0);
+    public static LatLngAlt portalLocation = new LatLngAlt(46.57835, 7.984, 2673.0);
 }
