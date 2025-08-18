@@ -16,6 +16,24 @@
         "lng": 8.0053,
         "alt": 3980
       },
+      "rotation": -100
+    },
+    {
+      "model": "claude.glb",
+      "tileOrigin": {
+        "lat": 46.577,
+        "lng": 8.0033,
+        "alt": 3870
+      },
+      "rotation": -120
+    },
+    {
+      "model": "squirrel.gltf",
+      "tileOrigin": {
+        "lat": 46.57656,
+        "lng": 8.0013,
+        "alt": 3760
+      },
       "rotation": -120
     }
   ],

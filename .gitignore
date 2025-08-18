@@ -14,6 +14,5 @@
 .externalNativeBuild
 .cxx
 local.properties
-CLAUDE.md
 Meta-Spatial-SDK-Samples
 meta-spatial-sdk-0.7.0-javadoc
