@@ -10,11 +10,11 @@
       "rotation": 0
     },
     {
-      "model": "billboard.glb",
+      "model": "baselinexr.glb",
       "tileOrigin": {
-        "lat": 46.5778,
+        "lat": 46.577812,
         "lng": 8.0053,
-        "alt": 3990
+        "alt": 3980
       },
       "rotation": -120
     }
