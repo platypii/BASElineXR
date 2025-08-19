@@ -1,0 +1,100 @@
+{
+  "asset": {
+    "generator": "glTF-Transform v4.2.0",
+    "version": "2.0"
+  },
+  "accessors": [
+    {
+      "name": "Node-Mesh_0_positions",
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 1288,
+      "max": [
+        99.98988342285156,
+        0.0015810427721589804,
+        4.000038146972656
+      ],
+      "min": [
+        -0.010013270191848278,
+        -54.10275650024414,
+        0
+      ],
+      "bufferView": 0,
+      "byteOffset": 0
+    },
+    {
+      "name": "Node-Mesh_0_indices",
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 8400,
+      "bufferView": 1,
+      "byteOffset": 0
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 15456,
+      "byteStride": 12,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 15456,
+      "byteLength": 16800,
+      "target": 34963
+    }
+  ],
+  "buffers": [
+    {
+      "name": "claude",
+      "uri": "claude.bin",
+      "byteLength": 32256
+    }
+  ],
+  "materials": [
+    {
+      "name": "white",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.01,
+          0.01,
+          0.01,
+          1
+        ],
+        "metallicFactor": 0
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Node-Mesh",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0
+          },
+          "mode": 4,
+          "material": 0,
+          "indices": 1
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "Node",
+      "mesh": 0,
+      "scale": [0.5, 0.5, 0.5]
+    }
+  ],
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene": 0
+}

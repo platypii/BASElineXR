@@ -10,7 +10,7 @@
       "rotation": 0
     },
     {
-      "model": "baselinexr.glb",
+      "model": "baselinexr.gltf",
       "tileOrigin": {
         "lat": 46.577812,
         "lng": 8.0053,
@@ -19,22 +19,22 @@
       "rotation": -100
     },
     {
-      "model": "claude.glb",
+      "model": "claude.gltf",
       "tileOrigin": {
-        "lat": 46.577,
-        "lng": 8.0033,
-        "alt": 3870
+        "lat": 46.57745,
+        "lng": 8.0043,
+        "alt": 3935
       },
-      "rotation": -120
+      "rotation": -105
     },
     {
       "model": "squirrel.gltf",
       "tileOrigin": {
-        "lat": 46.57656,
-        "lng": 8.0013,
-        "alt": 3760
+        "lat": 46.57725,
+        "lng": 8.0033,
+        "alt": 3870
       },
-      "rotation": -120
+      "rotation": -110
     }
   ],
   "terrainOrigin": {
