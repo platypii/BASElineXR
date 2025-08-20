@@ -2,6 +2,7 @@
   "tiles": [
     {
       "model": "terrain/eiger_terrain_0.5m.glb",
+      "modelLowLOD": "terrain/eiger_terrain_1.0m.glb",
       "tileOrigin": {
         "lat": 46.5631464,
         "lng": 7.94727628,

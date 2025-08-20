@@ -9,7 +9,6 @@ public class VROptionsList {
 
     public static final VROptions LIVE = new VROptions(
         "Live",
-        "data/shaders/terrain_cinema",
         null,
         "eiger",
         "kpowSouth",
@@ -21,7 +20,6 @@ public class VROptionsList {
 
     public static final VROptions EIGER_BASE = new VROptions(
         "Eiger Base",
-        null,
         "eiger.csv",
         "eiger",
         "eiger",
@@ -33,7 +31,6 @@ public class VROptionsList {
 
     public static final VROptions EIGER_SKYDIVE = new VROptions(
             "Eiger Skydive",
-            null,
             "kpow-prison.csv",
             "branded",
             "kpowPrison",
@@ -45,7 +42,6 @@ public class VROptionsList {
 
     public static final VROptions EIGER_SKYDIVE_LAKE = new VROptions(
             "Eiger Skydive",
-            null,
             "kpow.csv",
             "eiger",
             "kpowLake",
@@ -57,7 +53,6 @@ public class VROptionsList {
 
     public static final VROptions KPOW_SKYDIVE_LANDING = new VROptions(
         "Kpow Landing",
-        null,
         "kpow-landing.csv",
         "kpow",
         "kpow",
@@ -69,7 +64,6 @@ public class VROptionsList {
 
     public static final VROptions KPOW_GROUND_LEVEL = new VROptions(
         "Kpow Ground",
-        "data/shaders/terrain_bubble",
         "kpow-student.csv",
         "kpow",
         "kpow",
@@ -81,7 +75,6 @@ public class VROptionsList {
 
     public static final VROptions GOING_IN_SIMULATOR = new VROptions(
         "Going-In",
-        null,
         "kpow-impact.csv",
         "kpow",
         "kpow4500",
@@ -93,7 +86,6 @@ public class VROptionsList {
 
     public static final VROptions JANK = new VROptions(
         "Jank",
-        "data/shaders/terrain_bubble",
         "jank-longer.csv",
         "eiger",
         "kpowSouth",
@@ -105,7 +97,6 @@ public class VROptionsList {
 
     public static final VROptions PORTAL_RUN = new VROptions(
             "Portal Run",
-            null,
             "kpow-north-run.csv",
             "eiger",
             "kpowNorthRun",

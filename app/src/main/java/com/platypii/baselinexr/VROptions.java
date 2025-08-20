@@ -5,7 +5,6 @@ import com.platypii.baselinexr.measurements.LatLngAlt;
 public class VROptions {
 
     public final String name;
-    public final String shader;
     public final String mockTrack;
     public final String sourceModel;
     public final String destinationName;
@@ -17,10 +16,9 @@ public class VROptions {
     // Current active configuration
     public static VROptions current = VROptionsList.EIGER_SKYDIVE;
 
-    public VROptions(String name, String shader, String mockTrack, String sourceModel, String destinationName,
+    public VROptions(String name, String mockTrack, String sourceModel, String destinationName,
                      boolean roomMovement, boolean showDirectionArrow, boolean showTarget, boolean showPortal) {
         this.name = name;
-        this.shader = shader;
         this.mockTrack = mockTrack;
         this.sourceModel = sourceModel;
         this.destinationName = destinationName;

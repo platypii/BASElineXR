@@ -34,10 +34,11 @@ class TerrainSystem(
         super.delete(entity)
 
         // Find and remove deleted tile
-        val tileToRemove = terrainTiles.find { it.entity == entity }
+        val tileToRemove = terrainTiles.find { it.highLODEntity == entity || it.lowLODEntity == entity }
         tileToRemove?.let {
             terrainTiles.remove(it)
-            it.entity.destroy()
+            it.highLODEntity.destroy()
+            it.lowLODEntity.destroy()
         }
     }
 
@@ -60,20 +61,30 @@ class TerrainSystem(
     }
 
     private fun createTerrainTile(config: TerrainTileConfig) {
-        val entity = Entity.create(
+        // Create high LOD entity with high LOD shader
+        val highLODEntity = Entity.create(
             Mesh(config.model.toUri()),
             Visible(false),
-            Transform(Pose())  // Initial transform, updated in execute()
+            Transform(Pose())
         )
 
-        // Also modify the mesh to use custom transparency shader
-        if (VROptions.current.shader != null) {
-            val mesh = entity.getComponent<Mesh>()
-            mesh.defaultShaderOverride = VROptions.current.shader
-            entity.setComponent(mesh)
-        }
+        val highMesh = highLODEntity.getComponent<Mesh>()
+        highMesh.defaultShaderOverride = "data/shaders/terrain_high_lod"
+        highLODEntity.setComponent(highMesh)
 
-        terrainTiles.add(TerrainTileEntity(config, entity))
+        // Create low LOD entity - use modelLowLOD if available, otherwise fallback to regular model
+        val lowLODModelPath = config.modelLowLOD ?: config.model
+        val lowLODEntity = Entity.create(
+            Mesh(lowLODModelPath.toUri()),
+            Visible(false),
+            Transform(Pose())
+        )
+
+        val lowMesh = lowLODEntity.getComponent<Mesh>()
+        lowMesh.defaultShaderOverride = "data/shaders/terrain_low_lod"
+        lowLODEntity.setComponent(lowMesh)
+
+        terrainTiles.add(TerrainTileEntity(config, highLODEntity, lowLODEntity))
     }
 
     private fun updateTilePositions() {
@@ -115,7 +126,13 @@ class TerrainSystem(
                 Quaternion(0f, totalRotation, 0f)  // Apply yaw adjustment + tile rotation
             ))
 
-            tile.entity.setComponents(listOf(
+            // Update both high and low LOD entities
+            tile.highLODEntity.setComponents(listOf(
+                transform,
+                Visible(isVisible)
+            ))
+
+            tile.lowLODEntity.setComponents(listOf(
                 transform,
                 Visible(isVisible)
             ))
@@ -133,7 +150,8 @@ class TerrainSystem(
     fun setVisible(visible: Boolean) {
         isVisible = visible
         terrainTiles.forEach { tile ->
-            tile.entity.setComponent(Visible(visible))
+            tile.highLODEntity.setComponent(Visible(visible))
+            tile.lowLODEntity.setComponent(Visible(visible))
         }
     }
 
