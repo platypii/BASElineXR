@@ -57,5 +57,5 @@ public class VROptions {
     public static LatLngAlt target = new LatLngAlt(47.2375, -123.1458, 84);
 
     // Portal location
-    public static LatLngAlt portalLocation = new LatLngAlt(46.57835, 7.984, 2673.0);
+    public static LatLngAlt portalLocation = new LatLngAlt(46.57835, 7.984, 2670.5);
 }

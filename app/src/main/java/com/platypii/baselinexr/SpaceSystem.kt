@@ -41,10 +41,8 @@ class SpaceSystem(
         // Trench rotation parameters (degrees)
         private const val TRENCH_ROLL = 0f
         private const val TRENCH_PITCH = -33f
-        private const val TRENCH_YAW = 70f
-
-        // Apply yaw rotation to X,Z coordinates
-        private val trenchYawRadians = Math.toRadians(TRENCH_YAW.toDouble()).toFloat()
+        private const val TRENCH_YAW = 69f
+        private const val TRENCH_HEIGHT_OFFSET = 0.0
     }
 
     private var spaceCubeEntity: Entity? = null
@@ -59,12 +57,15 @@ class SpaceSystem(
     private var isMoving = false
     private var fighterEntity: Entity? = null
     private var lasersEntity: Entity? = null
-    private val fighterInitialPosition = Vector3(0f, 0f, -150f)
-    private val lasersInitialPosition = Vector3(0f, 0f, -125f)
-    
+    private val fighterInitialPosition = Vector3(0f, 0f, -200f)
+
     // Movement speeds (m/s)
-    private val fighterSpeed = 20f
-    private val lasersSpeed = 200f
+    private val fighterSpeed = 50f
+    private val lasersSpeed = 400f
+    
+    // Laser firing cycle (2 seconds)
+    private val laserFireCycleTime = 700L // milliseconds
+    private var lastLaserFireTime: Long = 0
 
     /**
      * Creates the space environment with separate spaceCube and trench composition
@@ -176,7 +177,7 @@ class SpaceSystem(
             val trenchWorldPos = gpsTransform.toWorldCoordinates(
                 trenchLocation.lat,
                 trenchLocation.lng,
-                trenchLocation.alt,
+                trenchLocation.alt + TRENCH_HEIGHT_OFFSET,
                 currentTime,
                 motionEstimator
             )
@@ -249,6 +250,7 @@ class SpaceSystem(
     private fun startMovement() {
         if (!isMoving) {
             movementStartTime = System.currentTimeMillis()
+            lastLaserFireTime = movementStartTime
             isMoving = true
             Log.i(TAG, "Movement started")
         }
@@ -274,11 +276,11 @@ class SpaceSystem(
         val currentTime = System.currentTimeMillis()
         val elapsedSeconds = (currentTime - movementStartTime) / 1000f
 
-        // Update fighter position (moving along Z-axis at 10 m/s)
+        // Update fighter position (moving along Z-axis)
+        val fighterCurrentZ = fighterInitialPosition.z + (fighterSpeed * elapsedSeconds)
         fighterEntity?.let { entity ->
             try {
-                val newZ = fighterInitialPosition.z + (fighterSpeed * elapsedSeconds)
-                val newPosition = Vector3(fighterInitialPosition.x, fighterInitialPosition.y, newZ)
+                val newPosition = Vector3(fighterInitialPosition.x, fighterInitialPosition.y, fighterCurrentZ)
                 val currentTransform = entity.tryGetComponent<Transform>()
                 val currentPose = currentTransform?.transform ?: Pose(fighterInitialPosition)
                 val newPose = Pose(newPosition, currentPose.q)
@@ -288,13 +290,23 @@ class SpaceSystem(
             }
         }
 
-        // Update lasers position (moving along Z-axis at 20 m/s)
+        // Update lasers position with firing cycle
         lasersEntity?.let { entity ->
             try {
-                val newZ = lasersInitialPosition.z + (lasersSpeed * elapsedSeconds)
-                val newPosition = Vector3(lasersInitialPosition.x, lasersInitialPosition.y, newZ)
+                // Check if 2 seconds have passed since last fire
+                if (currentTime - lastLaserFireTime >= laserFireCycleTime) {
+                    // Reset lasers to fighter position and restart fire cycle
+                    lastLaserFireTime = currentTime
+                    Log.d(TAG, "Lasers firing cycle reset")
+                }
+                
+                // Calculate time since last fire for laser movement
+                val timeSinceLastFire = (currentTime - lastLaserFireTime) / 1000f
+                val laserZ = fighterCurrentZ + 32f + (lasersSpeed * timeSinceLastFire) // in front
+                
+                val newPosition = Vector3(fighterInitialPosition.x, fighterInitialPosition.y + 1.5f, laserZ) // shift up a bit
                 val currentTransform = entity.tryGetComponent<Transform>()
-                val currentPose = currentTransform?.transform ?: Pose(lasersInitialPosition)
+                val currentPose = currentTransform?.transform ?: Pose(newPosition)
                 val newPose = Pose(newPosition, currentPose.q)
                 entity.setComponent(Transform(newPose))
             } catch (e: Exception) {
@@ -321,8 +333,8 @@ class SpaceSystem(
         lasersEntity?.let { entity ->
             try {
                 val currentTransform = entity.tryGetComponent<Transform>()
-                val currentPose = currentTransform?.transform ?: Pose(lasersInitialPosition)
-                val resetPose = Pose(lasersInitialPosition, currentPose.q)
+                val currentPose = currentTransform?.transform ?: Pose(fighterInitialPosition)
+                val resetPose = Pose(fighterInitialPosition, currentPose.q)
                 entity.setComponent(Transform(resetPose))
             } catch (e: Exception) {
                 Log.w(TAG, "Error resetting lasers position: ${e.message}")

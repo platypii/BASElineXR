@@ -28,9 +28,9 @@ class PortalSystem(
     companion object {
         private const val TAG = "PortalSystem"
         private const val PORTAL_SCALE = 2.0f
-        private const val TRIGGER_RADIUS = 3.0f // Radius for collision detection
+        private const val TRIGGER_RADIUS = 4.0f // Radius for collision detection
         private const val PRELOAD_RADIUS = 100.0f // Distance to preload space environment
-        private const val SPACE_DURATION_MS = 5000L // Duration to stay in space (milliseconds)
+        private const val SPACE_DURATION_MS = 4500L // Duration to stay in space (milliseconds)
 
         // Portal orientation
         private const val PORTAL_ORIENTATION_YAW = 90.0 // degrees yaw
