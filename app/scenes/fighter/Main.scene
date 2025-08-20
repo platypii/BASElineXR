@@ -1,0 +1,88 @@
+entities:
+  com.meta.models.Scene:
+    - components:
+        com.meta.components.Name:
+          {}
+        com.meta.components.Scene:
+          nodes:
+            - ref:Sketchfab_model
+      tag: Scene
+  com.meta.models.SceneNode:
+    - components:
+        com.meta.components.Animatable:
+          {}
+        com.meta.components.Name:
+          name: Object_43
+        com.meta.components.PointerNodeInverseComponent:
+          {}
+        com.meta.components.SceneNode:
+          rotation.data:
+            - 1
+            - 0
+            - 0
+            - 0
+          rotation.format: Quaternion
+          scale:
+            - 1
+            - 1
+            - 1
+          translation:
+            - 0
+            - -5.3924017
+            - 0
+          componentVersion: 1
+        com.meta.components.SceneNodeMesh:
+          mesh: ref:Object_41
+        com.meta.components.Visibility:
+          visible: true
+      tag: Object_43
+    - components:
+        com.meta.components.Animatable:
+          {}
+        com.meta.components.Name:
+          name: deathstar.obj.cleaner
+        com.meta.components.PointerNodeInverseComponent:
+          {}
+        com.meta.components.SceneNode:
+          rotation.data:
+            - 1
+            - 0
+            - 0
+            - 0
+          rotation.format: Quaternion
+          scale:
+            - 1
+            - 1
+            - 1
+          componentVersion: 1
+          children:
+            - ref:Object_43
+        com.meta.components.Visibility:
+          visible: true
+      tag: deathstar.obj.cleaner
+    - components:
+        com.meta.components.Animatable:
+          {}
+        com.meta.components.Name:
+          name: Sketchfab_model
+        com.meta.components.PointerNodeInverseComponent:
+          {}
+        com.meta.components.SceneNode:
+          rotation.data:
+            - 0.70710665
+            - -0.707106888
+            - 0
+            - 0
+          rotation.format: Quaternion
+          scale:
+            - 1
+            - 1
+            - 1
+          componentVersion: 1
+          children:
+            - ref:deathstar.obj.cleaner
+        com.meta.components.Visibility:
+          visible: true
+      tag: Sketchfab_model
+metadata:
+  version: 1.34

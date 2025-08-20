@@ -12,30 +12,6 @@ entities:
         com.meta.components.Animatable:
           {}
         com.meta.components.Name:
-          name: deathstar.obj.cleaner
-        com.meta.components.PointerNodeInverseComponent:
-          {}
-        com.meta.components.SceneNode:
-          rotation.data:
-            - 1
-            - 0
-            - 0
-            - 0
-          rotation.format: Quaternion
-          scale:
-            - 1
-            - 1
-            - 1
-          componentVersion: 1
-          children:
-            - ref:Object_43
-        com.meta.components.Visibility:
-          visible: true
-      tag: deathstar.obj.cleaner
-    - components:
-        com.meta.components.Animatable:
-          {}
-        com.meta.components.Name:
           name: Object_43
         com.meta.components.PointerNodeInverseComponent:
           {}
@@ -56,6 +32,30 @@ entities:
         com.meta.components.Visibility:
           visible: true
       tag: Object_43
+    - components:
+        com.meta.components.Animatable:
+          {}
+        com.meta.components.Name:
+          name: deathstar.obj.cleaner
+        com.meta.components.PointerNodeInverseComponent:
+          {}
+        com.meta.components.SceneNode:
+          rotation.data:
+            - 1
+            - 0
+            - 0
+            - 0
+          rotation.format: Quaternion
+          scale:
+            - 1
+            - 1
+            - 1
+          componentVersion: 1
+          children:
+            - ref:Object_43
+        com.meta.components.Visibility:
+          visible: true
+      tag: deathstar.obj.cleaner
     - components:
         com.meta.components.Animatable:
           {}

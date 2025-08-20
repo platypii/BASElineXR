@@ -5,35 +5,12 @@ entities:
           {}
         com.meta.components.Scene:
           nodes:
+            - ref:lasers
+            - ref:fighter
             - ref:trench8d1
             - ref:trench8d
-            - ref:fighters-darker
       tag: Scene
   com.meta.models.SceneNode:
-    - components:
-        com.meta.components.Animatable:
-          {}
-        com.meta.components.DocumentReference:
-          transformType: None
-          documentReference: projref:fighters/Main.metaspatialobj
-        com.meta.components.Name:
-          name: fighters-darker
-        com.meta.components.PointerNodeInverseComponent:
-          {}
-        com.meta.components.SceneNode:
-          rotation.format: Euler
-          scale:
-            - 5
-            - 5
-            - 5
-          translation:
-            - 2.72177067e-06
-            - 0
-            - -78
-          componentVersion: 1
-        com.meta.components.Visibility:
-          visible: true
-      tag: fighters-darker
     - components:
         com.meta.components.Animatable:
           {}
@@ -92,5 +69,53 @@ entities:
         com.meta.components.Visibility:
           visible: true
       tag: trench8d1
+    - components:
+        com.meta.components.Animatable:
+          {}
+        com.meta.components.DocumentReference:
+          transformType: None
+          documentReference: projref:fighter/Main.metaspatialobj
+        com.meta.components.Name:
+          name: fighter
+        com.meta.components.PointerNodeInverseComponent:
+          {}
+        com.meta.components.SceneNode:
+          rotation.format: Euler
+          scale:
+            - 5
+            - 5
+            - 5
+          translation:
+            - 0
+            - 0
+            - -150
+          componentVersion: 1
+        com.meta.components.Visibility:
+          visible: true
+      tag: fighter
+    - components:
+        com.meta.components.Animatable:
+          {}
+        com.meta.components.DocumentReference:
+          transformType: None
+          documentReference: projref:lasers/Main.metaspatialobj
+        com.meta.components.Name:
+          name: lasers
+        com.meta.components.PointerNodeInverseComponent:
+          {}
+        com.meta.components.SceneNode:
+          rotation.format: Euler
+          scale:
+            - 5
+            - 5
+            - 5
+          translation:
+            - 0
+            - 0
+            - -125
+          componentVersion: 1
+        com.meta.components.Visibility:
+          visible: true
+      tag: lasers
 metadata:
   version: 1.34
