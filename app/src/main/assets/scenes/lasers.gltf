@@ -60,7 +60,6 @@
   ],
   "materials": [
     {
-      "doubleSided": true,
       "emissiveFactor": [
         0.250980406999588,
         1,

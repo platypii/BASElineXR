@@ -81,6 +81,6 @@ entities:
     com.meta.components.PointerNodeInverseComponent:
       {}
     com.meta.components.StandardMaterial:
-      isDoubleSided: true
+      {}
 metadata:
   version: 1.34

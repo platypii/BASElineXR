@@ -60,7 +60,6 @@
   ],
   "materials": [
     {
-      "doubleSided": true,
       "extensions": {
         "KHR_materials_specular": {
           "specularFactor": 0.4830566346645355

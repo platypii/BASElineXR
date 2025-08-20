@@ -8,33 +8,6 @@
         "alt": 0
       },
       "rotation": 0
-    },
-    {
-      "model": "baselinexr.gltf",
-      "tileOrigin": {
-        "lat": 46.577812,
-        "lng": 8.0053,
-        "alt": 3980
-      },
-      "rotation": -100
-    },
-    {
-      "model": "claude.gltf",
-      "tileOrigin": {
-        "lat": 46.57745,
-        "lng": 8.0043,
-        "alt": 3935
-      },
-      "rotation": -105
-    },
-    {
-      "model": "squirrel.gltf",
-      "tileOrigin": {
-        "lat": 46.57725,
-        "lng": 8.0033,
-        "alt": 3870
-      },
-      "rotation": -110
     }
   ],
   "terrainOrigin": {

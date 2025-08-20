@@ -35,7 +35,7 @@ public class VROptionsList {
             "Eiger Skydive",
             null,
             "kpow-prison.csv",
-            "eiger",
+            "branded",
             "kpowPrison",
             false,
             true,
