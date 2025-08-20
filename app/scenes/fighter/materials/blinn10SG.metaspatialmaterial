@@ -5,11 +5,11 @@ entities:
     com.meta.components.PbrMaterial:
       alphaCutoff: 0.5
       alphaMode: Opaque
-      baseColorFactor.colorspace: RGB
+      baseColorFactor.colorspace: HSL
       baseColorFactor.data:
-        - 0.0671899989
-        - 0.0671899989
-        - 0.0671899989
+        - 0
+        - 0.00136999995
+        - 0.05308
         - 1
       baseColorFactor.type: color4
       baseColorTextureTransform.scale:
@@ -32,7 +32,7 @@ entities:
         - 1
         - 1
       ior: 1.5
-      metallicFactor: 0.105193004
+      metallicFactor: 0.455468744
       metallicRoughnessTextureTransform.scale:
         - 1
         - 1
@@ -44,7 +44,7 @@ entities:
       occlusionTextureTransform.scale:
         - 1
         - 1
-      roughnessFactor: 0.866957724
+      roughnessFactor: 0.877343774
       sheenColorFactor.colorspace: RGB
       sheenColorFactor.type: color3
       sheenColorTransform.scale:

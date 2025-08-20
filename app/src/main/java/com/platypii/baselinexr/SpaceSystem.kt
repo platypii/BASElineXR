@@ -45,8 +45,6 @@ class SpaceSystem(
 
         // Apply yaw rotation to X,Z coordinates
         private val trenchYawRadians = Math.toRadians(TRENCH_YAW.toDouble()).toFloat()
-        private val cosYaw = cos(trenchYawRadians)
-        private val sinYaw = sin(trenchYawRadians)
     }
 
     private var spaceCubeEntity: Entity? = null
@@ -55,6 +53,18 @@ class SpaceSystem(
     private var isActive = false
     private var visible = false
     private val systemScope = CoroutineScope(Dispatchers.Main)
+    
+    // Movement tracking
+    private var movementStartTime: Long = 0
+    private var isMoving = false
+    private var fighterEntity: Entity? = null
+    private var lasersEntity: Entity? = null
+    private val fighterInitialPosition = Vector3(0f, 0f, -150f)
+    private val lasersInitialPosition = Vector3(0f, 0f, -125f)
+    
+    // Movement speeds (m/s)
+    private val fighterSpeed = 20f
+    private val lasersSpeed = 200f
 
     /**
      * Creates the space environment with separate spaceCube and trench composition
@@ -89,6 +99,7 @@ class SpaceSystem(
                     onLoaded = { composition ->
                         spaceComposition = composition
                         isActive = true
+                        findChildEntities(composition)
                         Log.i(TAG, "Space scene loaded successfully")
                     }
                 )
@@ -108,7 +119,8 @@ class SpaceSystem(
         if (spaceCube != null && sceneEntity != null && isActive) {
             spaceCube.setComponent(Visible(true))
             updateCompositionVisibility(true)
-            Log.i(TAG, "Space environment shown")
+            startMovement()
+            Log.i(TAG, "Space environment shown with movement started")
         } else {
             // Create space environment if it doesn't exist and show it
             val headPose = getHeadPose()
@@ -124,6 +136,7 @@ class SpaceSystem(
      */
     fun hideSpace() {
         visible = false
+        stopMovement()
         spaceCubeEntity?.setComponent(Visible(false))
         updateCompositionVisibility(false)
         Log.i(TAG, "Space environment hidden")
@@ -207,6 +220,113 @@ class SpaceSystem(
         if (isActive) {
             updateSpacePosition()
             updateTrenchPosition()
+            updateMovement()
+        }
+    }
+
+    /**
+     * Finds and stores references to fighter and lasers entities from the composition
+     */
+    private fun findChildEntities(composition: GLXFInfo) {
+        try {
+            fighterEntity = composition.tryGetNodeByName("fighter")?.entity
+            lasersEntity = composition.tryGetNodeByName("lasers")?.entity
+            
+            if (fighterEntity != null) {
+                Log.d(TAG, "Found fighter entity")
+            }
+            if (lasersEntity != null) {
+                Log.d(TAG, "Found lasers entity")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error finding child entities: ${e.message}", e)
+        }
+    }
+
+    /**
+     * Starts movement for the fighter and lasers
+     */
+    private fun startMovement() {
+        if (!isMoving) {
+            movementStartTime = System.currentTimeMillis()
+            isMoving = true
+            Log.i(TAG, "Movement started")
+        }
+    }
+
+    /**
+     * Stops movement and resets positions
+     */
+    private fun stopMovement() {
+        if (isMoving) {
+            isMoving = false
+            resetChildPositions()
+            Log.i(TAG, "Movement stopped")
+        }
+    }
+
+    /**
+     * Updates positions of moving entities each frame
+     */
+    private fun updateMovement() {
+        if (!isMoving) return
+
+        val currentTime = System.currentTimeMillis()
+        val elapsedSeconds = (currentTime - movementStartTime) / 1000f
+
+        // Update fighter position (moving along Z-axis at 10 m/s)
+        fighterEntity?.let { entity ->
+            try {
+                val newZ = fighterInitialPosition.z + (fighterSpeed * elapsedSeconds)
+                val newPosition = Vector3(fighterInitialPosition.x, fighterInitialPosition.y, newZ)
+                val currentTransform = entity.tryGetComponent<Transform>()
+                val currentPose = currentTransform?.transform ?: Pose(fighterInitialPosition)
+                val newPose = Pose(newPosition, currentPose.q)
+                entity.setComponent(Transform(newPose))
+            } catch (e: Exception) {
+                Log.w(TAG, "Error updating fighter position: ${e.message}")
+            }
+        }
+
+        // Update lasers position (moving along Z-axis at 20 m/s)
+        lasersEntity?.let { entity ->
+            try {
+                val newZ = lasersInitialPosition.z + (lasersSpeed * elapsedSeconds)
+                val newPosition = Vector3(lasersInitialPosition.x, lasersInitialPosition.y, newZ)
+                val currentTransform = entity.tryGetComponent<Transform>()
+                val currentPose = currentTransform?.transform ?: Pose(lasersInitialPosition)
+                val newPose = Pose(newPosition, currentPose.q)
+                entity.setComponent(Transform(newPose))
+            } catch (e: Exception) {
+                Log.w(TAG, "Error updating lasers position: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Resets child entities to their initial positions
+     */
+    private fun resetChildPositions() {
+        fighterEntity?.let { entity ->
+            try {
+                val currentTransform = entity.tryGetComponent<Transform>()
+                val currentPose = currentTransform?.transform ?: Pose(fighterInitialPosition)
+                val resetPose = Pose(fighterInitialPosition, currentPose.q)
+                entity.setComponent(Transform(resetPose))
+            } catch (e: Exception) {
+                Log.w(TAG, "Error resetting fighter position: ${e.message}")
+            }
+        }
+
+        lasersEntity?.let { entity ->
+            try {
+                val currentTransform = entity.tryGetComponent<Transform>()
+                val currentPose = currentTransform?.transform ?: Pose(lasersInitialPosition)
+                val resetPose = Pose(lasersInitialPosition, currentPose.q)
+                entity.setComponent(Transform(resetPose))
+            } catch (e: Exception) {
+                Log.w(TAG, "Error resetting lasers position: ${e.message}")
+            }
         }
     }
 
@@ -230,8 +350,11 @@ class SpaceSystem(
         spaceCubeEntity = null
         spaceSceneEntity = null
         spaceComposition = null
+        fighterEntity = null
+        lasersEntity = null
         isActive = false
         visible = false
+        isMoving = false
     }
 
     private fun getHeadPose(): Pose? {

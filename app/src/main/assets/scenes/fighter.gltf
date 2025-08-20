@@ -69,13 +69,13 @@
       "name": "blinn10SG",
       "pbrMetallicRoughness": {
         "baseColorFactor": [
-          0.06718999892473221,
-          0.06718999892473221,
-          0.06718999892473221,
+          0.053152721375226974,
+          0.053007278591394424,
+          0.053007278591394424,
           1
         ],
-        "metallicFactor": 0.10519300401210785,
-        "roughnessFactor": 0.8669577240943909
+        "metallicFactor": 0.4554687440395355,
+        "roughnessFactor": 0.8773437738418579
       }
     }
   ],
@@ -96,17 +96,6 @@
   ],
   "nodes": [
     {
-      "children": [
-        1
-      ],
-      "extras": {
-        "meta_spatial": {
-          "entity_id": "deathstar.obj.cleaner"
-        }
-      },
-      "name": "deathstar.obj.cleaner"
-    },
-    {
       "extras": {
         "meta_spatial": {
           "entity_id": "Object_43"
@@ -123,6 +112,17 @@
     {
       "children": [
         0
+      ],
+      "extras": {
+        "meta_spatial": {
+          "entity_id": "deathstar.obj.cleaner"
+        }
+      },
+      "name": "deathstar.obj.cleaner"
+    },
+    {
+      "children": [
+        1
       ],
       "extras": {
         "meta_spatial": {
