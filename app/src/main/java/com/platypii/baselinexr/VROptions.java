@@ -1,5 +1,6 @@
 package com.platypii.baselinexr;
 
+import com.meta.spatial.core.Vector3;
 import com.platypii.baselinexr.measurements.LatLngAlt;
 
 public class VROptions {
@@ -56,4 +57,10 @@ public class VROptions {
 
     // Portal location
     public static LatLngAlt portalLocation = new LatLngAlt(46.57835, 7.984, 2670.5);
+
+    // Default lighting constants
+    public static final Vector3 AMBIENT_COLOR = new Vector3(1.4f);
+    public static final Vector3 SUN_COLOR = new Vector3(1f);
+    public static final Vector3 SUN_DIRECTION = new Vector3(-4f, 10f, -2f);
+    public static final float ENVIRONMENT_INTENSITY = 0.01f;
 }

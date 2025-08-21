@@ -24,6 +24,7 @@ import com.meta.spatial.core.PerformanceLevel
 import com.meta.spatial.toolkit.PlayerBodyAttachmentSystem
 import com.meta.spatial.toolkit.Transform
 import com.platypii.baselinexr.location.LocationStatus
+import com.platypii.baselinexr.measurements.MLocation
 import com.platypii.baselinexr.ui.HudPanelController
 
 class BaselineActivity : AppSystemActivity() {
@@ -39,8 +40,8 @@ class BaselineActivity : AppSystemActivity() {
   private var portalSystem: PortalSystem? = null
   private var miniMapPanel: MiniMapPanel? = null
   private val gpsTransform = GpsToWorldTransform()
-  private var locationSubscriber: ((com.platypii.baselinexr.measurements.MLocation) -> Unit)? = null
-  private var hudPanelController: com.platypii.baselinexr.ui.HudPanelController? = null
+  private var locationSubscriber: ((MLocation) -> Unit)? = null
+  private var hudPanelController: HudPanelController? = null
 
   override fun registerFeatures(): List<SpatialFeature> {
     val features =
@@ -76,7 +77,7 @@ class BaselineActivity : AppSystemActivity() {
     flightStatsSystem = FlightStatsSystem()
     directionArrowSystem = DirectionArrowSystem()
     targetPanelSystem = TargetPanel(gpsTransform)
-    portalSystem = PortalSystem(gpsTransform, this, this)
+    portalSystem = PortalSystem(gpsTransform, this)
     miniMapPanel = MiniMapPanel()
 
     // Register systems
@@ -143,10 +144,10 @@ class BaselineActivity : AppSystemActivity() {
     super.onSceneReady()
 
     scene.setLightingEnvironment(
-      ambientColor = Vector3(1.4f),
-      sunColor     = Vector3(1f),
-      sunDirection = Vector3(-4f,10f,-2f),
-      environmentIntensity = 0.01f
+      ambientColor = VROptions.AMBIENT_COLOR,
+      sunColor     = VROptions.SUN_COLOR,
+      sunDirection = VROptions.SUN_DIRECTION,
+      environmentIntensity = VROptions.ENVIRONMENT_INTENSITY
     )
     scene.updateIBLEnvironment("environment.env")
   }

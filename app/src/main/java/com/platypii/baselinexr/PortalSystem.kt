@@ -1,6 +1,5 @@
 package com.platypii.baselinexr
 
-import android.content.Context
 import android.util.Log
 import androidx.core.net.toUri
 import com.meta.spatial.core.Entity
@@ -21,7 +20,6 @@ import com.meta.spatial.toolkit.Visible
  */
 class PortalSystem(
     private val gpsTransform: GpsToWorldTransform,
-    private val context: Context,
     private val activity: BaselineActivity
 ) : SystemBase() {
 
@@ -40,7 +38,7 @@ class PortalSystem(
     private var isInSpace = false
     private var lastHeadPosition: Vector3? = null
     private var initialized = false
-    private val spaceSystem = SpaceSystem(context, gpsTransform, activity.glXFManager)
+    private val spaceSystem = SpaceSystem(gpsTransform, activity)
     private var spaceStartTime: Long = 0
     private var spaceEnvironmentPreloaded = false
 
@@ -92,7 +90,7 @@ class PortalSystem(
             return
         }
 
-        val terrainConfig = TerrainConfigLoader.loadConfig(context)
+        val terrainConfig = TerrainConfigLoader.loadConfig(activity)
         if (terrainConfig == null) {
             return
         }
@@ -199,15 +197,8 @@ class PortalSystem(
             terrainSystem.setVisible(false)
         }
 
-        // Change environment to space (black with stars)
-        activity.scene.setLightingEnvironment(
-            ambientColor = Vector3(0.8f),
-            sunColor = Vector3(1.2f, 1.2f, 1.8f), // Dim starlight
-            sunDirection = Vector3(1f, -2f, -1f), // Light from above
-            environmentIntensity = 0.01f // Less environment lighting
-        )
-
         // Show the space system cubemap (already preloaded when within 100m)
+        // This will also handle setting the space lighting environment
         spaceSystem.showSpace()
 
         Log.i(TAG, "Entered space environment")
@@ -215,6 +206,7 @@ class PortalSystem(
 
     private fun exitSpace() {
         // Hide the space system
+        // This will also handle restoring the normal lighting environment
         spaceSystem.hideSpace()
 
         // Show the terrain system again
@@ -222,16 +214,6 @@ class PortalSystem(
 //            // Set all terrain tiles back to visible
 //            terrainSystem.setVisible(true)
 //        }
-
-        // Restore normal environment
-        activity.scene.setLightingEnvironment(
-            ambientColor = Vector3(1.4f),
-            sunColor = Vector3(1f),
-            sunDirection = Vector3(1f, 10f, 1f),
-            environmentIntensity = 0.02f
-        )
-
-        activity.scene.updateIBLEnvironment("environment.env")
 
         Log.i(TAG, "Exited space, returned to normal environment")
     }

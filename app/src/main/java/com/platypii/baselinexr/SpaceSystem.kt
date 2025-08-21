@@ -1,6 +1,5 @@
 package com.platypii.baselinexr
 
-import android.content.Context
 import android.util.Log
 import androidx.core.net.toUri
 import com.meta.spatial.core.Entity
@@ -9,7 +8,6 @@ import com.meta.spatial.core.Quaternion
 import com.meta.spatial.core.SystemBase
 import com.meta.spatial.core.Vector3
 import com.meta.spatial.toolkit.GLXFInfo
-import com.meta.spatial.toolkit.GLXFManager
 import com.meta.spatial.toolkit.Mesh
 import com.meta.spatial.toolkit.MeshCollision
 import com.meta.spatial.toolkit.PlayerBodyAttachmentSystem
@@ -29,9 +27,8 @@ import kotlin.math.sin
  * When activated, it shows a large cube with space textures on the inside faces.
  */
 class SpaceSystem(
-    private val context: Context,
     private val gpsTransform: GpsToWorldTransform,
-    private val glXFManager: GLXFManager
+    private val activity: BaselineActivity
 ) : SystemBase() {
 
     companion object {
@@ -43,6 +40,12 @@ class SpaceSystem(
         private const val TRENCH_PITCH = -33f
         private const val TRENCH_YAW = 69f
         private const val TRENCH_HEIGHT_OFFSET = 0.0
+
+        // Space lighting constants
+        val SPACE_AMBIENT_COLOR = Vector3(0.8f)
+        val SPACE_SUN_COLOR = Vector3(1.2f, 1.2f, 1.8f)
+        val SPACE_SUN_DIRECTION = Vector3(1f, -2f, -1f)
+        const val SPACE_ENVIRONMENT_INTENSITY = 0.01f
     }
 
     private var spaceCubeEntity: Entity? = null
@@ -51,7 +54,7 @@ class SpaceSystem(
     private var isActive = false
     private var visible = false
     private val systemScope = CoroutineScope(Dispatchers.Main)
-    
+
     // Movement tracking
     private var movementStartTime: Long = 0
     private var isMoving = false
@@ -62,7 +65,7 @@ class SpaceSystem(
     // Movement speeds (m/s)
     private val fighterSpeed = 50f
     private val lasersSpeed = 400f
-    
+
     // Laser firing cycle (2 seconds)
     private val laserFireCycleTime = 700L // milliseconds
     private var lastLaserFireTime: Long = 0
@@ -94,7 +97,7 @@ class SpaceSystem(
 
         return systemScope.launch {
             try {
-                glXFManager.inflateGLXF(
+                activity.glXFManager.inflateGLXF(
                     "apk:///scenes/Space.glxf".toUri(),
                     rootEntity = spaceSceneEntity!!,
                     onLoaded = { composition ->
@@ -115,6 +118,15 @@ class SpaceSystem(
      */
     fun showSpace() {
         visible = true
+
+        // Set space lighting environment
+        activity.scene.setLightingEnvironment(
+            ambientColor = SPACE_AMBIENT_COLOR,
+            sunColor = SPACE_SUN_COLOR,
+            sunDirection = SPACE_SUN_DIRECTION,
+            environmentIntensity = SPACE_ENVIRONMENT_INTENSITY
+        )
+
         val spaceCube = spaceCubeEntity
         val sceneEntity = spaceSceneEntity
         if (spaceCube != null && sceneEntity != null && isActive) {
@@ -140,6 +152,16 @@ class SpaceSystem(
         stopMovement()
         spaceCubeEntity?.setComponent(Visible(false))
         updateCompositionVisibility(false)
+
+        // Restore normal lighting environment
+        activity.scene.setLightingEnvironment(
+            ambientColor = VROptions.AMBIENT_COLOR,
+            sunColor = VROptions.SUN_COLOR,
+            sunDirection = VROptions.SUN_DIRECTION,
+            environmentIntensity = VROptions.ENVIRONMENT_INTENSITY
+        )
+        activity.scene.updateIBLEnvironment("environment.env")
+
         Log.i(TAG, "Space environment hidden")
     }
 
@@ -161,7 +183,7 @@ class SpaceSystem(
     }
 
     private fun updateTrenchPosition() {
-        val terrainConfig = TerrainConfigLoader.loadConfig(context) ?: return
+        val terrainConfig = TerrainConfigLoader.loadConfig(activity) ?: return
         val rootEntity = spaceSceneEntity ?: return
 
         try {
@@ -190,7 +212,7 @@ class SpaceSystem(
             // Position the entire Space composition with world transform and yaw
             val transform = Transform(Pose(trenchWorldPos, rotation))
             rootEntity.setComponent(transform)
-            
+
             // Set visibility on child entities in the composition, not just the root
             updateCompositionVisibility(visible)
         } catch (e: Exception) {
@@ -204,7 +226,7 @@ class SpaceSystem(
      */
     private fun updateCompositionVisibility(isVisible: Boolean) {
         val composition = spaceComposition ?: return
-        
+
         try {
             // Get all nodes in the composition and update their visibility
             composition.nodes.forEach { node ->
@@ -232,7 +254,7 @@ class SpaceSystem(
         try {
             fighterEntity = composition.tryGetNodeByName("fighter")?.entity
             lasersEntity = composition.tryGetNodeByName("lasers")?.entity
-            
+
             if (fighterEntity != null) {
                 Log.d(TAG, "Found fighter entity")
             }
@@ -299,11 +321,11 @@ class SpaceSystem(
                     lastLaserFireTime = currentTime
                     Log.d(TAG, "Lasers firing cycle reset")
                 }
-                
+
                 // Calculate time since last fire for laser movement
                 val timeSinceLastFire = (currentTime - lastLaserFireTime) / 1000f
                 val laserZ = fighterCurrentZ + 32f + (lasersSpeed * timeSinceLastFire) // in front
-                
+
                 val newPosition = Vector3(fighterInitialPosition.x, fighterInitialPosition.y + 1.5f, laserZ) // shift up a bit
                 val currentTransform = entity.tryGetComponent<Transform>()
                 val currentPose = currentTransform?.transform ?: Pose(newPosition)
