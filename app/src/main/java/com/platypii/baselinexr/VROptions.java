@@ -45,21 +45,9 @@ public class VROptions {
     }
 
     public LatLngAlt getDestination() {
-        if (destination == null) {
-            return null;
-        }
-
-        // Convert north/east adjustments (in meters) to lat/lng offsets
-        double latRad = Math.toRadians(destination.lat);
-        double deltaLat = Adjustments.northAdjustment / 6371000.0; // Convert north meters to radians
-        double deltaLon = Adjustments.eastAdjustment / (6371000.0 * Math.cos(latRad)); // Convert east meters to radians
-
-        // Apply adjustments and return new LatLngAlt
-        return new LatLngAlt(
-            destination.lat + Math.toDegrees(deltaLat),
-            destination.lng + Math.toDegrees(deltaLon),
-            destination.alt
-        );
+        // Apply north/east adjustments
+        return GeoUtils.applyOffset(destination,
+            new Vector3((float) Adjustments.eastAdjustment, 0, (float) Adjustments.northAdjustment));
     }
 
     // Kpow student field
