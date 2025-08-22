@@ -38,7 +38,7 @@ class TerrainSystem(
         tileToRemove?.let {
             terrainTiles.remove(it)
             it.highLODEntity.destroy()
-            it.lowLODEntity.destroy()
+            it.lowLODEntity?.destroy()
         }
     }
 
@@ -61,30 +61,42 @@ class TerrainSystem(
     }
 
     private fun createTerrainTile(config: TerrainTileConfig) {
-        // Create high LOD entity with high LOD shader
-        val highLODEntity = Entity.create(
-            Mesh(config.model.toUri()),
-            Visible(false),
-            Transform(Pose())
-        )
+        if (VROptions.current.shader == VROptions.ShaderType.DEFAULT_SHADER) {
+            // For DEFAULT_SHADER: only load high LOD model, do NOT override defaultShaderOverride
+            val highLODEntity = Entity.create(
+                Mesh(config.model.toUri()),
+                Visible(false),
+                Transform(Pose())
+            )
 
-        val highMesh = highLODEntity.getComponent<Mesh>()
-        highMesh.defaultShaderOverride = "data/shaders/terrain_high_lod"
-        highLODEntity.setComponent(highMesh)
+            terrainTiles.add(TerrainTileEntity(config, highLODEntity, null))
+        } else {
+            // For LOD_SHADER: use current code with 2 LOD models
+            // Create high LOD entity with high LOD shader
+            val highLODEntity = Entity.create(
+                Mesh(config.model.toUri()),
+                Visible(false),
+                Transform(Pose())
+            )
 
-        // Create low LOD entity - use modelLowLOD if available, otherwise fallback to regular model
-        val lowLODModelPath = config.modelLowLOD ?: config.model
-        val lowLODEntity = Entity.create(
-            Mesh(lowLODModelPath.toUri()),
-            Visible(false),
-            Transform(Pose())
-        )
+            val highMesh = highLODEntity.getComponent<Mesh>()
+            highMesh.defaultShaderOverride = "data/shaders/terrain_high_lod"
+            highLODEntity.setComponent(highMesh)
 
-        val lowMesh = lowLODEntity.getComponent<Mesh>()
-        lowMesh.defaultShaderOverride = "data/shaders/terrain_low_lod"
-        lowLODEntity.setComponent(lowMesh)
+            // Create low LOD entity - use modelLowLOD if available, otherwise fallback to regular model
+            val lowLODModelPath = config.modelLowLOD ?: config.model
+            val lowLODEntity = Entity.create(
+                Mesh(lowLODModelPath.toUri()),
+                Visible(false),
+                Transform(Pose())
+            )
 
-        terrainTiles.add(TerrainTileEntity(config, highLODEntity, lowLODEntity))
+            val lowMesh = lowLODEntity.getComponent<Mesh>()
+            lowMesh.defaultShaderOverride = "data/shaders/terrain_low_lod"
+            lowLODEntity.setComponent(lowMesh)
+
+            terrainTiles.add(TerrainTileEntity(config, highLODEntity, lowLODEntity))
+        }
     }
 
     private fun updateTilePositions() {
@@ -126,13 +138,14 @@ class TerrainSystem(
                 Quaternion(0f, totalRotation, 0f)  // Apply yaw adjustment + tile rotation
             ))
 
-            // Update both high and low LOD entities
+            // Update high LOD entity
             tile.highLODEntity.setComponents(listOf(
                 transform,
                 Visible(isVisible)
             ))
 
-            tile.lowLODEntity.setComponents(listOf(
+            // Update low LOD entity if it exists
+            tile.lowLODEntity?.setComponents(listOf(
                 transform,
                 Visible(isVisible)
             ))
@@ -151,7 +164,7 @@ class TerrainSystem(
         isVisible = visible
         terrainTiles.forEach { tile ->
             tile.highLODEntity.setComponent(Visible(visible))
-            tile.lowLODEntity.setComponent(Visible(visible))
+            tile.lowLODEntity?.setComponent(Visible(visible))
         }
     }
 

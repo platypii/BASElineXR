@@ -31,14 +31,14 @@ class HudPanelController(private val activity: BaselineActivity) {
         val yawPlusButton = rootView?.findViewById<Button>(R.id.yaw_plus_button)
         yawPlusButton?.setOnClickListener({
             // Increment yaw adjustment by 5 degrees (convert to radians)
-            Adjustments.yawAdjustment += Math.toRadians(5.0)
+            Adjustments.yawAdjustment -= Math.toRadians(5.0)
             Adjustments.saveYawAdjustment(activity)
         })
 
         val yawMinusButton = rootView?.findViewById<Button>(R.id.yaw_minus_button)
         yawMinusButton?.setOnClickListener({
             // Decrement yaw adjustment by 5 degrees (convert to radians)
-            Adjustments.yawAdjustment -= Math.toRadians(5.0)
+            Adjustments.yawAdjustment += Math.toRadians(5.0)
             Adjustments.saveYawAdjustment(activity)
         })
 

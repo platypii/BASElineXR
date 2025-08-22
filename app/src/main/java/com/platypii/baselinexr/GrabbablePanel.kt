@@ -3,7 +3,6 @@ package com.platypii.baselinexr
 import com.meta.spatial.core.Entity
 import com.meta.spatial.core.Pose
 import com.meta.spatial.core.Quaternion
-import com.meta.spatial.core.SystemBase
 import com.meta.spatial.core.Vector3
 import com.meta.spatial.runtime.ButtonBits
 import com.meta.spatial.runtime.HitInfo

@@ -2,16 +2,15 @@ package com.platypii.baselinexr;
 
 import com.platypii.baselinexr.measurements.LatLngAlt;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class VROptionsList {
 
     public static final VROptions LIVE = new VROptions(
         "Live",
         null,
         "eiger",
-        "kpowSouth",
+        // ideal for a kpow west jump run:
+        new LatLngAlt(47.2245, -123.167, 3710.0),
+        VROptions.ShaderType.LOD_SHADER,
         false,
         true,
         true,
@@ -22,7 +21,8 @@ public class VROptionsList {
         "Eiger Base",
         "eiger.csv",
         "eiger",
-        "eiger",
+        new LatLngAlt(46.57731, 8.0053, 3973.0), // eiger
+        VROptions.ShaderType.LOD_SHADER,
         false,
         true,
         true,
@@ -33,7 +33,8 @@ public class VROptionsList {
             "Eiger Skydive",
             "kpow-prison.csv",
             "branded",
-            "kpowPrison",
+            new LatLngAlt(47.2338, -123.167, 3800.0), // kpow prison
+            VROptions.ShaderType.LOD_SHADER,
             false,
             true,
             true,
@@ -44,7 +45,8 @@ public class VROptionsList {
             "Eiger Skydive",
             "kpow.csv",
             "eiger",
-            "kpowLake",
+            new LatLngAlt(47.25203, -123.107976, 3060.0), // island lake
+            VROptions.ShaderType.LOD_SHADER,
             false,
             true,
             true,
@@ -55,7 +57,8 @@ public class VROptionsList {
         "Kpow Landing",
         "kpow-landing.csv",
         "kpow",
-        "kpow",
+        new LatLngAlt(47.2375, -123.1458, 84.0), // kpow
+        VROptions.ShaderType.LOD_SHADER,
         false,
         true,
         true,
@@ -66,7 +69,8 @@ public class VROptionsList {
         "Kpow Ground",
         "kpow-student.csv",
         "kpow",
-        "kpow",
+        new LatLngAlt(47.2375, -123.1458, 84.0), // kpow
+        VROptions.ShaderType.LOD_SHADER,
         false,
         true,
         true,
@@ -77,7 +81,8 @@ public class VROptionsList {
         "Going-In",
         "kpow-impact.csv",
         "kpow",
-        "kpow4500",
+        new LatLngAlt(47.2375, -123.1458, 1584.0), // kpow + 4500
+        VROptions.ShaderType.LOD_SHADER,
         true,
         false,
         false,
@@ -88,7 +93,8 @@ public class VROptionsList {
         "Jank",
         "jank-longer.csv",
         "eiger",
-        "kpowSouth",
+        new LatLngAlt(47.22453, -123.1669762, 3710.0), // kpow south
+        VROptions.ShaderType.LOD_SHADER,
         false,
         true,
         false,
@@ -97,27 +103,14 @@ public class VROptionsList {
 
     public static final VROptions PORTAL_RUN = new VROptions(
             "Portal Run",
-            "kpow-north-run.csv",
+            "portal-run.csv",
             "eiger",
-            "kpowNorthRun",
+            new LatLngAlt(47.2288, -123.112, 3710.0), // kpow portal run
+            VROptions.ShaderType.LOD_SHADER,
             false,
             true,
             true,
             true
     );
 
-    public static Map<String, LatLngAlt> destinations = new HashMap<>();
-
-    static {
-        // Small offset to align mushroom:
-        destinations.put("eiger", new LatLngAlt(46.57731, 8.0053, 3973.0));
-        destinations.put("capitolHillFoot", new LatLngAlt(47.60453, -122.30197620, 1860.0));
-        destinations.put("capitolHillSummit", new LatLngAlt(47.61123, -122.32377620, 170.0));
-        destinations.put("kpow", new LatLngAlt(47.2375, -123.1458, 84.0));
-        destinations.put("kpow4500", new LatLngAlt(47.2375, -123.1458, 1584.0)); // 84 + 1500
-        destinations.put("kpowPrison", new LatLngAlt(47.2338, -123.16697620, 3800.0));
-        destinations.put("kpowSouth", new LatLngAlt(47.22453, -123.1669762, 3710.0));
-        destinations.put("kpowNorthRun", new LatLngAlt(47.2288, -123.112, 3710.0));
-        destinations.put("kpowLake", new LatLngAlt(47.25203, -123.10797620, 3060.0));
-    }
 }

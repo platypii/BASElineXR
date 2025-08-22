@@ -19,6 +19,6 @@ data class TerrainConfiguration(
 
 data class TerrainTileEntity(
     val config: TerrainTileConfig,
-    val highLODEntity: Entity,  // High detail model entity
-    val lowLODEntity: Entity    // Low detail model entity (always created, fallback to high LOD model if no separate low LOD)
+    val highLODEntity: Entity,     // High detail model entity
+    val lowLODEntity: Entity?      // Low detail model entity (optional, only used for LOD_SHADER)
 )

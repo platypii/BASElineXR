@@ -5,24 +5,31 @@ import com.platypii.baselinexr.measurements.LatLngAlt;
 
 public class VROptions {
 
+    public enum ShaderType {
+        DEFAULT_SHADER,
+        LOD_SHADER
+    }
+
     public final String name;
     public final String mockTrack;
     public final String sourceModel;
-    public final String destinationName;
+    public final LatLngAlt destination;
     public final boolean roomMovement;
     public final boolean showDirectionArrow;
     public final boolean showTarget;
     public final boolean showPortal;
+    public final ShaderType shader;
 
     // Current active configuration
     public static VROptions current = VROptionsList.EIGER_SKYDIVE;
 
-    public VROptions(String name, String mockTrack, String sourceModel, String destinationName,
+    public VROptions(String name, String mockTrack, String sourceModel, LatLngAlt destination, ShaderType shader,
                      boolean roomMovement, boolean showDirectionArrow, boolean showTarget, boolean showPortal) {
         this.name = name;
         this.mockTrack = mockTrack;
         this.sourceModel = sourceModel;
-        this.destinationName = destinationName;
+        this.destination = destination;
+        this.shader = shader;
         this.roomMovement = roomMovement;
         this.showDirectionArrow = showDirectionArrow;
         this.showTarget = showTarget;
@@ -34,21 +41,20 @@ public class VROptions {
     }
 
     public LatLngAlt getDestination() {
-        LatLngAlt baseDestination = VROptionsList.destinations.get(this.destinationName);
-        if (baseDestination == null) {
+        if (destination == null) {
             return null;
         }
 
         // Convert north/east adjustments (in meters) to lat/lng offsets
-        double latRad = Math.toRadians(baseDestination.lat);
+        double latRad = Math.toRadians(destination.lat);
         double deltaLat = Adjustments.northAdjustment / 6371000.0; // Convert north meters to radians
         double deltaLon = Adjustments.eastAdjustment / (6371000.0 * Math.cos(latRad)); // Convert east meters to radians
 
         // Apply adjustments and return new LatLngAlt
         return new LatLngAlt(
-            baseDestination.lat + Math.toDegrees(deltaLat),
-            baseDestination.lng + Math.toDegrees(deltaLon),
-            baseDestination.alt
+            destination.lat + Math.toDegrees(deltaLat),
+            destination.lng + Math.toDegrees(deltaLon),
+            destination.alt
         );
     }
 
