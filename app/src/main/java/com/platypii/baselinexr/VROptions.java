@@ -5,6 +5,9 @@ import com.platypii.baselinexr.measurements.LatLngAlt;
 
 public class VROptions {
 
+    // Current active configuration
+    public static VROptions current = VROptionsList.EIGER_SKYDIVE;
+
     public enum ShaderType {
         DEFAULT_SHADER,
         LOD_SHADER
@@ -23,9 +26,6 @@ public class VROptions {
     public final boolean showTarget;
     public final boolean showPortal;
     public final ShaderType shader;
-
-    // Current active configuration
-    public static VROptions current = VROptionsList.EIGER_SKYDIVE;
 
     public VROptions(String name, String mockTrack, String sourceModel, LatLngAlt destination, ShaderType shader,
                      boolean roomMovement, boolean showDirectionArrow, boolean showTarget, boolean showPortal) {

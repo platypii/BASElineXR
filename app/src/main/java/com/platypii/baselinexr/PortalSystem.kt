@@ -31,7 +31,7 @@ class PortalSystem(
         private const val SPACE_DURATION_MS = 4500L // Duration to stay in space (milliseconds)
 
         // Portal orientation
-        private const val PORTAL_ORIENTATION_YAW = 90.0 // degrees yaw
+        private const val PORTAL_ORIENTATION_YAW = 75.0 // degrees yaw
     }
 
     private var portalEntity: Entity? = null

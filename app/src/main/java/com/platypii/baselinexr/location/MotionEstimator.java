@@ -12,6 +12,8 @@ public final class MotionEstimator {
     private static final double alpha = 0.2; // 0..1 sample weight position
     // Take velocity straight from gps:
     private static final double beta = 0.9; // 0..1 sample weight velocity
+    // Acceleration weight
+    private static final double gamma = 0.2; // 0..1 sample weight velocity
     public Vector3 p = new Vector3();        // metres ENU
     public Vector3 v = new Vector3();        // m s⁻¹ ENU
     public Vector3 a = new Vector3();        // m s⁻² ENU
@@ -60,7 +62,7 @@ public final class MotionEstimator {
         Vector3 pNew = gpsToEnu(gps);
         Vector3 vNew = new Vector3(gps.vE, gps.climb, gps.vN);
         Vector3 aRaw = vNew.minus(v).div(dt);
-        a = a.mul(1 - alpha).plus(aRaw.mul(alpha));
+        a = a.mul(1 - gamma).plus(aRaw.mul(gamma));
 
         // 1) predict (constant-acceleration)
         Vector3 pPred = p.plus(v.mul(dt)).plus(a.mul(0.5 * dt * dt));
