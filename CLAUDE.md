@@ -27,24 +27,39 @@ BASElineXR is a VR wingsuit skydiving application for Meta Quest devices (Quest 
 2. **app/src/main/java/com/platypii/baselinexr/TerrainSystem.kt** - 3D model system for rendering terrain from DEM + satellite imagery
 3. **app/src/main/java/com/platypii/baselinexr/GpsToWorldTransform.java** - Critical GPS to 3D coordinate transformation
 4. **app/src/main/java/com/platypii/baselinexr/Services.java** - Central service management (GPS, Bluetooth, Cloud)
+5. **app/src/main/java/com/platypii/baselinexr/VROptions.java** - Configuration management for VR scenes and display options
+6. **app/src/main/assets/terrain/eiger_tile.json** - Terrain tile configuration for Eiger mountain model
 
 ### Coordinate System
 
 The app transforms GPS coordinates (latitude/longitude/altitude) to VR world space:
 - Uses a dynamic origin that updates based on current GPS location
-- Implements proper spherical earth calculations for accurate positioning
-- See `GpsToWorldTransform.java` and `PLAN.md` for implementation details
+- Implements spherical earth calculations for positioning relative to current location
+- See `GpsToWorldTransform.java` for implementation details
+
+### 3D Models
+
+#### TerrainSystem (`TerrainSystem.kt`)
+- Renders terrain tiles from JSON config, anchored to **GPS world coordinates**
+- Supports dual LOD with high/low resolution models and custom shaders
+
+#### HUD System (`HudSystem.kt`)
+- GPS/speed display panel, anchored to **head position**, grabbable panel loaded via GLXF
+
+#### DirectionArrow (`DirectionArrowSystem.kt`)
+- Movement direction arrow, anchored to **head position** (5m below), when moving at least 2 mph
+
+#### Target Panel (`TargetPanel.kt`)
+- Shows a reticle on the target landing zone. Anchored to **head position** but oriented towards landing zone
 
 ### Service Architecture
 
 - **Location Services**: Multiple providers (Android GPS, Bluetooth GPS, NMEA, Mock GPS)
-- **Bluetooth**: Supports Flysight2 GPS devices via Blessed Android library
+- **Bluetooth**: Supports FlySight2 GPS devices via Blessed Android library
 
 ## Development Notes
 
 - **Event System**: Uses EventBus for inter-component communication
-- **ECS Pattern**: Follows Meta Spatial SDK's Entity Component System architecture
-- **Meta Spatial SDK Samples**: Example projects from Meta showing how to use the Spatial SDK is available in the Meta-Spatial-SDK-Samples directory.
 - **Always Build**: Always build the project after making changes to ensure everything compiles correctly.
 - **Live Testing**: The only real way to test things is for me to run them on my VR device as a user. When you think the code is working, ask the user to test it on the headset.
 

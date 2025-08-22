@@ -13,9 +13,13 @@ public class VROptions {
     public final String name;
     public final String mockTrack;
     public final String sourceModel;
+    // Place the summit at the destination
     public final LatLngAlt destination;
+    // If true, walking around the room moves in the map
     public final boolean roomMovement;
+    // Show direction arrow below for alignment
     public final boolean showDirectionArrow;
+    // Show target landing zone
     public final boolean showTarget;
     public final boolean showPortal;
     public final ShaderType shader;
@@ -67,6 +71,6 @@ public class VROptions {
     // Default lighting constants
     public static final Vector3 AMBIENT_COLOR = new Vector3(1.4f);
     public static final Vector3 SUN_COLOR = new Vector3(1f);
-    public static final Vector3 SUN_DIRECTION = new Vector3(-4f, 10f, -2f);
+    public static final Vector3 SUN_DIRECTION = new Vector3(-4f, 10f, -2f).normalize();
     public static final float ENVIRONMENT_INTENSITY = 0.01f;
 }

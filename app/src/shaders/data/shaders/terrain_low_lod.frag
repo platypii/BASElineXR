@@ -21,6 +21,15 @@ vec3 filmicTone(vec3 c, float exposure) {
 }
 
 void main() {
+    // distance-based cutoff check first (before texture sampling to save compute)
+    vec3 eyePos = g_ViewUniform.eyeCenter0.xyz;
+    vec3 toEye = eyePos - vertexOut.worldPosition;
+    float d2 = dot(toEye, toEye);
+    float c2 = CUTOFF_DIST * CUTOFF_DIST;
+
+    // Discard fragments closer than cutoff distance before texture sampling
+    if (d2 < c2) discard;
+
     vec4 albedo = texture(albedoSampler, vertexOut.albedoCoord) * vertexOut.color * g_MaterialUniform.albedoFactor;
 
     // alpha cutoff
@@ -32,23 +41,18 @@ void main() {
     float diffuseWrap = 0.25;
     float ambientBoost = 0.25;
 
-    // distance-based alpha fade (no sqrt)
-    vec3 eyePos = g_ViewUniform.eyeCenter0.xyz;
-    vec3 toEye = eyePos - vertexOut.worldPosition;
-    float d2 = dot(toEye, toEye);
+    // distance fade calculations
     float s2 = FADE_START * FADE_START;
     float e2 = FADE_END * FADE_END;
-    float c2 = CUTOFF_DIST * CUTOFF_DIST;
 
-    // Discard beyond cutoff distance
-    if (d2 < c2) discard;
-
-    float distFade = 1.0 - smoothstep(s2, e2, d2);
-    distFade = clamp(distFade, FAR_ALPHA, CLOSE_ALPHA);
+    // linear ramp instead of smoothstep
+    float invRange = 1.0 / max(e2 - s2, 1e-6);
+    float ramp     = saturate((e2 - d2) * invRange);
+    float distFade = mix(FAR_ALPHA, CLOSE_ALPHA, ramp);
 
     // wrapped diffuse so sun reads on grazing slopes
-    vec3 N = normalize(vertexOut.worldNormal);
-    vec3 L = normalize(-g_ViewUniform.sunDirection.xyz);
+    vec3 N = vertexOut.worldNormal;
+    vec3 L = -g_ViewUniform.sunDirection.xyz;
     float ndl  = dot(N, L);
     float diff = saturate((ndl + diffuseWrap) / (1.0 + diffuseWrap));
 

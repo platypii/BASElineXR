@@ -44,7 +44,7 @@ class SpaceSystem(
         // Space lighting constants
         val SPACE_AMBIENT_COLOR = Vector3(0.8f)
         val SPACE_SUN_COLOR = Vector3(1.2f, 1.2f, 1.8f)
-        val SPACE_SUN_DIRECTION = Vector3(1f, -2f, -1f)
+        val SPACE_SUN_DIRECTION = Vector3(1f, -2f, -1f).normalize()
         const val SPACE_ENVIRONMENT_INTENSITY = 0.01f
     }
 

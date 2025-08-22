@@ -8,7 +8,10 @@ import com.platypii.baselinexr.util.tensor.Vector3;
 public final class MotionEstimator {
     private static final String TAG = "MotionEstimator";
 
-    private static final double alpha = 0.2; // 0..1
+    // Position weight: 0.1 = mostly predicted, 1.0 = exact gps
+    private static final double alpha = 0.2; // 0..1 sample weight position
+    // Take velocity straight from gps:
+    private static final double beta = 0.9; // 0..1 sample weight velocity
     public Vector3 p = new Vector3();        // metres ENU
     public Vector3 v = new Vector3();        // m s⁻¹ ENU
     public Vector3 a = new Vector3();        // m s⁻² ENU
@@ -54,22 +57,21 @@ public final class MotionEstimator {
         }
 
         double dt = (tNow - lastUpdate.millis) * 1e-3;
+        Vector3 pNew = gpsToEnu(gps);
         Vector3 vNew = new Vector3(gps.vE, gps.climb, gps.vN);
         Vector3 aRaw = vNew.minus(v).div(dt);
         a = a.mul(1 - alpha).plus(aRaw.mul(alpha));
 
-        Vector3 lastPosition = gpsToEnu(gps);
-
         // 1) predict (constant-acceleration)
         Vector3 pPred = p.plus(v.mul(dt)).plus(a.mul(0.5 * dt * dt));
-//        Vector3 vPred = v.plus(a.mul(dt));
+        Vector3 vPred = v.plus(a.mul(dt));
 
         // 2) update using measurement as evidence (complementary filter)
-        p = pPred.mul(1 - alpha).plus(lastPosition.mul(alpha));
-//        v = vPred.mul(1 - alpha).plus(vNew.mul(alpha));
-        v = vNew; // Take velocity straight from gps
+        p = pPred.mul(1 - alpha).plus(pNew.mul(alpha));
+        v = vPred.mul(1 - beta).plus(vNew.mul(beta));
+//        v = vNew; // Take velocity straight from gps
 
-        positionDelta = p.minus(lastPosition);
+        positionDelta = p.minus(pNew);
 //        Log.i(TAG, "ppred: " + pPred.y + " lastpos: " + lastPosition.y + " v: " + v.y + " err: " + (pPred.y - lastPosition.y));
 
         lastUpdate = gps;
