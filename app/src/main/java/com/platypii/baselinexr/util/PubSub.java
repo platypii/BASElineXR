@@ -71,7 +71,7 @@ public class PubSub<T> {
     public void unsubscribeMain(@NonNull Subscriber<T> sub) {
         synchronized (mainSubs) {
             if (!mainSubs.remove(sub)) {
-                Log.e(TAG, "Unexpected main listener unsubscribed");
+                Log.e(TAG, "Unexpected main listener unsubscribed " + sub);
             }
         }
     }

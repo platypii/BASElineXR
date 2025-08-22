@@ -5,28 +5,41 @@ import com.platypii.baselinexr.measurements.LatLngAlt;
 public class VROptionsList {
 
     public static final VROptions LIVE = new VROptions(
-        "Live",
-        null,
-        "eiger",
-        // ideal for a kpow west jump run:
-        new LatLngAlt(47.2245, -123.167, 3710.0),
-        VROptions.ShaderType.LOD_SHADER,
-        false,
-        true,
-        true,
-        null
+            "Live",
+            null,
+            "branded",
+            // ideal for a kpow west jump run:
+            new LatLngAlt(47.2245, -123.167, 3710.0),
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            true,
+            new LatLngAlt(46.57835, 7.984, 2670.5)
+    );
+
+    public static final VROptions LIVE_EAST = new VROptions(
+            "Live East",
+            null,
+            "branded",
+            // ideal for a kpow east jump run:
+            new LatLngAlt(47.236, -123.132, 3710.0),
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            true,
+            null
     );
 
     public static final VROptions EIGER_BASE = new VROptions(
-        "Eiger Base",
-        "eiger.csv",
-        "eiger",
-        new LatLngAlt(46.57731, 8.0053, 3973.0), // eiger
-        VROptions.ShaderType.LOD_SHADER,
-        false,
-        true,
-        true,
-        null
+            "Eiger Base",
+            "eiger.csv",
+            "eiger",
+            new LatLngAlt(46.57731, 8.0053, 3973.0), // eiger
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            true,
+            null
     );
 
     public static final VROptions EIGER_SKYDIVE = new VROptions(
@@ -54,51 +67,51 @@ public class VROptionsList {
     );
 
     public static final VROptions KPOW_SKYDIVE_LANDING = new VROptions(
-        "Kpow Landing",
-        "kpow-landing.csv",
-        "kpow",
-        new LatLngAlt(47.2375, -123.1458, 84.0), // kpow
-        VROptions.ShaderType.LOD_SHADER,
-        false,
-        true,
-        true,
-        null
+            "Kpow Landing",
+            "kpow-landing.csv",
+            "kpow",
+            new LatLngAlt(47.2375, -123.1458, 84.0), // kpow
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            true,
+            null
     );
 
     public static final VROptions KPOW_GROUND_LEVEL = new VROptions(
-        "Kpow Ground",
-        "kpow-student.csv",
-        "kpow",
-        new LatLngAlt(47.2375, -123.1458, 84.0), // kpow
-        VROptions.ShaderType.LOD_SHADER,
-        false,
-        true,
-        true,
-        null
+            "Kpow Ground",
+            "kpow-student.csv",
+            "kpow",
+            new LatLngAlt(47.2375, -123.1458, 84.0), // kpow
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            true,
+            null
     );
 
     public static final VROptions GOING_IN_SIMULATOR = new VROptions(
-        "Going-In",
-        "kpow-impact.csv",
-        "kpow",
-        new LatLngAlt(47.2375, -123.1458, 1584.0), // kpow + 4500
-        VROptions.ShaderType.LOD_SHADER,
-        true,
-        false,
-        false,
-        null
+            "Going-In",
+            "kpow-impact.csv",
+            "kpow",
+            new LatLngAlt(47.2375, -123.1458, 1584.0), // kpow + 4500
+            VROptions.ShaderType.LOD_SHADER,
+            true,
+            false,
+            false,
+            null
     );
 
     public static final VROptions JANK = new VROptions(
-        "Jank",
-        "jank-longer.csv",
-        "eiger",
-        new LatLngAlt(47.22453, -123.1669762, 3710.0), // kpow south
-        VROptions.ShaderType.LOD_SHADER,
-        false,
-        true,
-        false,
-        null
+            "Jank",
+            "jank-longer.csv",
+            "eiger",
+            new LatLngAlt(47.22453, -123.1669762, 3710.0), // kpow south
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            false,
+            null
     );
 
     public static final VROptions PORTAL_RUN = new VROptions(

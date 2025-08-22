@@ -90,6 +90,7 @@ public class BleService {
         if (activity == null) {
             Exceptions.report(new NullPointerException("activity should not be null"));
         } else if (Permissions.hasBluetoothPermissions(activity)) {
+            Permissions.requestBluetoothPermissions(activity);
             Log.d(TAG, "Bluetooth permitted, starting scan");
             try {
                 scan();
@@ -147,7 +148,7 @@ public class BleService {
                 Log.e(TAG, "Invalid BLE state: " + BluetoothState.BT_STATES[bluetoothState]);
             }
             if (!hasDiscovered) {
-                Log.i(TAG, "Discovered first peripheral");
+                Log.i(TAG, "Discovered first bluetooth peripheral");
                 hasDiscovered = true;
             }
 //            Log.d(TAG, "Discovered: " + peripheral.getAddress() + " " + peripheral.getAddress());

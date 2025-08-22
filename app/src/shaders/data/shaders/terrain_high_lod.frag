@@ -6,11 +6,11 @@
 #include <Uniforms.glsl>
 
 const float OPACITY = 1.0;
-const float FADE_START = 400.0;
-const float FADE_END = 700.0;
+const float FADE_START = 500.0;
+const float FADE_END = 800.0;
 const float CUTOFF_DIST = 1200.0;
-const float CLOSE_ALPHA = 0.9;
-const float FAR_ALPHA = 0.01;
+const float CLOSE_ALPHA = 1.0;
+const float FAR_ALPHA = 0.1;
 
 float saturate(float x) { return clamp(x, 0.0, 1.0); }
 vec3  saturate(vec3 v)  { return clamp(v, 0.0, 1.0); }

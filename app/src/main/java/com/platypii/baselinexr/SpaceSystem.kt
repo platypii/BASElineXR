@@ -229,7 +229,6 @@ class SpaceSystem(
             composition.nodes.forEach { node ->
                 node.entity.setComponent(Visible(isVisible))
             }
-            Log.d(TAG, "Updated composition visibility: $isVisible for ${composition.nodes.size} nodes")
         } catch (e: Exception) {
             Log.w(TAG, "Error updating composition visibility: ${e.message}", e)
         }

@@ -18,24 +18,6 @@
         "alt": 3980
       },
       "rotation": -100
-    },
-    {
-      "model": "claude.gltf",
-      "tileOrigin": {
-        "lat": 46.57745,
-        "lng": 8.0043,
-        "alt": 3935
-      },
-      "rotation": -105
-    },
-    {
-      "model": "squirrel.gltf",
-      "tileOrigin": {
-        "lat": 46.57725,
-        "lng": 8.0033,
-        "alt": 3869
-      },
-      "rotation": -110
     }
   ],
   "terrainOrigin": {
