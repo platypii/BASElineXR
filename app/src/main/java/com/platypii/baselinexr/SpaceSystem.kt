@@ -14,13 +14,10 @@ import com.meta.spatial.toolkit.PlayerBodyAttachmentSystem
 import com.meta.spatial.toolkit.Scale
 import com.meta.spatial.toolkit.Transform
 import com.meta.spatial.toolkit.Visible
-import com.platypii.baselinexr.measurements.LatLngAlt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlin.math.cos
-import kotlin.math.sin
 
 /**
  * SpaceSystem manages a space environment with a cubemap of stars that encloses the user.
@@ -205,7 +202,7 @@ class SpaceSystem(
             )
 
             // Apply terrain rotation (same as terrain system) 
-            val yawDegrees = Math.toDegrees(Adjustments.yawAdjustment).toFloat()
+            val yawDegrees = Adjustments.yawAdjustmentDegrees().toFloat()
             val totalYaw = yawDegrees + TRENCH_YAW
             val rotation = Quaternion(TRENCH_PITCH, totalYaw, TRENCH_ROLL)
 

@@ -239,7 +239,7 @@ class BaselineActivity : AppSystemActivity() {
                     // Set yaw adjustment so that when looking in velocity direction, world is oriented north
                     // We want: head_direction + yaw_adjustment = north (0)
                     // So: yaw_adjustment = -head_direction + velocity_to_north_correction
-                    Adjustments.yawAdjustment = headBearingRad - velocityBearingRad
+                    Adjustments.yawAdjustment = (headBearingRad - velocityBearingRad).toFloat()
                     Adjustments.saveYawAdjustment(this@BaselineActivity)
 
 //                    Log.d(TAG, "Orient head: " + headBearingRad + " vel: " + velocityBearingRad + " yawAdj: " + Adjustments.yawAdjustment)
@@ -270,7 +270,7 @@ class BaselineActivity : AppSystemActivity() {
                     // Set yaw adjustment so that when looking in velocity direction, world is oriented north
                     // We want: head_direction + yaw_adjustment = north (0)
                     // So: yaw_adjustment = -head_direction + velocity_to_north_correction
-                    Adjustments.yawAdjustment = Math.PI + headBearingRad - velocityBearingRad
+                    Adjustments.yawAdjustment = (Math.PI + headBearingRad - velocityBearingRad).toFloat()
                     Adjustments.saveYawAdjustment(this@BaselineActivity)
                 }
             }

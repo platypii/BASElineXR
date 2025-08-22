@@ -131,7 +131,7 @@ class TerrainSystem(
 
             // Update entity transform
             // Apply yaw adjustment and tile-specific rotation to the terrain rotation
-            val yawDegrees = Math.toDegrees(Adjustments.yawAdjustment).toFloat()
+            val yawDegrees = Adjustments.yawAdjustmentDegrees().toFloat()
             val totalRotation = 180f + yawDegrees + tile.config.rotation
             val transform = Transform(Pose(
                 tilePosition,

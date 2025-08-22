@@ -31,14 +31,14 @@ class HudPanelController(private val activity: BaselineActivity) {
         val yawPlusButton = rootView?.findViewById<Button>(R.id.yaw_plus_button)
         yawPlusButton?.setOnClickListener({
             // Increment yaw adjustment by 5 degrees (convert to radians)
-            Adjustments.yawAdjustment -= Math.toRadians(5.0)
+            Adjustments.yawAdjustment -= Math.toRadians(5.0).toFloat()
             Adjustments.saveYawAdjustment(activity)
         })
 
         val yawMinusButton = rootView?.findViewById<Button>(R.id.yaw_minus_button)
         yawMinusButton?.setOnClickListener({
             // Decrement yaw adjustment by 5 degrees (convert to radians)
-            Adjustments.yawAdjustment += Math.toRadians(5.0)
+            Adjustments.yawAdjustment += Math.toRadians(5.0).toFloat()
             Adjustments.saveYawAdjustment(activity)
         })
 
@@ -54,32 +54,32 @@ class HudPanelController(private val activity: BaselineActivity) {
 
         val northButton = rootView?.findViewById<Button>(R.id.north_button)
         northButton?.setOnClickListener({
-            Adjustments.northAdjustment += 500.0
+            Adjustments.northAdjustment += 500f
             Adjustments.saveAdjustments(activity)
         })
 
         val southButton = rootView?.findViewById<Button>(R.id.south_button)
         southButton?.setOnClickListener({
-            Adjustments.northAdjustment -= 500.0
+            Adjustments.northAdjustment -= 500f
             Adjustments.saveAdjustments(activity)
         })
 
         val eastButton = rootView?.findViewById<Button>(R.id.east_button)
         eastButton?.setOnClickListener({
-            Adjustments.eastAdjustment += 500.0
+            Adjustments.eastAdjustment += 500f
             Adjustments.saveAdjustments(activity)
         })
 
         val westButton = rootView?.findViewById<Button>(R.id.west_button)
         westButton?.setOnClickListener({
-            Adjustments.eastAdjustment -= 500.0
+            Adjustments.eastAdjustment -= 500f
             Adjustments.saveAdjustments(activity)
         })
 
         val centerButton = rootView?.findViewById<Button>(R.id.center_button)
         centerButton?.setOnClickListener({
-            Adjustments.northAdjustment = 0.0
-            Adjustments.eastAdjustment = 0.0
+            Adjustments.northAdjustment = 0f
+            Adjustments.eastAdjustment = 0f
             Adjustments.saveAdjustments(activity)
         })
 

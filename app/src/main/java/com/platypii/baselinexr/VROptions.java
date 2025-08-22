@@ -14,7 +14,7 @@ public class VROptions {
     public final String mockTrack;
     public final String sourceModel;
     // Place the summit at the destination
-    public final LatLngAlt destination;
+    private final LatLngAlt destination;
     // If true, walking around the room moves in the map
     public final boolean roomMovement;
     // Show direction arrow below for alignment
@@ -47,7 +47,7 @@ public class VROptions {
     public LatLngAlt getDestination() {
         // Apply north/east adjustments
         return GeoUtils.applyOffset(destination,
-            new Vector3((float) Adjustments.eastAdjustment, 0, (float) Adjustments.northAdjustment));
+            new Vector3(Adjustments.eastAdjustment, 0, Adjustments.northAdjustment));
     }
 
     // Kpow student field

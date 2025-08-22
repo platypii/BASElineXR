@@ -114,7 +114,7 @@ class PortalSystem(
         )
 
         // Apply yaw adjustment and portal orientation to align with world coordinate system
-        val yawDegrees = Math.toDegrees(Adjustments.yawAdjustment).toFloat() + PORTAL_ORIENTATION_YAW.toFloat()
+        val yawDegrees = Adjustments.yawAdjustmentDegrees().toFloat() + PORTAL_ORIENTATION_YAW.toFloat()
         val transform = Transform(Pose(
             portalWorldPos,
             Quaternion(0f, yawDegrees, 0f)
