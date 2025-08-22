@@ -14,7 +14,7 @@ public class VROptionsList {
         false,
         true,
         true,
-        false
+        null
     );
 
     public static final VROptions EIGER_BASE = new VROptions(
@@ -26,7 +26,7 @@ public class VROptionsList {
         false,
         true,
         true,
-        false
+        null
     );
 
     public static final VROptions EIGER_SKYDIVE = new VROptions(
@@ -38,7 +38,7 @@ public class VROptionsList {
             false,
             true,
             true,
-            false
+            null
     );
 
     public static final VROptions EIGER_SKYDIVE_LAKE = new VROptions(
@@ -50,7 +50,7 @@ public class VROptionsList {
             false,
             true,
             true,
-            false
+            null
     );
 
     public static final VROptions KPOW_SKYDIVE_LANDING = new VROptions(
@@ -62,7 +62,7 @@ public class VROptionsList {
         false,
         true,
         true,
-        false
+        null
     );
 
     public static final VROptions KPOW_GROUND_LEVEL = new VROptions(
@@ -74,7 +74,7 @@ public class VROptionsList {
         false,
         true,
         true,
-        false
+        null
     );
 
     public static final VROptions GOING_IN_SIMULATOR = new VROptions(
@@ -86,7 +86,7 @@ public class VROptionsList {
         true,
         false,
         false,
-        false
+        null
     );
 
     public static final VROptions JANK = new VROptions(
@@ -98,7 +98,7 @@ public class VROptionsList {
         false,
         true,
         false,
-        false
+        null
     );
 
     public static final VROptions PORTAL_RUN = new VROptions(
@@ -110,7 +110,7 @@ public class VROptionsList {
             false,
             true,
             true,
-            true
+            new LatLngAlt(46.57835, 7.984, 2670.5)
     );
 
 }

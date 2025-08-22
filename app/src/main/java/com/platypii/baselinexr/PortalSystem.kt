@@ -77,8 +77,8 @@ class PortalSystem(
     private fun updatePortalPosition() {
         val portalEntity = this.portalEntity ?: return
 
-        // Check if portal is enabled
-        if (!VROptions.current.showPortal) {
+        // Check if portal location is defined (show portal if and only if location is defined)
+        if (VROptions.current.portalLocation == null) {
             portalEntity.setComponent(Visible(false))
             return
         }
@@ -96,7 +96,7 @@ class PortalSystem(
         }
 
         // Calculate portal offset from terrain origin to point of interest, similar to TerrainSystem
-        val terrainToPortal = GeoUtils.calculateOffset(terrainConfig.pointOfInterest, VROptions.portalLocation)
+        val terrainToPortal = GeoUtils.calculateOffset(terrainConfig.pointOfInterest, VROptions.current.portalLocation)
 
         // Apply offsets to destination to get portal position in user's reference frame
         val offsetDest = GeoUtils.applyOffset(VROptions.current.destination, terrainToPortal)
@@ -127,7 +127,7 @@ class PortalSystem(
     }
 
     private fun preloadSpaceEnvironmentIfNear() {
-        if (spaceEnvironmentPreloaded || !VROptions.current.showPortal) {
+        if (spaceEnvironmentPreloaded || VROptions.current.portalLocation == null) {
             return
         }
 
@@ -154,8 +154,8 @@ class PortalSystem(
         val headPose = getHeadPose() ?: return
         val portalEntity = this.portalEntity ?: return
 
-        // Don't check collision if portal is disabled
-        if (!VROptions.current.showPortal) {
+        // Don't check collision if portal location is not defined
+        if (VROptions.current.portalLocation == null) {
             return
         }
 

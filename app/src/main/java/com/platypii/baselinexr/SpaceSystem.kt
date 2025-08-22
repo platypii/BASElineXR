@@ -185,7 +185,7 @@ class SpaceSystem(
 
         try {
             // Calculate trench offset from terrain origin to portal location
-            val terrainToPortal = GeoUtils.calculateOffset(terrainConfig.pointOfInterest, VROptions.portalLocation)
+            val terrainToPortal = GeoUtils.calculateOffset(terrainConfig.pointOfInterest, VROptions.current.portalLocation)
 
             // Apply offsets to destination to get trench position in user's reference frame
             val trenchLocation = GeoUtils.applyOffset(VROptions.current.destination, terrainToPortal)

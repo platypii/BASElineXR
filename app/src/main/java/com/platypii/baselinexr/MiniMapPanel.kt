@@ -21,6 +21,7 @@ class MiniMapPanel : SystemBase() {
     // Minimap content references
     private var redDot: View? = null
     private var blueDot: View? = null
+    private var greenDot: View? = null
     private var minimapImage: ImageView? = null
 
     // Minimap bounds - should be set based on the actual minimap image coordinates
@@ -43,6 +44,7 @@ class MiniMapPanel : SystemBase() {
             updateMiniMapPosition()
             updateRedDotPosition()
             updateBlueDotPosition()
+            updateGreenDotPosition()
         }
     }
 
@@ -82,10 +84,11 @@ class MiniMapPanel : SystemBase() {
         miniMapEntity?.setComponent(Visible(true))
     }
 
-    fun setViews(minimapImage: ImageView?, redDot: View?, blueDot: View?) {
+    fun setViews(minimapImage: ImageView?, redDot: View?, blueDot: View?, greenDot: View?) {
         this.minimapImage = minimapImage
         this.redDot = redDot
         this.blueDot = blueDot
+        this.greenDot = greenDot
     }
 
     private fun translateLatLngToMinimapPixels(lat: Double, lng: Double): Pair<Int, Int>? {
@@ -160,6 +163,24 @@ class MiniMapPanel : SystemBase() {
         }
     }
 
+    private fun updateGreenDotPosition() {
+        val target = VROptions.target
+
+        greenDot?.visibility = View.VISIBLE
+
+        val pixelPos = translateLatLngToMinimapPixels(target.lat, target.lng)
+        pixelPos?.let { (xPos, yPos) ->
+            greenDot?.let { dot ->
+                // Update layout params to position the green dot
+                val layoutParams = dot.layoutParams as FrameLayout.LayoutParams
+                layoutParams.leftMargin = xPos - (dot.width / 2)
+                layoutParams.topMargin = yPos - (dot.height / 2)
+                layoutParams.gravity = 0 // Remove center gravity
+                dot.layoutParams = layoutParams
+            }
+        }
+    }
+
     private fun getHeadPose(): Pose? {
         val head = systemManager
             .tryFindSystem<PlayerBodyAttachmentSystem>()
@@ -174,6 +195,7 @@ class MiniMapPanel : SystemBase() {
         grabbablePanel = null
         redDot = null
         blueDot = null
+        greenDot = null
         minimapImage = null
     }
 }

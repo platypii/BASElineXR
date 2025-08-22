@@ -20,6 +20,14 @@
         android:background="#ff0000ff"
         android:elevation="2dp" />
 
+    <!-- Green dot for target -->
+    <View
+        android:id="@+id/green_dot"
+        android:layout_width="8dp"
+        android:layout_height="8dp"
+        android:background="#ff00ff00"
+        android:elevation="2dp" />
+
     <!-- Red dot for location -->
     <View
         android:id="@+id/red_dot"

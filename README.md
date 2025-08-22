@@ -14,6 +14,7 @@ Orientation comes from the Quest headset.
    - Click your FlySight in the list to pair it with the quest
 2. Install app:
    - Install Android Studio
+   - Enable developer mode in Quest settings
    - Open BASElineXR project in Android Studio
    - Click run button ▶️ to install
 3. Configure Quest (IMPORTANT):

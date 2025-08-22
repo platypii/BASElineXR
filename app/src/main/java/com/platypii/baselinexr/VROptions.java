@@ -6,7 +6,7 @@ import com.platypii.baselinexr.measurements.LatLngAlt;
 public class VROptions {
 
     // Current active configuration
-    public static VROptions current = VROptionsList.EIGER_SKYDIVE;
+    public static VROptions current = VROptionsList.LIVE;
 
     public enum ShaderType {
         DEFAULT_SHADER,
@@ -24,11 +24,11 @@ public class VROptions {
     public final boolean showDirectionArrow;
     // Show target landing zone
     public final boolean showTarget;
-    public final boolean showPortal;
+    public final LatLngAlt portalLocation;
     public final ShaderType shader;
 
     public VROptions(String name, String mockTrack, String sourceModel, LatLngAlt destination, ShaderType shader,
-                     boolean roomMovement, boolean showDirectionArrow, boolean showTarget, boolean showPortal) {
+                     boolean roomMovement, boolean showDirectionArrow, boolean showTarget, LatLngAlt portalLocation) {
         this.name = name;
         this.mockTrack = mockTrack;
         this.sourceModel = sourceModel;
@@ -37,7 +37,7 @@ public class VROptions {
         this.roomMovement = roomMovement;
         this.showDirectionArrow = showDirectionArrow;
         this.showTarget = showTarget;
-        this.showPortal = showPortal;
+        this.portalLocation = portalLocation;
     }
 
     public String getTerrainModel() {
@@ -50,11 +50,9 @@ public class VROptions {
             new Vector3(Adjustments.eastAdjustment, 0, Adjustments.northAdjustment));
     }
 
-    // Kpow student field
+    // Target landing zone in the real world (kpow student field)
     public static LatLngAlt target = new LatLngAlt(47.2375, -123.1458, 84);
 
-    // Portal location
-    public static LatLngAlt portalLocation = new LatLngAlt(46.57835, 7.984, 2670.5);
 
     // Default lighting constants
     public static final Vector3 AMBIENT_COLOR = new Vector3(1.4f);
