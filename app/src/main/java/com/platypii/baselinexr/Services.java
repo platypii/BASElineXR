@@ -14,6 +14,7 @@ import com.platypii.baselinexr.cloud.AuthState;
 import com.platypii.baselinexr.cloud.tasks.Tasks;
 import com.platypii.baselinexr.location.LocationService;
 import com.platypii.baselinexr.places.Places;
+import com.platypii.baselinexr.tracks.TrackLogger;
 import com.platypii.baselinexr.util.Convert;
 
 /**
@@ -41,6 +42,7 @@ public class Services {
     public static final LocationService location = new LocationService(bluetooth);
     public static final Tasks tasks = new Tasks();
     public static final Places places = new Places();
+    public static final TrackLogger trackLogger = new TrackLogger();
 
     /**
      * We want preferences to be available as early as possible.
@@ -86,6 +88,9 @@ public class Services {
             Log.i(TAG, "Starting place database");
             places.start(appContext);
 
+            Log.i(TAG, "Starting track logger");
+            trackLogger.start(appContext);
+
             Log.i(TAG, "Services started in " + (System.currentTimeMillis() - startTime) + " ms");
         } else if (initialized) {
             // Every time an activity starts...
@@ -123,6 +128,7 @@ public class Services {
         if (initialized && startCount == 0) {
             Log.i(TAG, "All activities have stopped. Stopping services.");
             // Stop services
+            trackLogger.stop();
             places.stop();
             tasks.stop();
             location.stop();
