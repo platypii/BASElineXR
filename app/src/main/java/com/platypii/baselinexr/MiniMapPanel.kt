@@ -4,6 +4,8 @@ import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
+import kotlin.math.atan2
+import kotlin.math.sqrt
 import com.meta.spatial.core.Entity
 import com.meta.spatial.core.Pose
 import com.meta.spatial.core.SystemBase
@@ -129,12 +131,24 @@ class MiniMapPanel : SystemBase() {
         val pixelPos = translateLatLngToMinimapPixels(loc.latitude, loc.longitude)
         pixelPos?.let { (xPos, yPos) ->
             redDot?.let { dot ->
-                // Update layout params to position the red dot
+                // Update layout params to position the red arrow
                 val layoutParams = dot.layoutParams as FrameLayout.LayoutParams
                 layoutParams.leftMargin = xPos - (dot.width / 2)
                 layoutParams.topMargin = yPos - (dot.height / 2)
                 layoutParams.gravity = 0 // Remove center gravity
                 dot.layoutParams = layoutParams
+
+                // Calculate and apply rotation based on velocity direction
+                // Only rotate if we have significant velocity (> 0.5 m/s to avoid jitter)
+                val groundSpeed = sqrt(loc.vN * loc.vN + loc.vE * loc.vE)
+                if (groundSpeed > 0.5) {
+                    // Calculate bearing in degrees (0° = North, 90° = East)
+                    val bearingDegrees = Math.toDegrees(atan2(loc.vE, loc.vN))
+                    dot.rotation = bearingDegrees.toFloat()
+                } else {
+                    // If not moving significantly, keep arrow pointing north
+                    dot.rotation = 0f
+                }
             }
         }
     }

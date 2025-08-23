@@ -6,8 +6,8 @@
 
     <ImageView
         android:id="@+id/minimap_image"
-        android:layout_width="440dp"
-        android:layout_height="300dp"
+        android:layout_width="500dp"
+        android:layout_height="340dp"
         android:scaleType="centerCrop"
         android:src="@drawable/minimap"
         android:background="#00000000" />
@@ -28,13 +28,13 @@
         android:background="#ff00ff00"
         android:elevation="2dp" />
 
-    <!-- Red dot for location -->
-    <View
+    <!-- Red arrow for location -->
+    <ImageView
         android:id="@+id/red_dot"
-        android:layout_width="8dp"
-        android:layout_height="8dp"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
         android:layout_gravity="center"
-        android:background="#ffff0000"
+        android:src="@drawable/arrow_red"
         android:elevation="2dp" />
 
 </FrameLayout>
