@@ -54,10 +54,11 @@ class HudSystem() : SystemBase() {
   private fun updateLocation() {
     val provider = Services.location.dataSource()
     val loc = Services.location.lastLoc
+    val refreshRate = Services.location.refreshRate()
     latlngLabel?.setCompoundDrawablesWithIntrinsicBounds(LocationStatus.icon, 0, 0, 0)
     if (loc != null) {
       latlngLabel?.text = provider + " " + loc.toStringSimple() + " (" + VROptions.current.name + ")"
-      speedLabel?.text = Convert.speed(loc.groundSpeed()) + "  " + Convert.distance(loc.altitude_gps)
+      speedLabel?.text = Convert.speed(loc.groundSpeed()) + "  " + Convert.distance(loc.altitude_gps) + "  " + String.format("%.1f Hz", refreshRate)
     } else {
       latlngLabel?.text = LocationStatus.message
       speedLabel?.text = ""
