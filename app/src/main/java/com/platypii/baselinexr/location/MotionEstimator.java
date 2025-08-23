@@ -9,7 +9,7 @@ public final class MotionEstimator {
     private static final String TAG = "MotionEstimator";
 
     // Position weight: 0.1 = mostly predicted, 1.0 = exact gps
-    private static final double alpha = 0.3; // 0..1 sample weight position
+    private static final double alpha = 0.15; // 0..1 sample weight position
     // Take velocity straight from gps:
     private static final double beta = 0.9; // 0..1 sample weight velocity
     // Acceleration weight

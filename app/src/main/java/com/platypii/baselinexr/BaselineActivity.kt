@@ -72,7 +72,7 @@ class BaselineActivity : AppSystemActivity() {
     hudPanelController = HudPanelController(this)
 
     // Create systems
-    hudSystem = HudSystem(gpsTransform)
+    hudSystem = HudSystem()
     flightStatsSystem = FlightStatsSystem()
     directionArrowSystem = DirectionArrowSystem()
     targetPanelSystem = TargetPanel(gpsTransform)

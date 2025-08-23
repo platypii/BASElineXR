@@ -2,14 +2,16 @@ package com.platypii.baselinexr
 
 import android.widget.TextView
 import com.meta.spatial.core.SystemBase
+import com.meta.spatial.core.Vector3
 import com.meta.spatial.toolkit.SpatialActivityManager
 import com.platypii.baselinexr.location.LocationStatus
 import com.platypii.baselinexr.util.Convert
 import com.platypii.baselinexr.util.GpsFreshnessColor
 
-class HudSystem(private val gpsTransform: GpsToWorldTransform) : SystemBase() {
+class HudSystem() : SystemBase() {
   private var initialized = false
   private var grabbablePanel: GrabbablePanel? = null
+  private var extraControlsVisible = false
   
   // HUD content references
   private var latlngLabel: TextView? = null
@@ -35,7 +37,8 @@ class HudSystem(private val gpsTransform: GpsToWorldTransform) : SystemBase() {
     val composition = activity.glXFManager.getGLXFInfo(BaselineActivity.GLXF_SCENE)
     val panel = composition.tryGetNodeByName("Panel")
     if (panel?.entity != null) {
-      grabbablePanel = GrabbablePanel(systemManager, panel.entity)
+      val hudOffset = Vector3(-0.2f, 1.4f, 3.6f)
+      grabbablePanel = GrabbablePanel(systemManager, panel.entity, hudOffset)
       initialized = true
     }
   }
@@ -62,6 +65,12 @@ class HudSystem(private val gpsTransform: GpsToWorldTransform) : SystemBase() {
     val millisecondsSinceLastFix = Services.location.lastFixDuration()
     val color = GpsFreshnessColor.getColorForFreshness(millisecondsSinceLastFix)
     speedLabel?.setTextColor(color)
+  }
+
+  fun setExtraControlsVisible(visible: Boolean) {
+    extraControlsVisible = visible
+    val offset = if (visible) Vector3(0f, -1f, -1.5f) else Vector3(0f, 1f, 1.5f)
+    grabbablePanel?.moveByOffset(offset)
   }
 
   fun cleanup() {

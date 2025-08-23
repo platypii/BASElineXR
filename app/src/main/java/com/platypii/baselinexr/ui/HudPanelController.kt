@@ -22,8 +22,10 @@ class HudPanelController(private val activity: BaselineActivity) {
             extraControls?.let { controls ->
                 if (controls.visibility == View.VISIBLE) {
                     controls.visibility = View.GONE
+                    activity.hudSystem?.setExtraControlsVisible(false)
                 } else {
                     controls.visibility = View.VISIBLE
+                    activity.hudSystem?.setExtraControlsVisible(true)
                 }
             }
         })
