@@ -9,12 +9,14 @@ public class VROptionsList {
             null,
             "branded",
             // ideal for a kpow west jump run:
-            new LatLngAlt(47.2245, -123.167, 3710.0),
+//            new LatLngAlt(47.2245, -123.167, 3710.0),
+            // summit over the water tower:
+            new LatLngAlt(47.238, -123.156, 3800.0),
             VROptions.ShaderType.LOD_SHADER,
             false,
             true,
             true,
-            new LatLngAlt(46.57835, 7.984, 2670.5)
+            new LatLngAlt(46.5785, 7.99, 3050.0)
     );
 
     public static final VROptions LIVE_EAST = new VROptions(
@@ -51,7 +53,7 @@ public class VROptionsList {
             false,
             true,
             true,
-            null
+            new LatLngAlt(46.5785, 7.99, 3050.0)
     );
 
     public static final VROptions EIGER_SKYDIVE_LAKE = new VROptions(

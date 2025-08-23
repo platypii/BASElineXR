@@ -38,7 +38,7 @@ class FlightStatsSystem : SystemBase() {
         val panel = composition.tryGetNodeByName("FlightStatsPanel")
         if (panel?.entity != null) {
             // Position on bottom left where the altimeter was
-            val flightStatsOffset = Vector3(-1.6f, -1.2f, 3f)
+            val flightStatsOffset = Vector3(-1.6f, -1.0f, 3f)
             grabbablePanel = GrabbablePanel(systemManager, panel.entity, flightStatsOffset)
             initialized = true
         }

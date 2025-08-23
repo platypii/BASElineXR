@@ -6,8 +6,8 @@
 
     <ImageView
         android:id="@+id/minimap_image"
-        android:layout_width="400dp"
-        android:layout_height="272dp"
+        android:layout_width="440dp"
+        android:layout_height="300dp"
         android:scaleType="centerCrop"
         android:src="@drawable/minimap"
         android:background="#00000000" />
