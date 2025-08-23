@@ -106,9 +106,9 @@ public class VROptionsList {
 
     public static final VROptions JANK = new VROptions(
             "Jank",
-            "jank-longer.csv",
+            "kpow20hz.csv",
             "eiger",
-            new LatLngAlt(47.22453, -123.1669762, 3710.0), // kpow south
+            new LatLngAlt(47.238, -123.156, 3800.0), // water tower
             VROptions.ShaderType.LOD_SHADER,
             false,
             true,
