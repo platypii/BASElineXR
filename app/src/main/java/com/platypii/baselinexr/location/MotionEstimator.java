@@ -79,12 +79,19 @@ public final class MotionEstimator {
         lastUpdate = gps;
     }
 
-    public Vector3 predictDelta(long tQueryMillis) {
+    /**
+     * Predict position at some time in the future
+     *
+     * @param currentTimeMillis phone timestamp to predict position at
+     */
+    public Vector3 predictDelta(long currentTimeMillis) {
         if (lastUpdate == null) return new Vector3();
+        // Correct for phone/gps time skew
+        final double adjustedCurrentTime = TimeOffset.phoneToGpsTime(currentTimeMillis);
 
-        double dt = (tQueryMillis - lastUpdate.millis) * 1e-3;
+        double dt = (adjustedCurrentTime - lastUpdate.millis) * 1e-3;
         if (dt < 0) dt = 0;                  // clamp if asked for the past
-//        Log.i(TAG, "lastUpdate = " + lastUpdate.millis + " now = " + tQueryMillis + " dt = " + dt);
+//        Log.i(TAG, "lastUpdate = " + lastUpdate.millis + " now = " + currentTimeMillis + " dt = " + dt);
         return positionDelta
                 .plus(v.mul(dt))
                 .plus(a.mul(0.5 * dt * dt));

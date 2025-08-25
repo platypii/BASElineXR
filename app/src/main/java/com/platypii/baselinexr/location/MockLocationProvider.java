@@ -23,6 +23,9 @@ public class MockLocationProvider extends LocationProvider {
     public static long systemStartTime = System.currentTimeMillis();
     private boolean started = false;
 
+    // Introduce a fake phone/gps time skew for testing
+    private static final long phoneSkew = 0;
+
     @NonNull
     @Override
     protected String providerName() {
@@ -43,7 +46,6 @@ public class MockLocationProvider extends LocationProvider {
     @Override
     public void start(@NonNull Context context) throws SecurityException {
         Log.i(TAG, "Starting mock location service");
-        systemStartTime = System.currentTimeMillis();
         started = true;
         // Load track from csv
         List<MLocation> all = loadData(context);
@@ -68,7 +70,7 @@ public class MockLocationProvider extends LocationProvider {
                     }
                 }
                 // Update the time
-                loc.millis = loc.millis + timeDelta;
+                loc.millis = loc.millis + timeDelta - phoneSkew;
                 updateLocation(loc);
             }
             Log.i(TAG, "Finished emitting mock locations");
