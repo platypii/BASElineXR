@@ -218,7 +218,7 @@ class BaselineActivity : AppSystemActivity() {
     }
   }
 
-    fun handleForwardOrientationButton() {
+    fun handleOrientationButton(isForward: Boolean) {
         // Get current head transform to determine yaw
         val head = systemManager
             .tryFindSystem<PlayerBodyAttachmentSystem>()
@@ -240,39 +240,11 @@ class BaselineActivity : AppSystemActivity() {
                     // Set yaw adjustment so that when looking in velocity direction, world is oriented north
                     // We want: head_direction + yaw_adjustment = north (0)
                     // So: yaw_adjustment = -head_direction + velocity_to_north_correction
-                    Adjustments.yawAdjustment = (headBearingRad - velocityBearingRad).toFloat()
+                    val orientationOffset = if (isForward) 0.0 else Math.PI
+                    Adjustments.yawAdjustment = (orientationOffset + headBearingRad - velocityBearingRad).toFloat()
                     Adjustments.saveYawAdjustment(this@BaselineActivity)
 
 //                    Log.d(TAG, "Orient head: " + headBearingRad + " vel: " + velocityBearingRad + " yawAdj: " + Adjustments.yawAdjustment)
-                }
-            }
-        }
-    }
-
-    fun handleTailOrientationButton() {
-        // Get current head transform to determine yaw
-        val head = systemManager
-            .tryFindSystem<PlayerBodyAttachmentSystem>()
-            ?.tryGetLocalPlayerAvatarBody()
-            ?.head
-        head?.let {
-            val headTransform = it.tryGetComponent<Transform>()
-            headTransform?.let { transform ->
-                val currentHeadYaw = SpatialUtils.extractYawFromQuaternion(transform.transform.q)
-
-                // Get current location with velocity data
-                val currentLocation = Services.location.lastLoc
-                currentLocation?.let { loc ->
-                    // Calculate velocity bearing (direction of movement)
-                    val velocityBearing = loc.bearing() // This returns degrees
-                    val velocityBearingRad = Math.toRadians(velocityBearing)
-                    val headBearingRad = currentHeadYaw // Already in radians from extractYawFromQuaternion
-
-                    // Set yaw adjustment so that when looking in velocity direction, world is oriented north
-                    // We want: head_direction + yaw_adjustment = north (0)
-                    // So: yaw_adjustment = -head_direction + velocity_to_north_correction
-                    Adjustments.yawAdjustment = (Math.PI + headBearingRad - velocityBearingRad).toFloat()
-                    Adjustments.saveYawAdjustment(this@BaselineActivity)
                 }
             }
         }

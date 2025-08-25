@@ -39,6 +39,18 @@ Get GPU memory usage:
 adb shell gpumeminfo -l
 ```
 
+Persist android logcat to a file:
+
+```
+adb shell "nohup logcat -v time -f /sdcard/persisted.log &"
+```
+
+Retrieve log file:
+
+```
+adb pull /sdcard/persisted.log
+```
+
 ### Things that don't work:
 
 ```
@@ -68,7 +80,7 @@ $ adb shell cmd role get-role-holders --user 0 android.app.role.HOME
 com.oculus.systemux
 ```
 
-Removing causes "social features disabled" popup:
+Removing this causes "social features disabled" popup:
 
 ```
 adb shell pm disable-user --user 0 com.oculus.socialplatform

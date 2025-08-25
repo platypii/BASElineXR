@@ -46,12 +46,12 @@ class HudPanelController(private val activity: BaselineActivity) {
 
         val fwdButton = rootView?.findViewById<Button>(R.id.fwd_button)
         fwdButton?.setOnClickListener({
-            activity.handleForwardOrientationButton()
+            activity.handleOrientationButton(true)
         })
 
         val tailButton = rootView?.findViewById<Button>(R.id.tail_button)
         tailButton?.setOnClickListener({
-            activity.handleTailOrientationButton()
+            activity.handleOrientationButton(false)
         })
 
         val northButton = rootView?.findViewById<Button>(R.id.north_button)
