@@ -21,10 +21,12 @@ class DirectionArrowSystem : SystemBase() {
         private const val TAG = "DirectionArrowSystem"
         private const val ARROW_SCALE = 0.1f
         private const val ARROW_HEIGHT_OFFSET = -5.0f
+        private const val COMPASS_SCALE = 0.12f
         private const val MIN_SPEED_THRESHOLD = 0.9 // m/s minimum speed to show arrow
     }
 
     private var arrowEntity: Entity? = null
+    private var northEntity: Entity? = null
     private var currentLocation: MLocation? = null
     private var initialized = false
 
@@ -44,11 +46,18 @@ class DirectionArrowSystem : SystemBase() {
     private fun initializeDirectionArrow() {
         // Create arrow using custom arrow.glb model
         // The arrow points in the positive Z direction (forward)
-
         arrowEntity = Entity.create(
             Mesh("arrow.glb".toUri()),
-            Transform(Pose(Vector3(0f, 0f, 0f))),
+            Transform(Pose(Vector3(0f))),
             Scale(Vector3(ARROW_SCALE)),
+            Visible(false) // Start invisible
+        )
+
+        // Create north indicator using compass model
+        northEntity = Entity.create(
+            Mesh("compass.gltf".toUri()),
+            Transform(Pose(Vector3(0f))),
+            Scale(Vector3(COMPASS_SCALE)),
             Visible(false) // Start invisible
         )
 
@@ -57,49 +66,73 @@ class DirectionArrowSystem : SystemBase() {
     }
 
     private fun updateArrowDirection() {
-        val loc = currentLocation ?: return
-
         // Check if direction arrow is enabled
         if (!VROptions.current.showDirectionArrow) {
             arrowEntity?.setComponent(Visible(false))
+            northEntity?.setComponent(Visible(false))
             return
         }
 
-        // Only show arrow if moving fast enough (and not stale)
-        val groundSpeed = loc.groundSpeed()
-        if (groundSpeed < MIN_SPEED_THRESHOLD || !Services.location.isFresh) {
-            arrowEntity?.setComponent(Visible(false))
-            return
-        }
+        val loc = currentLocation
 
-        // Get head position to place arrow below it
+        // Get head position to place indicator below it
         val headPose = getHeadPose() ?: return
         if (headPose == Pose()) return
 
-        // Position arrow below the head
-        val arrowPosition = headPose.t + Vector3(0f, ARROW_HEIGHT_OFFSET, 0f)
+        // Position indicator below the head
+        val indicatorPosition = headPose.t + Vector3(0f, ARROW_HEIGHT_OFFSET, 0f)
 
-        // Calculate rotation based on velocity direction
-        var bearingRad = Math.toRadians(loc.bearing() - 90)
+        // Check if moving fast enough (and not stale)
+        if (loc == null || loc.groundSpeed() < MIN_SPEED_THRESHOLD || !Services.location.isFresh) {
+            // Show north indicator instead of direction arrow
+            arrowEntity?.setComponent(Visible(false))
 
-        // Apply yaw adjustment to align with world coordinate system
-        bearingRad += Adjustments.yawAdjustment
+            // Calculate rotation to point north
+            var northBearingRad = Math.toRadians(-90.0) // North is 0 degrees, but we adjust for model orientation
 
-        // Convert to quaternion rotation around Y-axis
-        // Note: Meta Spatial uses Y-up coordinate system
-        val yRotation = bearingRad.toFloat() // Negative because we want clockwise rotation for eastward bearing
+            // Apply yaw adjustment to align with world coordinate system
+            northBearingRad += Adjustments.yawAdjustment
 
-        // Create rotation quaternion for Y-axis rotation
-        val cosHalfAngle = cos(yRotation / 2f)
-        val sinHalfAngle = sin(yRotation / 2f)
-        val rotation = Quaternion(0f, sinHalfAngle, 0f, cosHalfAngle)
+            val yRotation = northBearingRad.toFloat()
+            val cosHalfAngle = cos(yRotation / 2f)
+            val sinHalfAngle = sin(yRotation / 2f)
+            val northRotation = Quaternion(0f, sinHalfAngle, 0f, cosHalfAngle)
 
-        // Update arrow position and orientation
-        arrowEntity?.setComponents(listOf(
-            Scale(Vector3(ARROW_SCALE)),
-            Transform(Pose(arrowPosition, rotation)),
-            Visible(true)
-        ))
+            northEntity?.setComponents(listOf(
+                Scale(Vector3(COMPASS_SCALE)),
+                Transform(Pose(indicatorPosition, northRotation)),
+                Visible(true)
+            ))
+            return
+        } else {
+
+            // Show direction arrow when moving fast enough
+            northEntity?.setComponent(Visible(false))
+
+            // Calculate rotation based on velocity direction
+            var bearingRad = Math.toRadians(loc.bearing() - 90)
+
+            // Apply yaw adjustment to align with world coordinate system
+            bearingRad += Adjustments.yawAdjustment
+
+            // Convert to quaternion rotation around Y-axis
+            // Note: Meta Spatial uses Y-up coordinate system
+            val yRotation = bearingRad.toFloat()
+
+            // Create rotation quaternion for Y-axis rotation
+            val cosHalfAngle = cos(yRotation / 2f)
+            val sinHalfAngle = sin(yRotation / 2f)
+            val rotation = Quaternion(0f, sinHalfAngle, 0f, cosHalfAngle)
+
+            // Update arrow position and orientation
+            arrowEntity?.setComponents(
+                listOf(
+                    Scale(Vector3(ARROW_SCALE)),
+                    Transform(Pose(indicatorPosition, rotation)),
+                    Visible(true)
+                )
+            )
+        }
     }
 
 
@@ -116,10 +149,6 @@ class DirectionArrowSystem : SystemBase() {
             }
 
             val head = avatarBody.head
-            if (head == null) {
-                return null
-            }
-
             val headPose = head.tryGetComponent<Transform>()?.transform
             if (headPose == null || headPose == Pose()) {
                 return null
@@ -134,6 +163,7 @@ class DirectionArrowSystem : SystemBase() {
 
     fun cleanup() {
         arrowEntity = null
+        northEntity = null
         initialized = false
         Log.i(TAG, "DirectionArrowSystem cleaned up")
     }

@@ -6,7 +6,7 @@ import com.platypii.baselinexr.measurements.LatLngAlt;
 public class VROptions {
 
     // Current active configuration
-    public static VROptions current = VROptionsList.LIVE;
+    public static VROptions current = VROptionsList.EIGER_BASE;
 
     public enum ShaderType {
         DEFAULT_SHADER,

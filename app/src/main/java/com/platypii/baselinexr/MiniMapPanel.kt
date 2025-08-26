@@ -195,14 +195,6 @@ class MiniMapPanel : SystemBase() {
         }
     }
 
-    private fun getHeadPose(): Pose? {
-        val head = systemManager
-            .tryFindSystem<PlayerBodyAttachmentSystem>()
-            ?.tryGetLocalPlayerAvatarBody()
-            ?.head ?: return null
-        return head.tryGetComponent<Transform>()?.transform
-    }
-
     fun cleanup() {
         initialized = false
         miniMapEntity = null
