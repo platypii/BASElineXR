@@ -85,3 +85,6 @@ Removing this causes "social features disabled" popup:
 ```
 adb shell pm disable-user --user 0 com.oculus.socialplatform
 ```
+
+If you remove permission `oculus.software.handtracking` you will get a "Switch to Controllers" popup.
+Ignore the deprecation warning in logcat `HANDTRACKING: Deprecated Manifest Permission request for com.platypii.baselinexr please update to 'horizonos.permission.HAND_TRACKING'`.

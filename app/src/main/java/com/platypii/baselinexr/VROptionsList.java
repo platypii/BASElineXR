@@ -16,7 +16,7 @@ public class VROptionsList {
             false,
             true,
             true,
-            new LatLngAlt(46.5785, 7.99, 3050.0)
+            new LatLngAlt(46.5785, 7.99, 3040.0)
     );
 
     public static final VROptions LIVE_EAST = new VROptions(
