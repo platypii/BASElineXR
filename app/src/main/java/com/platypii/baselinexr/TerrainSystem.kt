@@ -8,9 +8,9 @@ import com.meta.spatial.core.Pose
 import com.meta.spatial.core.Quaternion
 import com.meta.spatial.core.SystemBase
 import com.meta.spatial.toolkit.Mesh
-import com.meta.spatial.toolkit.PlayerBodyAttachmentSystem
 import com.meta.spatial.toolkit.Transform
 import com.meta.spatial.toolkit.Visible
+import com.platypii.baselinexr.util.HeadPoseUtil
 
 class TerrainSystem(
     private val gpsToWorldTransform: GpsToWorldTransform,
@@ -113,7 +113,7 @@ class TerrainSystem(
         val terrainToPoiOffset = GeoUtils.calculateOffset(terrainConfig!!.pointOfInterest, terrainConfig!!.terrainOrigin)
 
         // Get head pose for optional room movement translation
-        val headPose = getHeadPose()
+        val headPose = HeadPoseUtil.getHeadPose(systemManager)
 
         terrainTiles.forEach { tile ->
             // Calculate offset from tileOrigin to terrainOrigin using geographic math
@@ -152,13 +152,6 @@ class TerrainSystem(
         }
     }
 
-    private fun getHeadPose(): Pose? {
-        val head = systemManager
-            .tryFindSystem<PlayerBodyAttachmentSystem>()
-            ?.tryGetLocalPlayerAvatarBody()
-            ?.head ?: return null
-        return head.tryGetComponent<Transform>()?.transform
-    }
 
     fun setVisible(visible: Boolean) {
         isVisible = visible

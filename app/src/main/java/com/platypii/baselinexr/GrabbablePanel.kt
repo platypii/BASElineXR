@@ -9,10 +9,10 @@ import com.meta.spatial.runtime.HitInfo
 import com.meta.spatial.runtime.InputListener
 import com.meta.spatial.runtime.SceneObject
 import com.meta.spatial.toolkit.Controller
-import com.meta.spatial.toolkit.PlayerBodyAttachmentSystem
 import com.meta.spatial.toolkit.SceneObjectSystem
 import com.meta.spatial.toolkit.Transform
 import com.meta.spatial.toolkit.getAbsoluteTransform
+import com.platypii.baselinexr.util.HeadPoseUtil
 
 class GrabbablePanel(
     private val systemManager: com.meta.spatial.core.SystemManager,
@@ -79,7 +79,7 @@ class GrabbablePanel(
             if ((controller.buttonState and (ButtonBits.ButtonTriggerL or ButtonBits.ButtonTriggerR)) == 0) {
                 isDragging = false
                 // Store the new offset relative to head
-                val headPose = getHeadPose()
+                val headPose = HeadPoseUtil.getHeadPose(systemManager)
                 if (headPose != null) {
                         val panelTransform = panelEntity.tryGetComponent<Transform>()
                         if (panelTransform != null) {
@@ -98,7 +98,7 @@ class GrabbablePanel(
             targetPose.t = newPosition - dragLocalOffset!!
 
             // Make panel face the head
-            val headPose = getHeadPose() ?: return
+            val headPose = HeadPoseUtil.getHeadPose(systemManager) ?: return
 
             val toHead = headPose.t - targetPose.t
             val forwardVec = toHead.normalize()
@@ -113,7 +113,7 @@ class GrabbablePanel(
 
         } else {
             // Not dragging, follow head with stored offset
-            val headPose = getHeadPose() ?: return
+            val headPose = HeadPoseUtil.getHeadPose(systemManager) ?: return
             if (headPose == Pose()) return
 
             // Calculate the forward and right vectors from the head's rotation
@@ -141,11 +141,4 @@ class GrabbablePanel(
         panelOffset = panelOffset + additionalOffset
     }
 
-    private fun getHeadPose(): Pose? {
-        val head = systemManager
-            .tryFindSystem<PlayerBodyAttachmentSystem>()
-            ?.tryGetLocalPlayerAvatarBody()
-            ?.head ?: return null
-        return head.tryGetComponent<Transform>()?.transform
-    }
 }

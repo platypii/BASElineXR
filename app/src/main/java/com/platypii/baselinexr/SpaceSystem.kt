@@ -2,6 +2,7 @@ package com.platypii.baselinexr
 
 import android.util.Log
 import androidx.core.net.toUri
+import com.platypii.baselinexr.util.HeadPoseUtil
 import com.meta.spatial.core.Entity
 import com.meta.spatial.core.Pose
 import com.meta.spatial.core.Quaternion
@@ -10,7 +11,6 @@ import com.meta.spatial.core.Vector3
 import com.meta.spatial.toolkit.GLXFInfo
 import com.meta.spatial.toolkit.Mesh
 import com.meta.spatial.toolkit.MeshCollision
-import com.meta.spatial.toolkit.PlayerBodyAttachmentSystem
 import com.meta.spatial.toolkit.Scale
 import com.meta.spatial.toolkit.Transform
 import com.meta.spatial.toolkit.Visible
@@ -133,7 +133,7 @@ class SpaceSystem(
             Log.i(TAG, "Space environment shown with movement started")
         } else {
             // Create space environment if it doesn't exist and show it
-            val headPose = getHeadPose()
+            val headPose = HeadPoseUtil.getHeadPose(systemManager)
             val userPosition = headPose?.t ?: Vector3(0f, 0f, 0f)
             createSpaceEnvironment(userPosition)
             // Note: Visibility will be handled in updateSpacePosition after scene is loaded
@@ -169,7 +169,7 @@ class SpaceSystem(
         if (!isActive) return
 
         val spaceCube = spaceCubeEntity ?: return
-        val headPose = getHeadPose() ?: return
+        val headPose = HeadPoseUtil.getHeadPose(systemManager) ?: return
 
         // Keep space cube centered on user's head position
         val transform = Transform(Pose(headPose.t))
@@ -387,18 +387,6 @@ class SpaceSystem(
         isMoving = false
     }
 
-    private fun getHeadPose(): Pose? {
-        try {
-            val head = systemManager
-                .tryFindSystem<PlayerBodyAttachmentSystem>()
-                ?.tryGetLocalPlayerAvatarBody()
-                ?.head ?: return null
-            return head.tryGetComponent<Transform>()?.transform
-        } catch (e: Exception) {
-            Log.e(TAG, "Error getting head pose", e)
-            return null
-        }
-    }
 
     fun cleanup() {
         destroySpaceEnvironment()

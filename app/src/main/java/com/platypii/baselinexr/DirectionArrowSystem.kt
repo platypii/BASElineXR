@@ -8,11 +8,11 @@ import com.meta.spatial.core.Quaternion
 import com.meta.spatial.core.SystemBase
 import com.meta.spatial.core.Vector3
 import com.meta.spatial.toolkit.Mesh
-import com.meta.spatial.toolkit.PlayerBodyAttachmentSystem
 import com.meta.spatial.toolkit.Scale
 import com.meta.spatial.toolkit.Transform
 import com.meta.spatial.toolkit.Visible
 import com.platypii.baselinexr.measurements.MLocation
+import com.platypii.baselinexr.util.HeadPoseUtil
 import kotlin.math.*
 
 class DirectionArrowSystem : SystemBase() {
@@ -76,7 +76,7 @@ class DirectionArrowSystem : SystemBase() {
         val loc = currentLocation
 
         // Get head position to place indicator below it
-        val headPose = getHeadPose() ?: return
+        val headPose = HeadPoseUtil.getHeadPose(systemManager) ?: return
         if (headPose == Pose()) return
 
         // Position indicator below the head
@@ -136,30 +136,6 @@ class DirectionArrowSystem : SystemBase() {
     }
 
 
-    private fun getHeadPose(): Pose? {
-        try {
-            val playerBodySystem = systemManager.tryFindSystem<PlayerBodyAttachmentSystem>()
-            if (playerBodySystem == null) {
-                return null
-            }
-
-            val avatarBody = playerBodySystem.tryGetLocalPlayerAvatarBody()
-            if (avatarBody == null) {
-                return null
-            }
-
-            val head = avatarBody.head
-            val headPose = head.tryGetComponent<Transform>()?.transform
-            if (headPose == null || headPose == Pose()) {
-                return null
-            }
-
-            return headPose
-        } catch (e: Exception) {
-            Log.w(TAG, "Avatar body not ready yet, skipping head pose")
-            return null
-        }
-    }
 
     fun cleanup() {
         arrowEntity = null

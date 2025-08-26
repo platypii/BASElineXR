@@ -7,11 +7,11 @@ import com.meta.spatial.core.Pose
 import com.meta.spatial.core.Quaternion
 import com.meta.spatial.core.SystemBase
 import com.meta.spatial.core.Vector3
-import com.meta.spatial.toolkit.PlayerBodyAttachmentSystem
 import com.meta.spatial.toolkit.SpatialActivityManager
 import com.meta.spatial.toolkit.Transform
 import com.meta.spatial.toolkit.Visible
 import com.platypii.baselinexr.location.LatLng
+import com.platypii.baselinexr.util.HeadPoseUtil
 
 class TargetPanel(private val gpsTransform: GpsToWorldTransform) : SystemBase() {
     private var initialized = false
@@ -52,7 +52,7 @@ class TargetPanel(private val gpsTransform: GpsToWorldTransform) : SystemBase() 
             return
         }
 
-        val headPose = getHeadPose() ?: return
+        val headPose = HeadPoseUtil.getHeadPose(systemManager) ?: return
         if (headPose == Pose()) return
         if (gpsTransform.initialOrigin == null) return
 
@@ -128,13 +128,6 @@ class TargetPanel(private val gpsTransform: GpsToWorldTransform) : SystemBase() 
         }
     }
 
-    private fun getHeadPose(): Pose? {
-        val head = systemManager
-            .tryFindSystem<PlayerBodyAttachmentSystem>()
-            ?.tryGetLocalPlayerAvatarBody()
-            ?.head ?: return null
-        return head.tryGetComponent<Transform>()?.transform
-    }
 
     fun cleanup() {
         initialized = false

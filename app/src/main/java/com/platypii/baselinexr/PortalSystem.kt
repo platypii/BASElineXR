@@ -13,6 +13,7 @@ import com.meta.spatial.toolkit.PlayerBodyAttachmentSystem
 import com.meta.spatial.toolkit.Scale
 import com.meta.spatial.toolkit.Transform
 import com.meta.spatial.toolkit.Visible
+import com.platypii.baselinexr.util.HeadPoseUtil
 
 /**
  * Portal system that detects when the user flies through a portal and transports them to space.
@@ -131,7 +132,7 @@ class PortalSystem(
             return
         }
 
-        val headPose = getHeadPose() ?: return
+        val headPose = HeadPoseUtil.getHeadPose(systemManager) ?: return
         val portalEntity = this.portalEntity ?: return
 
         // Get portal position
@@ -151,7 +152,7 @@ class PortalSystem(
     }
 
     private fun checkPortalCollision() {
-        val headPose = getHeadPose() ?: return
+        val headPose = HeadPoseUtil.getHeadPose(systemManager) ?: return
         val portalEntity = this.portalEntity ?: return
 
         // Don't check collision if portal location is not defined
@@ -218,18 +219,6 @@ class PortalSystem(
         Log.i(TAG, "Exited space, returned to normal environment")
     }
 
-    private fun getHeadPose(): Pose? {
-        try {
-            val head = systemManager
-                .tryFindSystem<PlayerBodyAttachmentSystem>()
-                ?.tryGetLocalPlayerAvatarBody()
-                ?.head ?: return null
-            return head.tryGetComponent<Transform>()?.transform
-        } catch (e: Exception) {
-            Log.e(TAG, "Error getting head pose", e)
-            return null
-        }
-    }
 
     fun cleanup() {
         // Clean up space system
