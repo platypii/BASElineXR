@@ -17,7 +17,7 @@ class HudPanelController(private val activity: BaselineActivity) {
 
         // Add click listener to hudPanel to toggle extraControls visibility
         val hudPanel = rootView?.findViewById<android.widget.LinearLayout>(R.id.hudPanel)
-        val extraControls = rootView?.findViewById<android.widget.LinearLayout>(R.id.extraControls)
+        val extraControls = rootView?.findViewById<android.widget.GridLayout>(R.id.extraControls)
         hudPanel?.setOnClickListener({
             extraControls?.let { controls ->
                 if (controls.visibility == View.VISIBLE) {
