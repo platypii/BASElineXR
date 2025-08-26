@@ -6,7 +6,6 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import com.platypii.baselinexr.measurements.MLocation;
-import com.platypii.baselinexr.util.Numbers;
 import com.platypii.baselinexr.util.PubSub;
 import com.platypii.baselinexr.util.RefreshRateEstimator;
 
@@ -19,7 +18,6 @@ public abstract class LocationProvider {
 
     // History
     public MLocation lastLoc; // last location received
-    private MLocation prevLoc; // 2nd to last
 
     public final PubSub<MLocation> locationUpdates = new PubSub<>();
 
@@ -81,7 +79,6 @@ public abstract class LocationProvider {
         }
 
         // Store location
-        prevLoc = lastLoc;
         lastLoc = loc;
 
         // Update gps time offset
@@ -92,85 +89,6 @@ public abstract class LocationProvider {
 
         // Notify listeners (async so the service never blocks!)
         locationUpdates.postAsync(lastLoc);
-    }
-
-    /**
-     * Helper method for getting latest speed in m/s
-     * If GPS is not giving us speed natively, fallback to computing from v = dist/time.
-     * This should be used for display of the latest groundspeed, but not for logging.
-     */
-    public double groundSpeed() {
-        if (isFresh()) {
-            final double lastGroundSpeed = lastLoc.groundSpeed();
-            if (Numbers.isReal(lastGroundSpeed)) {
-                return lastGroundSpeed;
-            } else {
-                // Compute ground speed from previous location
-                if (prevLoc != null) {
-                    final double dist = prevLoc.distanceTo(lastLoc);
-                    final double dt = (lastLoc.millis - prevLoc.millis) * 0.001;
-                    if (dt > 0) {
-                        return dist / dt;
-                    }
-                }
-            }
-        }
-        return Double.NaN;
-    }
-
-    /**
-     * Helper method for getting latest speed in m/s
-     * If GPS is not giving us speed natively, fallback to computing from v = dist/time.
-     * This should be used for display of the latest total speed, but not for logging.
-     */
-    public double totalSpeed() {
-        if (isFresh()) {
-            return lastLoc.totalSpeed();
-        } else {
-            return Double.NaN;
-        }
-    }
-
-    /**
-     * Helper method for getting latest bearing in degrees
-     * If GPS is not giving us speed natively, fallback to computing from v = dist/time.
-     * This should be used for display of the latest groundspeed, but not for logging.
-     */
-    public double bearing() {
-        if (isFresh()) {
-            final double lastBearing = lastLoc.bearing();
-            if (Numbers.isReal(lastBearing)) {
-                return lastBearing;
-            } else {
-                // Compute ground speed from previous location
-                if (prevLoc != null) {
-                    return prevLoc.bearingTo(lastLoc);
-                }
-            }
-        }
-        return Double.NaN;
-    }
-
-    /**
-     * Helper method for getting latest speed in m/s
-     * If GPS is not giving us speed natively, fallback to computing from v = dist/time.
-     * This should be used for display of the latest total speed, but not for logging.
-     */
-    public double glideRatio() {
-        if (isFresh()) {
-            return lastLoc.glideRatio();
-        }
-        return Double.NaN;
-    }
-
-    /**
-     * Reset the state of the location provider.
-     * This is useful when switching devices.
-     */
-    public void reset() {
-        lastLoc = null;
-        prevLoc = null;
-        refreshRate.reset();
     }
 
     public void stop() {

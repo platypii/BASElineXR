@@ -20,6 +20,8 @@ Orientation comes from the Quest headset.
 3. Configure Quest (IMPORTANT):
    - Travel Mode: DISABLED
    - Settings > Movement Tracking > Headset Tracking: DISABLED
+4. Verify you are able to receive location data from FlySight
+   - Reboot may be required after pairing
 
 ![Quest Movement Tracking Settings](screenshots/quest-movement-tracking.jpg)
 ![Quest Quick Settings](screenshots/quest-quick-settings.jpg)
@@ -57,9 +59,9 @@ The blue arrow is always below you, and points toward what the headset _thinks_ 
 
 1. On final approach, put on headset
 2. Click on BASElineXR HUD to show options menu
-3. LOOK at the nose or tail of the plane and click Nose or Tail
+3. LOOK at the nose or tail of the plane and click Nose or Tail button
 4. Use +/- 5° to fine tune the orientation
-5. Click on BASElineXR HUD to hide options menu
+5. Click on BASElineXR HUD again to hide options menu
 
 Notes:
 

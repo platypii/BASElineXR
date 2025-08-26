@@ -108,40 +108,23 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
         }
     }
 
+    private LocationProvider locationProvider() {
+        if (locationMode == LOCATION_BLUETOOTH) {
+            return locationProviderBluetooth;
+        } else if (locationMode == LOCATION_MOCK) {
+            return locationProviderMock;
+        } else {
+            return locationProviderAndroid;
+        }
+    }
+
     @Override
     public long lastFixDuration() {
-        if (locationMode == LOCATION_BLUETOOTH) {
-            return locationProviderBluetooth.lastFixDuration();
-        } else if (locationMode == LOCATION_MOCK) {
-            return locationProviderMock.lastFixDuration();
-        } else {
-            return locationProviderAndroid.lastFixDuration();
-        }
+        return locationProvider().lastFixDuration();
     }
 
     public float refreshRate() {
-        if (bluetooth.preferences.preferenceEnabled) {
-            return locationProviderBluetooth.refreshRate.refreshRate;
-        } else {
-            return locationProviderAndroid.refreshRate.refreshRate;
-        }
-    }
-
-    public void permissionGranted(@NonNull Context context) {
-        if (locationMode == LOCATION_BLUETOOTH) {
-            locationProviderBluetooth.start(context);
-        } else if (locationMode == LOCATION_ANDROID) {
-            locationProviderAndroid.start(context);
-        }
-    }
-
-    /**
-     * Stops and then starts location services, such as when switch bluetooth on or off.
-     */
-    public synchronized void restart(@NonNull Context context) {
-        Log.i(TAG, "Restarting location service");
-        stop();
-        start(context);
+        return locationProvider().refreshRate.refreshRate;
     }
 
     @Override
