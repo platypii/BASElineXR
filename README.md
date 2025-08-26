@@ -21,8 +21,8 @@ Orientation comes from the Quest headset.
    - Travel Mode: DISABLED
    - Settings > Movement Tracking > Headset Tracking: DISABLED
 
-![Quest Movement Tracking Settings](quest-movement-tracking.jpg)
-![Quest Quick Settings](quest-quick-settings.jpg)
+![Quest Movement Tracking Settings](screenshots/quest-movement-tracking.jpg)
+![Quest Quick Settings](screenshots/quest-quick-settings.jpg)
 
 ### Headset Tracking
 
@@ -34,14 +34,14 @@ Disabling headset tracking prevents the Tracking Lost screen.
 
 If "Headset Tracking" is enabled, the device will lose tracking in flight (or on the plane) and show the tracking lost screen.
 
-WARNING: When the headset loses tracking, it will show a popup **AND DISABLE PASSTHROUGH CAMERA**.
+WARNING: When the headset loses tracking, it will show a popup **AND DISABLE PASSTHROUGH CAMERA** until you click "continue without tracking".
 
 If you're on the plane, you can use a controller to click "continue without tracking".
 But it can be hard to hit, and it is important that you do NOT click "turn on travel mode".
 
 WARNING: Do NOT turn on travel mode! It will disable headset rotation that is needed for BASElineXR. 
 
-![Quest Tracking Lost](quest-tracking-lost.jpg)
+![Quest Tracking Lost](screenshots/quest-tracking-lost.jpg)
 
 ## Flight Setup
 
