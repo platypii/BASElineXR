@@ -1,5 +1,8 @@
 package com.platypii.baselinexr.location;
 
+import static com.platypii.baselinexr.location.WSE.calculateWingsuitAcceleration;
+import static com.platypii.baselinexr.location.WSE.calculateWingsuitParameters;
+
 import android.util.Log;
 
 import com.platypii.baselinexr.measurements.MLocation;
@@ -14,9 +17,15 @@ public final class MotionEstimator {
     private static final double beta = 0.9; // 0..1 sample weight velocity
     // Acceleration weight
     private static final double gamma = 0.2; // 0..1 sample weight velocity
+
+    // Kalman parameters
     public Vector3 p = new Vector3();        // metres ENU
     public Vector3 v = new Vector3();        // m s⁻¹ ENU
     public Vector3 a = new Vector3();        // m s⁻² ENU
+
+    // Wingsuit parameters
+    WSEParams wseParams = new WSEParams(0.01, 0.01, 0.0);
+
     public MLocation lastUpdate = null;     // last GPS update
     private Vector3 positionDelta = null;    // Difference between last gps point and last estimated position
     private MLocation origin = null;         // GPS origin for ENU conversion
@@ -59,21 +68,40 @@ public final class MotionEstimator {
         }
 
         double dt = (tNow - lastUpdate.millis) * 1e-3;
-        Vector3 pNew = gpsToEnu(gps);
-        Vector3 vNew = new Vector3(gps.vE, gps.climb, gps.vN);
-        Vector3 aRaw = vNew.minus(v).div(dt);
-        a = a.mul(1 - gamma).plus(aRaw.mul(gamma));
 
-        // 1) predict (constant-acceleration)
+        // Get current GPS measurements in ENU
+        Vector3 pMeasured = gpsToEnu(gps);
+        Vector3 vMeasured = new Vector3(gps.vE, gps.climb, gps.vN);
+        Vector3 aMeasured = vMeasured.minus(v).div(dt);
+
+        // Calculate predicted velocity for wingsuit acceleration
         Vector3 pPred = p.plus(v.mul(dt)).plus(a.mul(0.5 * dt * dt));
         Vector3 vPred = v.plus(a.mul(dt));
 
-        // 2) update using measurement as evidence (complementary filter)
-        p = pPred.mul(1 - alpha).plus(pNew.mul(alpha));
-        v = vPred.mul(1 - beta).plus(vNew.mul(beta));
-//        v = vNew; // Take velocity straight from gps
+        // Calculate wingsuit params
+        Vector3 aWSE = calculateWingsuitAcceleration(vPred, wseParams);
 
-        positionDelta = p.minus(pNew);
+        // Complementary filter for acceleration using wingsuit prediction
+        Vector3 aOld = a;
+        a = a.mul(1 - gamma).plus(aMeasured.mul(gamma));
+
+        // Predict current state using trapezoidal rule from last state
+        // Trapezoidal rule for velocity: v_pred = v + (a_old + a_new) * dt / 2
+        Vector3 vPredictedFinal = v.plus(aOld.plus(a).mul(dt / 2));
+
+        // Trapezoidal rule for position: p_pred = p + (v_old + v_new) * dt / 2
+        Vector3 pPredictedFinal = p.plus(v.plus(vPredictedFinal).mul(dt / 2));
+
+        // Complementary filter for velocity (blend predicted with GPS measurement)
+        v = vPredictedFinal.mul(1 - beta).plus(vMeasured.mul(beta));
+
+        // Complementary filter for position (blend predicted with GPS measurement)
+        p = pPredictedFinal.mul(1 - alpha).plus(pMeasured.mul(alpha));
+
+        // Update wingsuit parameters based on final state
+        wseParams = calculateWingsuitParameters(v, a, wseParams);
+
+        positionDelta = p.minus(pMeasured);
 //        Log.i(TAG, "ppred: " + pPred.y + " lastpos: " + lastPosition.y + " v: " + v.y + " err: " + (pPred.y - lastPosition.y));
 
         lastUpdate = gps;
