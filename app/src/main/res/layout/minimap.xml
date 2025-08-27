@@ -15,24 +15,24 @@
     <!-- Blue dot for summit -->
     <View
         android:id="@+id/blue_dot"
-        android:layout_width="8dp"
-        android:layout_height="8dp"
-        android:background="#ff0000ff"
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:background="#ff8800ff"
         android:elevation="2dp" />
 
     <!-- Green dot for target -->
     <View
         android:id="@+id/green_dot"
-        android:layout_width="8dp"
-        android:layout_height="8dp"
+        android:layout_width="10dp"
+        android:layout_height="10dp"
         android:background="#ff00ff00"
         android:elevation="2dp" />
 
     <!-- Red arrow for location -->
     <ImageView
         android:id="@+id/red_dot"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
         android:layout_gravity="center"
         android:src="@drawable/arrow_red"
         android:elevation="2dp" />

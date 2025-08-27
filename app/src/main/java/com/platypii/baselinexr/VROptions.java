@@ -6,7 +6,7 @@ import com.platypii.baselinexr.measurements.LatLngAlt;
 public class VROptions {
 
     // Current active configuration
-    public static VROptions current = VROptionsList.EIGER_BASE;
+    public static VROptions current = VROptionsList.EIGER_SKYDIVE_LAKE;
 
     public enum ShaderType {
         DEFAULT_SHADER,
@@ -53,6 +53,8 @@ public class VROptions {
     // Target landing zone in the real world (kpow student field)
     public static LatLngAlt target = new LatLngAlt(47.2375, -123.1458, 84);
 
+    // Offset distance when clicking NSEW
+    public static float offsetDistance = 300; // meters
 
     // Default lighting constants
     public static final Vector3 AMBIENT_COLOR = new Vector3(1.4f);

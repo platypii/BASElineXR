@@ -57,14 +57,14 @@ class FlightStatsSystem : SystemBase() {
         val millisecondsSinceLastFix = Services.location.lastFixDuration()
         
         if (loc != null) {
-            // Top left: Altitude
+            // Altitude
             altitudeLabel?.text = Convert.distance(loc.altitude_gps - VROptions.target.alt)
             
-            // Top right: Horizontal Speed
+            // Horizontal Speed
             val groundSpeed = loc.groundSpeed()
             horizontalSpeedLabel?.text = " H: ${Convert.speed(groundSpeed)}"
             
-            // Bottom left: Vertical Speed
+            // Vertical Speed
             val climb = loc.climb
             if (!climb.isNaN()) {
                 verticalSpeedLabel?.text = " V: ${Convert.speed(-climb)}" // Negative climb for fall rate display
@@ -72,7 +72,7 @@ class FlightStatsSystem : SystemBase() {
                 verticalSpeedLabel?.text = " V: --- mph"
             }
             
-            // Bottom right: Glide ratio
+            // Glide ratio
             if (!climb.isNaN()) {
                 glideLabel?.text = " " + Convert.glide(groundSpeed, climb, 1, true)
             } else {

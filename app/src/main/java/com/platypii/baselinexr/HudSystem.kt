@@ -8,7 +8,7 @@ import com.platypii.baselinexr.location.LocationStatus
 import com.platypii.baselinexr.util.Convert
 import com.platypii.baselinexr.util.GpsFreshnessColor
 
-class HudSystem() : SystemBase() {
+class HudSystem : SystemBase() {
   private var initialized = false
   private var grabbablePanel: GrabbablePanel? = null
   private var extraControlsVisible = false
@@ -70,7 +70,7 @@ class HudSystem() : SystemBase() {
 
   fun setExtraControlsVisible(visible: Boolean) {
     extraControlsVisible = visible
-    val offset = if (visible) Vector3(0f, -1f, -1.5f) else Vector3(0f, 1f, 1.5f)
+    val offset = if (visible) Vector3(0f, -1.2f, -1.6f) else Vector3(0f, 1.2f, 1.6f)
     grabbablePanel?.moveByOffset(offset)
   }
 

@@ -95,6 +95,17 @@
   ],
   "nodes": [
     {
+      "children": [
+        1
+      ],
+      "extras": {
+        "meta_spatial": {
+          "entity_id": "deathstar.obj.cleaner"
+        }
+      },
+      "name": "deathstar.obj.cleaner"
+    },
+    {
       "extras": {
         "meta_spatial": {
           "entity_id": "Object_43"
@@ -106,17 +117,6 @@
     {
       "children": [
         0
-      ],
-      "extras": {
-        "meta_spatial": {
-          "entity_id": "deathstar.obj.cleaner"
-        }
-      },
-      "name": "deathstar.obj.cleaner"
-    },
-    {
-      "children": [
-        1
       ],
       "extras": {
         "meta_spatial": {

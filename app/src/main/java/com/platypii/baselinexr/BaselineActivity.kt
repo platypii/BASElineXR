@@ -28,196 +28,207 @@ import com.platypii.baselinexr.ui.HudPanelController
 
 class BaselineActivity : AppSystemActivity() {
 
-  var glxfLoaded = false
-  private val activityScope = CoroutineScope(Dispatchers.Main)
-  private var gltfxEntity: Entity? = null
-  var terrainSystem: TerrainSystem? = null
-  private var directionArrowSystem: DirectionArrowSystem? = null
-  var hudSystem: HudSystem? = null
-  private var flightStatsSystem: FlightStatsSystem? = null
-  private var targetPanelSystem: TargetPanel? = null
-  private var portalSystem: PortalSystem? = null
-  private var miniMapPanel: MiniMapPanel? = null
-  private val gpsTransform = GpsToWorldTransform()
-  private var locationSubscriber: ((MLocation) -> Unit)? = null
-  private var hudPanelController: HudPanelController? = null
+    var glxfLoaded = false
+    private val activityScope = CoroutineScope(Dispatchers.Main)
+    private var gltfxEntity: Entity? = null
+    var terrainSystem: TerrainSystem? = null
+    private var directionArrowSystem: DirectionArrowSystem? = null
+    var hudSystem: HudSystem? = null
+    private var flightStatsSystem: FlightStatsSystem? = null
+    private var targetPanelSystem: TargetPanel? = null
+    private var portalSystem: PortalSystem? = null
+    private var miniMapPanel: MiniMapPanel? = null
+    private val gpsTransform = GpsToWorldTransform()
+    private var locationSubscriber: ((MLocation) -> Unit)? = null
+    private var hudPanelController: HudPanelController? = null
 
-  override fun registerFeatures(): List<SpatialFeature> {
-    val features =
-        mutableListOf<SpatialFeature>(
-          VRFeature(this),
-        )
-    if (BuildConfig.DEBUG) {
-      features.add(CastInputForwardFeature(this))
-      features.add(HotReloadFeature(this))
-      features.add(OVRMetricsFeature(this, OVRMetricsDataModel { numberOfMeshes() }))
-      features.add(DataModelInspectorFeature(spatial, this.componentManager))
+    override fun registerFeatures(): List<SpatialFeature> {
+        val features =
+            mutableListOf<SpatialFeature>(
+                VRFeature(this),
+            )
+        if (BuildConfig.DEBUG) {
+            // Enable CastInputForwardFeature to support forwarding input from your computer into your Meta Quest headset.
+            // This makes it possible to iterate on a Spatial SDK app without needing to don/doff the headset.
+            // This requires usage of the MQDH Cast feature, which mirrors your headset to your computer.
+//            features.add(CastInputForwardFeature(this))
+            features.add(HotReloadFeature(this))
+            features.add(OVRMetricsFeature(this, OVRMetricsDataModel { numberOfMeshes() }))
+            features.add(DataModelInspectorFeature(spatial, this.componentManager))
+        }
+        return features
     }
-    return features
-  }
 
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-    // Set CPU/GPU performance to SustainedHigh for better performance
-    // This allows CPU level 4-6 and GPU level 3-5
-    spatial.setPerformanceLevel(PerformanceLevel.SUSTAINED_HIGH)
+        // Set CPU/GPU performance to SustainedHigh for better performance
+        // This allows CPU level 4-6 and GPU level 3-5
+        spatial.setPerformanceLevel(PerformanceLevel.SUSTAINED_HIGH)
 
-    Services.create(this)
+        Services.create(this)
 
-    // Load saved adjustments
-    Adjustments.loadAdjustments(this)
+        // Load saved adjustments
+        Adjustments.loadAdjustments(this)
 
-    // Initialize panel controllers
-    hudPanelController = HudPanelController(this)
+        // Initialize panel controllers
+        hudPanelController = HudPanelController(this)
 
-    // Create systems
-    hudSystem = HudSystem()
-    flightStatsSystem = FlightStatsSystem()
-    directionArrowSystem = DirectionArrowSystem()
-    targetPanelSystem = TargetPanel(gpsTransform)
-    portalSystem = PortalSystem(gpsTransform, this)
-    miniMapPanel = MiniMapPanel()
+        // Create systems
+        hudSystem = HudSystem()
+        flightStatsSystem = FlightStatsSystem()
+        directionArrowSystem = DirectionArrowSystem()
+        targetPanelSystem = TargetPanel(gpsTransform)
+        portalSystem = PortalSystem(gpsTransform, this)
+        miniMapPanel = MiniMapPanel()
 
-    // Register systems
-    systemManager.registerSystem(hudSystem!!)
-    systemManager.registerSystem(flightStatsSystem!!)
-    systemManager.registerSystem(directionArrowSystem!!)
-    systemManager.registerSystem(targetPanelSystem!!)
-    systemManager.registerSystem(portalSystem!!)
-    systemManager.registerSystem(miniMapPanel!!)
+        // Register systems
+        systemManager.registerSystem(hudSystem!!)
+        systemManager.registerSystem(flightStatsSystem!!)
+        systemManager.registerSystem(directionArrowSystem!!)
+        systemManager.registerSystem(targetPanelSystem!!)
+        systemManager.registerSystem(portalSystem!!)
+        systemManager.registerSystem(miniMapPanel!!)
 
-    // Set up centralized location updates
-    setupLocationUpdates()
+        // Set up centralized location updates
+        setupLocationUpdates()
 //    val flightPathSystem = FlightPathTrailSystem(this, gpsTransform)
 //    systemManager.registerSystem(flightPathSystem)
 
-    // Enable MR mode
-    systemManager.findSystem<LocomotionSystem>().enableLocomotion(false)
-    scene.enablePassthrough(true)
+        // Enable MR mode
+        systemManager.findSystem<LocomotionSystem>().enableLocomotion(false)
+        scene.enablePassthrough(true)
 
-    // Create and register terrain rendering system
-    terrainSystem = TerrainSystem(gpsTransform, this)
-    terrainSystem!!.initialize()
-    systemManager.registerSystem(terrainSystem!!)
+        // Create and register terrain rendering system
+        terrainSystem = TerrainSystem(gpsTransform, this)
+        terrainSystem!!.initialize()
+        systemManager.registerSystem(terrainSystem!!)
 
-    loadGLXF().invokeOnCompletion {
-      glxfLoaded = true
-    }
-  }
-
-  override fun onStart() {
-    super.onStart()
-    Services.start(this)
-  }
-
-  override fun onStop() {
-    Log.i(TAG, "Stopping...")
-    super.onStop()
-    Services.stop()
-  }
-
-  override fun onDestroy() {
-    // Clean up location subscription
-    locationSubscriber?.let { subscriber ->
-      Services.location.locationUpdates.unsubscribeMain(subscriber)
-      locationSubscriber = null
+        loadGLXF().invokeOnCompletion {
+            glxfLoaded = true
+        }
     }
 
-    // Clean up all systems that have cleanup methods
-    hudSystem?.cleanup()
-    flightStatsSystem?.cleanup()
-    terrainSystem?.cleanup()
-    directionArrowSystem?.cleanup()
-    targetPanelSystem?.cleanup()
-    portalSystem?.cleanup()
-    miniMapPanel?.cleanup()
-
-    // Clean up panel controllers to prevent memory leaks
-    hudPanelController = null
-
-    super.onDestroy()
-  }
-
-  override fun onSceneReady() {
-    super.onSceneReady()
-
-    scene.setLightingEnvironment(
-      ambientColor = VROptions.AMBIENT_COLOR,
-      sunColor     = VROptions.SUN_COLOR,
-      sunDirection = VROptions.SUN_DIRECTION,
-      environmentIntensity = VROptions.ENVIRONMENT_INTENSITY
-    )
-    scene.updateIBLEnvironment("environment.env")
-  }
-
-  override fun registerPanels(): List<PanelRegistration> {
-    return listOf(
-        PanelRegistration(R.layout.hud) {
-          config {
-            themeResourceId = R.style.PanelAppThemeTransparent
-            includeGlass = false
-            enableTransparent = true
-          }
-          panel {
-            hudPanelController?.setupPanel(rootView)
-          }
-        },
-        PanelRegistration(R.layout.flight_stats) {
-          config {
-            themeResourceId = R.style.PanelAppThemeTransparent
-            includeGlass = false
-            enableTransparent = true
-          }
-          panel {
-            // Set up flight stats references
-            val altitudeLabel = rootView?.findViewById<TextView>(R.id.altitude)
-            val horizontalSpeedLabel = rootView?.findViewById<TextView>(R.id.horizontal_speed)
-            val verticalSpeedLabel = rootView?.findViewById<TextView>(R.id.vertical_speed)
-            val glideLabel = rootView?.findViewById<TextView>(R.id.glide)
-            flightStatsSystem?.setLabels(altitudeLabel, horizontalSpeedLabel, verticalSpeedLabel, glideLabel)
-          }
-        },
-        PanelRegistration(R.layout.target_panel) {
-          config {
-            themeResourceId = R.style.PanelAppThemeTransparent
-            includeGlass = false
-            enableTransparent = true
-          }
-          panel {
-            // Set up target panel distance label
-            val distanceLabel = rootView?.findViewById<TextView>(R.id.distance_text)
-            targetPanelSystem?.setLabel(distanceLabel)
-          }
-        },
-        PanelRegistration(R.layout.minimap) {
-          config {
-            themeResourceId = R.style.PanelAppThemeTransparent
-            includeGlass = false
-            enableTransparent = true
-          }
-          panel {
-            // Set up minimap references
-            val minimapImage = rootView?.findViewById<android.widget.ImageView>(R.id.minimap_image)
-            val redDot = rootView?.findViewById<android.view.View>(R.id.red_dot)
-            val blueDot = rootView?.findViewById<android.view.View>(R.id.blue_dot)
-            val greenDot = rootView?.findViewById<android.view.View>(R.id.green_dot)
-            miniMapPanel?.setViews(minimapImage, redDot, blueDot, greenDot)
-          }
-        })
-  }
-
-  private fun loadGLXF(): Job {
-    gltfxEntity = Entity.create()
-    return activityScope.launch {
-      glXFManager.inflateGLXF(
-          "apk:///scenes/Composition.glxf".toUri(),
-          rootEntity = gltfxEntity!!,
-          keyName = GLXF_SCENE
-      )
+    override fun onStart() {
+        super.onStart()
+        Services.start(this)
     }
-  }
 
+    override fun onStop() {
+        Log.i(TAG, "Stopping...")
+        super.onStop()
+        Services.stop()
+    }
+
+    override fun onDestroy() {
+        // Clean up location subscription
+        locationSubscriber?.let { subscriber ->
+            Services.location.locationUpdates.unsubscribeMain(subscriber)
+            locationSubscriber = null
+        }
+
+        // Clean up all systems that have cleanup methods
+        hudSystem?.cleanup()
+        flightStatsSystem?.cleanup()
+        terrainSystem?.cleanup()
+        directionArrowSystem?.cleanup()
+        targetPanelSystem?.cleanup()
+        portalSystem?.cleanup()
+        miniMapPanel?.cleanup()
+
+        // Clean up panel controllers to prevent memory leaks
+        hudPanelController = null
+
+        super.onDestroy()
+    }
+
+    override fun onSceneReady() {
+        super.onSceneReady()
+
+        scene.setLightingEnvironment(
+            ambientColor = VROptions.AMBIENT_COLOR,
+            sunColor = VROptions.SUN_COLOR,
+            sunDirection = VROptions.SUN_DIRECTION,
+            environmentIntensity = VROptions.ENVIRONMENT_INTENSITY
+        )
+        scene.updateIBLEnvironment("environment.env")
+    }
+
+    override fun registerPanels(): List<PanelRegistration> {
+        return listOf(
+            PanelRegistration(R.layout.hud) {
+                config {
+                    themeResourceId = R.style.PanelAppThemeTransparent
+                    includeGlass = false
+                    enableTransparent = true
+                }
+                panel {
+                    hudPanelController?.setupPanel(rootView)
+                }
+            },
+            PanelRegistration(R.layout.flight_stats) {
+                config {
+                    themeResourceId = R.style.PanelAppThemeTransparent
+                    includeGlass = false
+                    enableTransparent = true
+                }
+                panel {
+                    // Set up flight stats references
+                    val altitudeLabel = rootView?.findViewById<TextView>(R.id.altitude)
+                    val horizontalSpeedLabel =
+                        rootView?.findViewById<TextView>(R.id.horizontal_speed)
+                    val verticalSpeedLabel = rootView?.findViewById<TextView>(R.id.vertical_speed)
+                    val glideLabel = rootView?.findViewById<TextView>(R.id.glide)
+                    flightStatsSystem?.setLabels(
+                        altitudeLabel,
+                        horizontalSpeedLabel,
+                        verticalSpeedLabel,
+                        glideLabel
+                    )
+                }
+            },
+            PanelRegistration(R.layout.target_panel) {
+                config {
+                    themeResourceId = R.style.PanelAppThemeTransparent
+                    includeGlass = false
+                    enableTransparent = true
+                }
+                panel {
+                    // Set up target panel distance label
+                    val distanceLabel = rootView?.findViewById<TextView>(R.id.distance_text)
+                    targetPanelSystem?.setLabel(distanceLabel)
+                }
+            },
+            PanelRegistration(R.layout.minimap) {
+                config {
+                    themeResourceId = R.style.PanelAppThemeTransparent
+                    includeGlass = false
+                    enableTransparent = true
+                }
+                panel {
+                    // Set up minimap references
+                    val minimapImage =
+                        rootView?.findViewById<android.widget.ImageView>(R.id.minimap_image)
+                    val redDot = rootView?.findViewById<android.view.View>(R.id.red_dot)
+                    val blueDot = rootView?.findViewById<android.view.View>(R.id.blue_dot)
+                    val greenDot = rootView?.findViewById<android.view.View>(R.id.green_dot)
+                    miniMapPanel?.setViews(minimapImage, redDot, blueDot, greenDot)
+                }
+            })
+    }
+
+    private fun loadGLXF(): Job {
+        gltfxEntity = Entity.create()
+        return activityScope.launch {
+            glXFManager.inflateGLXF(
+                "apk:///scenes/Composition.glxf".toUri(),
+                rootEntity = gltfxEntity!!,
+                keyName = GLXF_SCENE
+            )
+        }
+    }
+
+    // Handles clicking nose or tail
     fun handleOrientationButton(isForward: Boolean) {
         // Get current head transform to determine yaw
         val head = systemManager
@@ -235,40 +246,39 @@ class BaselineActivity : AppSystemActivity() {
                     // Calculate velocity bearing (direction of movement)
                     val velocityBearing = loc.bearing() // This returns degrees
                     val velocityBearingRad = Math.toRadians(velocityBearing)
-                    val headBearingRad = currentHeadYaw // Already in radians from extractYawFromQuaternion
 
                     // Set yaw adjustment so that when looking in velocity direction, world is oriented north
                     // We want: head_direction + yaw_adjustment = north (0)
                     // So: yaw_adjustment = -head_direction + velocity_to_north_correction
                     val orientationOffset = if (isForward) 0.0 else Math.PI
-                    Adjustments.yawAdjustment = (orientationOffset + headBearingRad - velocityBearingRad).toFloat()
+                    Adjustments.yawAdjustment = (orientationOffset + currentHeadYaw - velocityBearingRad).toFloat()
                     Adjustments.saveYawAdjustment(this@BaselineActivity)
 
-//                    Log.d(TAG, "Orient head: " + headBearingRad + " vel: " + velocityBearingRad + " yawAdj: " + Adjustments.yawAdjustment)
+//                    Log.d(TAG, "Orient head: " + currentHeadYaw + " vel: " + velocityBearingRad + " yawAdj: " + Adjustments.yawAdjustment)
                 }
             }
         }
     }
 
-  private fun setupLocationUpdates() {
-    locationSubscriber = { loc ->
-      Log.d(TAG, "Location: $loc")
+    private fun setupLocationUpdates() {
+        locationSubscriber = { loc ->
+            Log.d(TAG, "Location: $loc")
 
-      // Update GPS transform origin
-      gpsTransform.setOrigin(loc)
+            // Update GPS transform origin
+            gpsTransform.setOrigin(loc)
 
-      // Update LocationStatus helper
-      LocationStatus.updateStatus(this)
+            // Update LocationStatus helper
+            LocationStatus.updateStatus(this)
 
-      // Notify direction arrow system of location update (others update automatically)
-      directionArrowSystem?.onLocation(loc)
+            // Notify direction arrow system of location update (others update automatically)
+            directionArrowSystem?.onLocation(loc)
+        }
+        Services.location.locationUpdates.subscribeMain(locationSubscriber!!)
     }
-    Services.location.locationUpdates.subscribeMain(locationSubscriber!!)
-  }
 
-  companion object {
-    const val TAG = "BaselineActivity"
-    const val GLXF_SCENE = "GLXF_SCENE"
-  }
+    companion object {
+        const val TAG = "BaselineActivity"
+        const val GLXF_SCENE = "GLXF_SCENE"
+    }
 
 }
