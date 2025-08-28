@@ -24,7 +24,7 @@ public final class MotionEstimator {
     public Vector3 a = new Vector3();        // m s⁻² ENU
 
     // Wingsuit parameters
-    WSEParams wseParams = new WSEParams(0.01, 0.01, 0.0);
+    public WSEParams wseParams = new WSEParams(0.01, 0.01, 0.0);
 
     public MLocation lastUpdate = null;     // last GPS update
     private Vector3 positionDelta = null;    // Difference between last gps point and last estimated position

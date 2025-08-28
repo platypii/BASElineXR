@@ -179,11 +179,13 @@ class BaselineActivity : AppSystemActivity() {
                         rootView?.findViewById<TextView>(R.id.horizontal_speed)
                     val verticalSpeedLabel = rootView?.findViewById<TextView>(R.id.vertical_speed)
                     val glideLabel = rootView?.findViewById<TextView>(R.id.glide)
+                    val ldLabel = rootView?.findViewById<TextView>(R.id.ld_ratio)
                     flightStatsSystem?.setLabels(
                         altitudeLabel,
                         horizontalSpeedLabel,
                         verticalSpeedLabel,
-                        glideLabel
+                        glideLabel,
+                        ldLabel
                     )
                 }
             },

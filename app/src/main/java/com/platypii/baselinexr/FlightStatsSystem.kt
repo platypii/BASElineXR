@@ -16,6 +16,7 @@ class FlightStatsSystem : SystemBase() {
     private var horizontalSpeedLabel: TextView? = null
     private var verticalSpeedLabel: TextView? = null
     private var glideLabel: TextView? = null
+    private var ldRatioLabel: TextView? = null
 
     override fun execute() {
         val activity = SpatialActivityManager.getVrActivity<BaselineActivity>()
@@ -38,17 +39,18 @@ class FlightStatsSystem : SystemBase() {
         val panel = composition.tryGetNodeByName("FlightStatsPanel")
         if (panel?.entity != null) {
             // Position on bottom left where the altimeter was
-            val flightStatsOffset = Vector3(-1.6f, -1.0f, 3f)
+            val flightStatsOffset = Vector3(-1.6f, -0.8f, 3f)
             grabbablePanel = GrabbablePanel(systemManager, panel.entity, flightStatsOffset)
             initialized = true
         }
     }
 
-    fun setLabels(altitudeLabel: TextView?, horizontalSpeedLabel: TextView?, verticalSpeedLabel: TextView?, glideLabel: TextView?) {
+    fun setLabels(altitudeLabel: TextView?, horizontalSpeedLabel: TextView?, verticalSpeedLabel: TextView?, glideLabel: TextView?, ldRatioLabel: TextView?) {
         this.altitudeLabel = altitudeLabel
         this.horizontalSpeedLabel = horizontalSpeedLabel
         this.verticalSpeedLabel = verticalSpeedLabel
         this.glideLabel = glideLabel
+        this.ldRatioLabel = ldRatioLabel
         updateFlightStats()
     }
 
@@ -74,15 +76,24 @@ class FlightStatsSystem : SystemBase() {
             
             // Glide ratio
             if (!climb.isNaN()) {
-                glideLabel?.text = " " + Convert.glide(groundSpeed, climb, 1, true)
+                glideLabel?.text = " GR: " + Convert.glide(groundSpeed, climb, 1, false)
             } else {
-                glideLabel?.text = " ---"
+                glideLabel?.text = " GR: ---"
+            }
+
+            // L/D ratio from motion estimator
+            val ld = Services.location.motionEstimator.wseParams.ld()
+            if (!ld.isNaN()) {
+                ldRatioLabel?.text = " LD: ${String.format("%.1f", ld)}"
+            } else {
+                ldRatioLabel?.text = " LD: ---"
             }
         } else {
             altitudeLabel?.text = "--- ft"
             horizontalSpeedLabel?.text = " H: --- mph"
             verticalSpeedLabel?.text = " V: --- mph"
-            glideLabel?.text = " ---"
+            glideLabel?.text = " GR: ---"
+            ldRatioLabel?.text = " LD: ---"
         }
 
         // Set color based on GPS freshness
@@ -94,10 +105,12 @@ class FlightStatsSystem : SystemBase() {
             horizontalSpeedLabel?.text = ""
             verticalSpeedLabel?.text = ""
             glideLabel?.text = ""
+            ldRatioLabel?.text = ""
         } else {
             horizontalSpeedLabel?.setTextColor(color)
             verticalSpeedLabel?.setTextColor(color)
             glideLabel?.setTextColor(color)
+            ldRatioLabel?.setTextColor(color)
         }
     }
 
@@ -107,6 +120,7 @@ class FlightStatsSystem : SystemBase() {
         horizontalSpeedLabel = null
         verticalSpeedLabel = null
         glideLabel = null
+        ldRatioLabel = null
         initialized = false
     }
 }

@@ -38,12 +38,23 @@
         android:textSize="40sp"
         android:typeface="monospace" />
 
-    <!-- Glide Ratio at bottom -->
+    <!-- Glide Ratio -->
     <TextView
         android:id="@+id/glide"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
         android:text="---"
+        android:textColor="#ffffff"
+        android:textSize="40sp"
+        android:typeface="monospace" />
+
+    <!-- L/D Ratio at bottom -->
+    <TextView
+        android:id="@+id/ld_ratio"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="L/D: ---"
         android:textColor="#ffffff"
         android:textSize="40sp"
         android:typeface="monospace" />
