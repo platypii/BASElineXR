@@ -14,7 +14,10 @@ public class VROptions {
     }
 
     public final String name;
+    // Replay locations from track
     public final String mockTrack;
+    // Display prior track in 3d
+    public final String displayTrack;
     public final String sourceModel;
     // Place the summit at the destination
     private final LatLngAlt destination;
@@ -27,10 +30,11 @@ public class VROptions {
     public final LatLngAlt portalLocation;
     public final ShaderType shader;
 
-    public VROptions(String name, String mockTrack, String sourceModel, LatLngAlt destination, ShaderType shader,
+    public VROptions(String name, String mockTrack, String displayTrack, String sourceModel, LatLngAlt destination, ShaderType shader,
                      boolean roomMovement, boolean showDirectionArrow, boolean showTarget, LatLngAlt portalLocation) {
         this.name = name;
         this.mockTrack = mockTrack;
+        this.displayTrack = displayTrack;
         this.sourceModel = sourceModel;
         this.destination = destination;
         this.shader = shader;

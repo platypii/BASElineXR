@@ -3,7 +3,6 @@ package com.platypii.baselinexr
 import android.os.Bundle
 import android.util.Log
 import android.widget.TextView
-import com.meta.spatial.castinputforward.CastInputForwardFeature
 import com.meta.spatial.core.Entity
 import com.meta.spatial.core.SpatialFeature
 import com.meta.spatial.datamodelinspector.DataModelInspectorFeature
@@ -38,6 +37,7 @@ class BaselineActivity : AppSystemActivity() {
     private var targetPanelSystem: TargetPanel? = null
     private var portalSystem: PortalSystem? = null
     private var miniMapPanel: MiniMapPanel? = null
+    private var flightPathSystem: FlightPathSystem? = null
     private val gpsTransform = GpsToWorldTransform()
     private var locationSubscriber: ((MLocation) -> Unit)? = null
     private var hudPanelController: HudPanelController? = null
@@ -81,6 +81,7 @@ class BaselineActivity : AppSystemActivity() {
         targetPanelSystem = TargetPanel(gpsTransform)
         portalSystem = PortalSystem(gpsTransform, this)
         miniMapPanel = MiniMapPanel()
+        flightPathSystem = FlightPathSystem(gpsTransform, this)
 
         // Register systems
         systemManager.registerSystem(hudSystem!!)
@@ -89,6 +90,7 @@ class BaselineActivity : AppSystemActivity() {
         systemManager.registerSystem(targetPanelSystem!!)
         systemManager.registerSystem(portalSystem!!)
         systemManager.registerSystem(miniMapPanel!!)
+        systemManager.registerSystem(flightPathSystem!!)
 
         // Set up centralized location updates
         setupLocationUpdates()
@@ -135,6 +137,7 @@ class BaselineActivity : AppSystemActivity() {
         targetPanelSystem?.cleanup()
         portalSystem?.cleanup()
         miniMapPanel?.cleanup()
+        flightPathSystem?.cleanup()
 
         // Clean up panel controllers to prevent memory leaks
         hudPanelController = null

@@ -7,6 +7,7 @@ public class VROptionsList {
     public static final VROptions LIVE = new VROptions(
             "Live",
             null,
+            null,
             "branded",
             // ideal for a kpow west jump run:
 //            new LatLngAlt(47.2245, -123.167, 3710.0),
@@ -22,6 +23,7 @@ public class VROptionsList {
     public static final VROptions LIVE_EAST = new VROptions(
             "Live East",
             null,
+            null,
             "branded",
             // ideal for a kpow east jump run:
             new LatLngAlt(47.236, -123.132, 3710.0),
@@ -35,6 +37,7 @@ public class VROptionsList {
     public static final VROptions EIGER_BASE = new VROptions(
             "Eiger Base",
             "eiger.csv",
+            "eiger.csv",
             "eiger",
             new LatLngAlt(46.57731, 8.0053, 3973.0), // eiger
             VROptions.ShaderType.LOD_SHADER,
@@ -46,6 +49,7 @@ public class VROptionsList {
 
     public static final VROptions EIGER_SKYDIVE = new VROptions(
             "Eiger Skydive",
+            "kpow-prison.csv",
             "kpow-prison.csv",
             "branded",
             new LatLngAlt(47.2338, -123.167, 3800.0), // kpow prison
@@ -59,6 +63,7 @@ public class VROptionsList {
     public static final VROptions EIGER_SKYDIVE_LAKE = new VROptions(
             "Eiger Skydive",
             "kpow.csv",
+            "kpow.csv",
             "eiger",
             new LatLngAlt(47.25203, -123.107976, 3060.0), // island lake
             VROptions.ShaderType.LOD_SHADER,
@@ -70,6 +75,7 @@ public class VROptionsList {
 
     public static final VROptions KPOW_SKYDIVE_LANDING = new VROptions(
             "Kpow Landing",
+            "kpow-landing.csv",
             "kpow-landing.csv",
             "kpow",
             new LatLngAlt(47.2375, -123.1458, 84.0), // kpow
@@ -83,6 +89,7 @@ public class VROptionsList {
     public static final VROptions KPOW_GROUND_LEVEL = new VROptions(
             "Kpow Ground",
             "kpow-student.csv",
+            "kpow-student.csv",
             "kpow",
             new LatLngAlt(47.2375, -123.1458, 84.0), // kpow
             VROptions.ShaderType.LOD_SHADER,
@@ -94,6 +101,7 @@ public class VROptionsList {
 
     public static final VROptions GOING_IN_SIMULATOR = new VROptions(
             "Going-In",
+            "kpow-impact.csv",
             "kpow-impact.csv",
             "kpow",
             new LatLngAlt(47.2375, -123.1458, 1584.0), // kpow + 4500
@@ -107,6 +115,7 @@ public class VROptionsList {
     public static final VROptions JANK = new VROptions(
             "Jank",
             "kpow20hz.csv",
+            "kpow20hz.csv",
             "eiger",
             new LatLngAlt(47.238, -123.156, 3800.0), // water tower
             VROptions.ShaderType.LOD_SHADER,
@@ -118,6 +127,7 @@ public class VROptionsList {
 
     public static final VROptions PORTAL_RUN = new VROptions(
             "Portal Run",
+            "portal-run.csv",
             "portal-run.csv",
             "eiger",
             new LatLngAlt(47.2288, -123.112, 3710.0), // kpow portal run
