@@ -9,11 +9,9 @@ import com.meta.spatial.core.Quaternion
 import com.meta.spatial.core.SystemBase
 import com.meta.spatial.core.Vector3
 import com.meta.spatial.toolkit.Mesh
-import com.meta.spatial.toolkit.PlayerBodyAttachmentSystem
 import com.meta.spatial.toolkit.Scale
 import com.meta.spatial.toolkit.Transform
 import com.meta.spatial.toolkit.Visible
-import com.platypii.baselinexr.util.HeadPoseUtil
 
 /**
  * Portal system that detects when the user flies through a portal and transports them to space.
@@ -29,7 +27,7 @@ class PortalSystem(
         private const val PORTAL_SCALE = 2.0f
         private const val TRIGGER_RADIUS = 4.0f // Radius for collision detection
         private const val PRELOAD_RADIUS = 100.0f // Distance to preload space environment
-        private const val SPACE_DURATION_MS = 4500L // Duration to stay in space (milliseconds)
+        private const val SPACE_DURATION_MS = 4200L // Duration to stay in space (milliseconds)
 
         // Portal orientation
         private const val PORTAL_ORIENTATION_YAW = 75.0 // degrees yaw
@@ -132,27 +130,24 @@ class PortalSystem(
             return
         }
 
-        val headPose = HeadPoseUtil.getHeadPose(systemManager) ?: return
         val portalEntity = this.portalEntity ?: return
 
         // Get portal position
         val portalTransform = portalEntity.getComponent<Transform>()
         val portalPosition = portalTransform.transform.t
-        val headPosition = headPose.t
 
         // Calculate distance between head and portal center
-        val distance = (headPosition - portalPosition).length()
+        val distance = portalPosition.length()
 
         // Preload space environment when within 100m
         if (distance <= PRELOAD_RADIUS) {
             Log.i(TAG, "Preloading space environment - distance: ${distance}m")
-            spaceSystem.createSpaceEnvironment(headPosition)
+            spaceSystem.createSpaceEnvironment()
             spaceEnvironmentPreloaded = true
         }
     }
 
     private fun checkPortalCollision() {
-        val headPose = HeadPoseUtil.getHeadPose(systemManager) ?: return
         val portalEntity = this.portalEntity ?: return
 
         // Don't check collision if portal location is not defined
@@ -163,7 +158,7 @@ class PortalSystem(
         // Get portal position
         val portalTransform = portalEntity.getComponent<Transform>()
         val portalPosition = portalTransform.transform.t
-        val headPosition = headPose.t
+        val headPosition = Vector3(0f) // Assume head is at origin
 
         // Calculate distance between head and portal center
         val distance = (headPosition - portalPosition).length()

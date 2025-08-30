@@ -1,8 +1,5 @@
 package com.platypii.baselinexr.location;
 
-import static com.platypii.baselinexr.location.WSE.calculateWingsuitAcceleration;
-import static com.platypii.baselinexr.location.WSE.calculateWingsuitParameters;
-
 import android.util.Log;
 
 import com.platypii.baselinexr.measurements.MLocation;
@@ -70,11 +67,11 @@ public final class SimpleEstimator implements MotionEstimator {
         Vector3 aMeasured = vMeasured.minus(v).div(dt);
 
         // Calculate predicted velocity for wingsuit acceleration
-        Vector3 pPred = p.plus(v.mul(dt)).plus(a.mul(0.5 * dt * dt));
-        Vector3 vPred = v.plus(a.mul(dt));
+//        Vector3 pPred = p.plus(v.mul(dt)).plus(a.mul(0.5 * dt * dt));
+//        Vector3 vPred = v.plus(a.mul(dt));
 
         // Calculate wingsuit params
-        Vector3 aWSE = calculateWingsuitAcceleration(vPred, wseParams);
+//        Vector3 aWSE = WSE.calculateWingsuitAcceleration(vPred, wseParams);
 
         // Complementary filter for acceleration using wingsuit prediction
         Vector3 aOld = a;
@@ -94,7 +91,7 @@ public final class SimpleEstimator implements MotionEstimator {
         p = pPredictedFinal.mul(1 - alpha).plus(pMeasured.mul(alpha));
 
         // Update wingsuit parameters based on final state
-        wseParams = calculateWingsuitParameters(v, a, wseParams);
+        wseParams = WSE.calculateWingsuitParameters(v, a, wseParams);
 
         positionDelta = p.minus(pMeasured);
 //        Log.i(TAG, "ppred: " + pPred.y + " lastpos: " + lastPosition.y + " v: " + v.y + " err: " + (pPred.y - lastPosition.y));
