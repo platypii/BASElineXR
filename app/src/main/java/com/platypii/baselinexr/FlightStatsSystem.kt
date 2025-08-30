@@ -13,10 +13,7 @@ class FlightStatsSystem : SystemBase() {
 
     // Flight stats content references
     private var altitudeLabel: TextView? = null
-    private var horizontalSpeedLabel: TextView? = null
-    private var verticalSpeedLabel: TextView? = null
-    private var glideLabel: TextView? = null
-    private var ldRatioLabel: TextView? = null
+    private var otherStatsLabel: TextView? = null
 
     override fun execute() {
         val activity = SpatialActivityManager.getVrActivity<BaselineActivity>()
@@ -45,82 +42,66 @@ class FlightStatsSystem : SystemBase() {
         }
     }
 
-    fun setLabels(altitudeLabel: TextView?, horizontalSpeedLabel: TextView?, verticalSpeedLabel: TextView?, glideLabel: TextView?, ldRatioLabel: TextView?) {
+    fun setLabels(altitudeLabel: TextView?, otherStatsLabel: TextView?) {
         this.altitudeLabel = altitudeLabel
-        this.horizontalSpeedLabel = horizontalSpeedLabel
-        this.verticalSpeedLabel = verticalSpeedLabel
-        this.glideLabel = glideLabel
-        this.ldRatioLabel = ldRatioLabel
+        this.otherStatsLabel = otherStatsLabel
         updateFlightStats()
     }
 
     private fun updateFlightStats() {
         val loc = Services.location.lastLoc
         val millisecondsSinceLastFix = Services.location.lastFixDuration()
-        
+
         if (loc != null) {
             // Altitude
             altitudeLabel?.text = Convert.distance(loc.altitude_gps - VROptions.target.alt)
-            
-            // Horizontal Speed
+
+            // Combine other stats into single string
             val groundSpeed = loc.groundSpeed()
-            horizontalSpeedLabel?.text = " H: ${Convert.speed(groundSpeed)}"
-            
-            // Vertical Speed
+            val horizontalSpeedText = "H: ${Convert.speed(groundSpeed)}"
+
             val climb = loc.climb
-            if (!climb.isNaN()) {
-                verticalSpeedLabel?.text = " V: ${Convert.speed(-climb)}" // Negative climb for fall rate display
+            val verticalSpeedText = if (!climb.isNaN()) {
+                "V: ${Convert.speed(-climb)}" // Negative climb for fall rate display
             } else {
-                verticalSpeedLabel?.text = " V: --- mph"
-            }
-            
-            // Glide ratio
-            if (!climb.isNaN()) {
-                glideLabel?.text = " GR: " + Convert.glide(groundSpeed, climb, 1, false)
-            } else {
-                glideLabel?.text = " GR: ---"
+                "V: --- mph"
             }
 
-            // L/D ratio from motion estimator
-            val ld = Services.location.motionEstimator.ld()
-            if (!ld.isNaN()) {
-                ldRatioLabel?.text = " LD: ${String.format("%.1f", ld)}"
+            val glideText = if (!climb.isNaN()) {
+                "GR: " + Convert.glide(groundSpeed, climb, 1, false)
             } else {
-                ldRatioLabel?.text = " LD: ---"
+                "GR: ---"
             }
+
+            val ld = Services.location.motionEstimator.ld()
+            val ldText = if (!ld.isNaN()) {
+                "LD: ${String.format("%.1f", ld)}"
+            } else {
+                "LD: ---"
+            }
+
+            otherStatsLabel?.text = "$horizontalSpeedText\n$verticalSpeedText\n$glideText\n$ldText"
         } else {
             altitudeLabel?.text = "--- ft"
-            horizontalSpeedLabel?.text = " H: --- mph"
-            verticalSpeedLabel?.text = " V: --- mph"
-            glideLabel?.text = " GR: ---"
-            ldRatioLabel?.text = " LD: ---"
+            otherStatsLabel?.text = "H: --- mph\nV: --- mph\nGR: ---\nLD: ---"
         }
 
         // Set color based on GPS freshness
         val color = GpsFreshnessColor.getColorForFreshness(millisecondsSinceLastFix)
         altitudeLabel?.setTextColor(color)
-        
-        // Hide speed-related labels if GPS data is stale (3+ seconds)
+
+        // Hide speed-related stats if GPS data is stale (3+ seconds)
         if (millisecondsSinceLastFix >= 3000) {
-            horizontalSpeedLabel?.text = ""
-            verticalSpeedLabel?.text = ""
-            glideLabel?.text = ""
-            ldRatioLabel?.text = ""
+            otherStatsLabel?.text = ""
         } else {
-            horizontalSpeedLabel?.setTextColor(color)
-            verticalSpeedLabel?.setTextColor(color)
-            glideLabel?.setTextColor(color)
-            ldRatioLabel?.setTextColor(color)
+            otherStatsLabel?.setTextColor(color)
         }
     }
 
     fun cleanup() {
         grabbablePanel = null
         altitudeLabel = null
-        horizontalSpeedLabel = null
-        verticalSpeedLabel = null
-        glideLabel = null
-        ldRatioLabel = null
+        otherStatsLabel = null
         initialized = false
     }
 }

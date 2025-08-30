@@ -175,18 +175,8 @@ class BaselineActivity : AppSystemActivity() {
                 panel {
                     // Set up flight stats references
                     val altitudeLabel = rootView?.findViewById<TextView>(R.id.altitude)
-                    val horizontalSpeedLabel =
-                        rootView?.findViewById<TextView>(R.id.horizontal_speed)
-                    val verticalSpeedLabel = rootView?.findViewById<TextView>(R.id.vertical_speed)
-                    val glideLabel = rootView?.findViewById<TextView>(R.id.glide)
-                    val ldLabel = rootView?.findViewById<TextView>(R.id.ld_ratio)
-                    flightStatsSystem?.setLabels(
-                        altitudeLabel,
-                        horizontalSpeedLabel,
-                        verticalSpeedLabel,
-                        glideLabel,
-                        ldLabel
-                    )
+                    val otherStatsLabel = rootView?.findViewById<TextView>(R.id.other_stats)
+                    flightStatsSystem?.setLabels(altitudeLabel, otherStatsLabel)
                 }
             },
             PanelRegistration(R.layout.target_panel) {
