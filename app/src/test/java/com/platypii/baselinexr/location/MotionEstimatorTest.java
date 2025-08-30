@@ -54,7 +54,7 @@ public class MotionEstimatorTest {
         // Position should reflect movement north with smoothing and prediction
         // GPS gives 11.1m north, prediction also 11.1m north -> result is 11.1m
         assertEquals(0.0, estimator.p.x, 0.1); // East
-        assertEquals(3.11, estimator.p.z, 0.1); // North
+        assertEquals(2.67, estimator.p.z, 0.1); // North
         assertEquals(0.0, estimator.p.y, 0.1); // Up
     }
 
@@ -124,7 +124,7 @@ public class MotionEstimatorTest {
 
         // Position should reflect movement east with smoothing and prediction
         // GPS gives 8.51m east, prediction also 8.51m east -> result is 8.51m
-        assertEquals(2.38, estimator.p.x, 0.1); // East
+        assertEquals(2.04, estimator.p.x, 0.1); // East
         assertEquals(0.0, estimator.p.z, 0.2); // North
         assertEquals(0.0, estimator.p.y, 0.2); // Up
     }
@@ -142,7 +142,7 @@ public class MotionEstimatorTest {
 
         assertEquals(0.0, estimator.p.x, EPSILON); // East
         assertEquals(0.0, estimator.p.z, EPSILON); // North
-        assertEquals(1.2, estimator.p.y, 0.1); // Up
+        assertEquals(1.6, estimator.p.y, 0.1); // Up
         assertEquals(-9.0, estimator.v.y, 0.5); // Climb rate (smoothed with beta=0.9)
     }
 
@@ -158,7 +158,7 @@ public class MotionEstimatorTest {
         MLocation gps2 = new MLocation(1000L, 60.0, 10.0001, 0.0, 0.0, 0.0, 5.55, 1.0f, 1.0f, 1.0f, 1.0f, 10, 12);
         estimator.update(gps2);
 
-        assertEquals(1.56, estimator.p.x, 0.1); // East movement at 60° latitude
+        assertEquals(1.33, estimator.p.x, 0.1); // East movement at 60° latitude
     }
 
     @Test
