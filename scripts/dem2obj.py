@@ -4,7 +4,7 @@ Convert a DEM + texture into a simplified Wavefront OBJ
 using Delatin (adaptive Delaunay triangulation).
 
 Usage:
-    python dem_to_obj.py dem.tif texture.jpg terrain.obj
+    python dem_to_obj.py dem.tif texture.jpg terrain.obj [max_error]
 """
 
 import sys
@@ -24,7 +24,7 @@ def main(dem_path, tex_path, obj_path, *, max_err=7.5):
     px_size = ds.GetGeoTransform()[1]     # metres / pixel
 
     print(f'DEM {ncols} × {nrows}   pixel = {px_size:.3f} m')
-    print('running delatin …')
+    print('running delatin with max error =', max_err)
 
     # adaptive triangulation
     tin = Delatin(elev, max_error=max_err)   # <- max error 1 m
@@ -87,6 +87,9 @@ def main(dem_path, tex_path, obj_path, *, max_err=7.5):
     print(f'\norigin lat,lon = {lat:.8f}, {lon:.8f}\n')
 
 if __name__ == '__main__':
-    if len(sys.argv) != 4:
+    if len(sys.argv) < 4 or len(sys.argv) > 5:
         sys.exit(__doc__)
-    main(*sys.argv[1:])
+
+    args = sys.argv[1:4]
+    max_err = float(sys.argv[4]) if len(sys.argv) == 5 else 7.5
+    main(*args, max_err=max_err)
