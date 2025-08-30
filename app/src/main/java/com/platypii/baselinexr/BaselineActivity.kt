@@ -261,9 +261,6 @@ class BaselineActivity : AppSystemActivity() {
 
             // Update LocationStatus helper
             LocationStatus.updateStatus(this)
-
-            // Notify direction arrow system of location update (others update automatically)
-            directionArrowSystem?.onLocation(loc)
         }
         Services.location.locationUpdates.subscribeMain(locationSubscriber!!)
     }

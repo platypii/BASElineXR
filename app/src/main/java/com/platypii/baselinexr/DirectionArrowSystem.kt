@@ -27,7 +27,6 @@ class DirectionArrowSystem : SystemBase() {
 
     private var arrowEntity: Entity? = null
     private var northEntity: Entity? = null
-    private var currentLocation: MLocation? = null
     private var initialized = false
 
     override fun execute() {
@@ -35,11 +34,6 @@ class DirectionArrowSystem : SystemBase() {
             initializeDirectionArrow()
         }
 
-        updateArrowDirection()
-    }
-
-    fun onLocation(location: MLocation) {
-        currentLocation = location
         updateArrowDirection()
     }
 
@@ -73,7 +67,7 @@ class DirectionArrowSystem : SystemBase() {
             return
         }
 
-        val loc = currentLocation
+        val loc = Services.location.lastLoc
 
         // Get head position to place indicator below it
         val headPose = HeadPoseUtil.getHeadPose(systemManager) ?: return
