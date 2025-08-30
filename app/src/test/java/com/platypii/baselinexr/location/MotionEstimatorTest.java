@@ -12,7 +12,7 @@ public class MotionEstimatorTest {
 
     @Test
     public void testInitialization() {
-        MotionEstimator estimator = new MotionEstimator();
+        SimpleEstimator estimator = new SimpleEstimator();
 
         // Before any update, should have zero state
         assertVector3Equals(new Vector3(), estimator.p);
@@ -22,7 +22,7 @@ public class MotionEstimatorTest {
 
     @Test
     public void testFirstUpdate() {
-        MotionEstimator estimator = new MotionEstimator();
+        SimpleEstimator estimator = new SimpleEstimator();
 
         // First GPS fix with climb=2.0, vN=10.0, vE=5.0
         MLocation gps1 = new MLocation(0, 40.0, -105.0, 1500.0, 2.0, 10.0, 5.0, 1.0f, 1.0f, 1.0f, 1.0f, 10, 12);
@@ -40,7 +40,7 @@ public class MotionEstimatorTest {
 
     @Test
     public void testSecondUpdatePosition() {
-        MotionEstimator estimator = new MotionEstimator();
+        SimpleEstimator estimator = new SimpleEstimator();
 
         // First GPS fix sets origin
         MLocation gps1 = new MLocation(0, 40.0, -105.0, 1500.0, 0.0, 0.0, 0.0, 1.0f, 1.0f, 1.0f, 1.0f, 10, 12);
@@ -60,7 +60,7 @@ public class MotionEstimatorTest {
 
     @Test
     public void testAccelerationSmoothing() {
-        MotionEstimator estimator = new MotionEstimator(); // Uses alpha = 0.2 smoothing
+        SimpleEstimator estimator = new SimpleEstimator(); // Uses alpha = 0.2 smoothing
 
         // Initial stationary position
         MLocation gps1 = new MLocation(0, 40.0, -105.0, 1500.0, 0.0, 0.0, 0.0, 1.0f, 1.0f, 1.0f, 1.0f, 10, 12);
@@ -78,7 +78,7 @@ public class MotionEstimatorTest {
 
     @Test
     public void testPredictDelta() {
-        MotionEstimator estimator = new MotionEstimator();
+        SimpleEstimator estimator = new SimpleEstimator();
 
         // Moving at constant velocity
         MLocation gps1 = new MLocation(0, 40.0, -105.0, 1500.0, 0.0, 10.0, 5.0, 1.0f, 1.0f, 1.0f, 1.0f, 10, 12);
@@ -98,7 +98,7 @@ public class MotionEstimatorTest {
 
     @Test
     public void testNegativeTimePrediction() {
-        MotionEstimator estimator = new MotionEstimator();
+        SimpleEstimator estimator = new SimpleEstimator();
 
         MLocation gps1 = new MLocation(1000L, 40.0, -105.0, 1500.0, 0.0, 10.0, 5.0, 1.0f, 1.0f, 1.0f, 1.0f, 10, 12);
         estimator.update(gps1);
@@ -112,7 +112,7 @@ public class MotionEstimatorTest {
 
     @Test
     public void testEastWestMovement() {
-        MotionEstimator estimator = new MotionEstimator();
+        SimpleEstimator estimator = new SimpleEstimator();
 
         // Origin at 40 degrees latitude (valid location)
         MLocation gps1 = new MLocation(0, 40.0, -105.0, 1500.0, 0.0, 0.0, 0.0, 1.0f, 1.0f, 1.0f, 1.0f, 10, 12);
@@ -131,7 +131,7 @@ public class MotionEstimatorTest {
 
     @Test
     public void testAltitudeChanges() {
-        MotionEstimator estimator = new MotionEstimator();
+        SimpleEstimator estimator = new SimpleEstimator();
 
         MLocation gps1 = new MLocation(0, 40.0, -105.0, 1500.0, 0.0, 0.0, 0.0, 1.0f, 1.0f, 1.0f, 1.0f, 10, 12);
         estimator.update(gps1);
@@ -148,7 +148,7 @@ public class MotionEstimatorTest {
 
     @Test
     public void testLatitudeScaling() {
-        MotionEstimator estimator = new MotionEstimator();
+        SimpleEstimator estimator = new SimpleEstimator();
 
         // Origin at 60 degrees latitude (valid non-zero longitude)
         MLocation gps1 = new MLocation(0, 60.0, 10.0, 0.0, 0.0, 0.0, 0.0, 1.0f, 1.0f, 1.0f, 1.0f, 10, 12);
@@ -163,7 +163,7 @@ public class MotionEstimatorTest {
 
     @Test
     public void testRapidUpdates() {
-        MotionEstimator estimator = new MotionEstimator();
+        SimpleEstimator estimator = new SimpleEstimator();
 
         // Test handling of very small dt
         MLocation gps1 = new MLocation(0, 40.0, -105.0, 1500.0, 0.0, 0.0, 0.0, 1.0f, 1.0f, 1.0f, 1.0f, 10, 12);
@@ -180,7 +180,7 @@ public class MotionEstimatorTest {
 
     @Test
     public void testGpsPositionToEnuConversion() {
-        MotionEstimator estimator = new MotionEstimator();
+        SimpleEstimator estimator = new SimpleEstimator();
 
         // Set origin
         MLocation origin = new MLocation(0, 40.0, -105.0, 1500.0, 0.0, 0.0, 0.0, 1.0f, 1.0f, 1.0f, 1.0f, 10, 12);
@@ -194,7 +194,7 @@ public class MotionEstimatorTest {
         assertEquals(2.22, estimator.p.z, 0.1); // North
 
         // Reset and move east by 0.0001 degrees (≈8.5 meters at 40° latitude)
-        estimator = new MotionEstimator();
+        estimator = new SimpleEstimator();
         estimator.update(origin);
         MLocation eastPoint = new MLocation(2000L, 40.0, -104.9999, 1500.0, 0.0, 0.0, 0.0, 1.0f, 1.0f, 1.0f, 1.0f, 10, 12);
         estimator.update(eastPoint);

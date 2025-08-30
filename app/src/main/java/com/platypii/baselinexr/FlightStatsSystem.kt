@@ -82,7 +82,7 @@ class FlightStatsSystem : SystemBase() {
             }
 
             // L/D ratio from motion estimator
-            val ld = Services.location.motionEstimator.wseParams.ld()
+            val ld = Services.location.motionEstimator.ld()
             if (!ld.isNaN()) {
                 ldRatioLabel?.text = " LD: ${String.format("%.1f", ld)}"
             } else {

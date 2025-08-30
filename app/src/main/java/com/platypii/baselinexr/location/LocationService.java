@@ -38,7 +38,7 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
     private final MockLocationProvider locationProviderMock;
 
     // Motion estimator for sophisticated position prediction
-    public final MotionEstimator motionEstimator = new MotionEstimator();
+    public final MotionEstimator motionEstimator = new SimpleEstimator();
 
     public LocationService(@NonNull BluetoothService bluetooth) {
         this.bluetooth = bluetooth;

@@ -53,8 +53,8 @@ public class GpsToWorldTransform {
      */
     public Vector3 toWorldCoordinates(double lat, double lon, double alt, long currentTimeMillis, MotionEstimator motionEstimator) {
         // Fix race with location service:
-        if (motionEstimator != null && motionEstimator.lastUpdate != null) {
-            setOrigin(motionEstimator.lastUpdate);
+        if (motionEstimator != null && motionEstimator.getLastUpdate() != null) {
+            setOrigin(motionEstimator.getLastUpdate());
         }
         if (lastOrigin == null) {
 //            Log.w(TAG, "Origin must be set before converting coordinates");
@@ -70,32 +70,7 @@ public class GpsToWorldTransform {
 
         // If motion estimator is available, use it for velocity and acceleration-based prediction
         if (motionEstimator != null && lastOrigin.millis > 0 && currentTimeMillis > lastOrigin.millis) {
-            // Calculate time delta
-            double deltaTime = (currentTimeMillis - lastOrigin.millis) / 1000.0; // Convert to seconds
-
-            // Extract velocity and acceleration from predicted state
-            // MotionEstimator uses ENU (East, North, Up)
-            double vE = motionEstimator.v.x;
-            double vU = motionEstimator.v.y;
-            double vN = motionEstimator.v.z;
-
-            double aE = motionEstimator.a.x;
-            double aU = motionEstimator.a.y;
-            double aN = motionEstimator.a.z;
-
             com.platypii.baselinexr.util.tensor.Vector3 delta = motionEstimator.predictDelta(currentTimeMillis);
-//            Log.i(TAG, "base: " + lat + " " + lon + " " + alt + " pred: " + lla.lat + " " + lla.lng + " " + lla.alt);
-//            Log.i(TAG, "base: " + extrapolatedX + " " + extrapolatedY + " " + extrapolatedZ);
-
-//            Log.i(TAG, "delta: " + delta.x + " " + delta.y + " " + delta.z);
-//            Log.i(TAG, "delta2: " + (vE * deltaTime + 0.5 * aE * deltaTime * deltaTime) + " " + (vU * deltaTime + 0.5 * aU * deltaTime * deltaTime) + " " + (vN * deltaTime + 0.5 * aN * deltaTime * deltaTime));
-//            Log.i(TAG, "pred: x " + predictedPosition.getX() + " y " + predictedPosition.getY() + " z " + predictedPosition.getZ());
-
-            // Calculate position update using velocity and acceleration
-            // position = basePosition + velocity * deltaTime + 0.5 * acceleration * deltaTime^2
-//            extrapolatedX = basePosition.getX() - (float)(vE * deltaTime + 0.5 * aE * deltaTime * deltaTime);
-//            extrapolatedY = basePosition.getY() - (float)(vU * deltaTime + 0.5 * aU * deltaTime * deltaTime);
-//            extrapolatedZ = basePosition.getZ() - (float)(vN * deltaTime + 0.5 * aN * deltaTime * deltaTime);
 
             // Calculate position with predicted delta
             extrapolatedX = basePosition.getX() - (float) delta.x;
