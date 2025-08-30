@@ -4,11 +4,11 @@ import android.util.Log;
 
 import com.meta.spatial.core.Vector3;
 import com.platypii.baselinexr.measurements.MLocation;
+import com.platypii.baselinexr.measurements.LatLngAlt;
 import com.platypii.baselinexr.location.MotionEstimator;
 
 public class GpsToWorldTransform {
     private static final String TAG = "GpsToWorldTransform";
-    private static final double EARTH_RADIUS_METERS = 6371000.0;
 
     public MLocation initialOrigin;
     public MLocation lastOrigin;
@@ -21,26 +21,6 @@ public class GpsToWorldTransform {
         lastOrigin = location;
     }
 
-    private Vector3 toWorldCoordinates(double lat, double lon, double alt) {
-        if (lastOrigin == null) {
-            Log.w(TAG, "Origin must be set before converting coordinates");
-            return new Vector3(0f);
-        }
-
-        double latRad = Math.toRadians(lat);
-        double lonRad = Math.toRadians(lon);
-        double originLatRad = Math.toRadians(lastOrigin.latitude);
-        double originLonRad = Math.toRadians(lastOrigin.longitude);
-
-        double deltaLat = latRad - originLatRad;
-        double deltaLon = lonRad - originLonRad;
-
-        double north = deltaLat * EARTH_RADIUS_METERS;
-        double east = deltaLon * EARTH_RADIUS_METERS * Math.cos(originLatRad);
-        double up = alt - lastOrigin.altitude_gps;
-
-        return new Vector3((float)east, (float)up, (float)north);
-    }
 
     /**
      * Convert GPS coordinates to world coordinates with MotionEstimator-based extrapolation.
@@ -62,7 +42,9 @@ public class GpsToWorldTransform {
         }
 
         // First convert the GPS position to world coordinates
-        Vector3 basePosition = toWorldCoordinates(lat, lon, alt);
+        LatLngAlt from = lastOrigin.toLatLngAlt();
+        LatLngAlt to = new LatLngAlt(lat, lon, alt);
+        Vector3 basePosition = GeoUtils.calculateOffset(from, to);
 
         float extrapolatedX = basePosition.getX();
         float extrapolatedY = basePosition.getY();

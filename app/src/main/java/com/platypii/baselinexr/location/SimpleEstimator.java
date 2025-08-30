@@ -6,6 +6,8 @@ import static com.platypii.baselinexr.location.WSE.calculateWingsuitParameters;
 import android.util.Log;
 
 import com.platypii.baselinexr.measurements.MLocation;
+import com.platypii.baselinexr.measurements.LatLngAlt;
+import com.platypii.baselinexr.GeoUtils;
 import com.platypii.baselinexr.util.tensor.Vector3;
 
 public final class SimpleEstimator implements MotionEstimator {
@@ -29,7 +31,6 @@ public final class SimpleEstimator implements MotionEstimator {
     public MLocation lastUpdate = null;     // last GPS update
     private Vector3 positionDelta = null;    // Difference between last gps point and last estimated position
     private MLocation origin = null;         // GPS origin for ENU conversion
-    private static final double EARTH_RADIUS_METERS = 6371000.0;
 
     /**
      * Converts GPS lat/lon/alt to ENU coordinates relative to the origin
@@ -39,19 +40,12 @@ public final class SimpleEstimator implements MotionEstimator {
             return new Vector3(); // Return zero if no origin set
         }
 
-        double latRad = Math.toRadians(gps.latitude);
-        double lonRad = Math.toRadians(gps.longitude);
-        double originLatRad = Math.toRadians(origin.latitude);
-        double originLonRad = Math.toRadians(origin.longitude);
+        LatLngAlt from = origin.toLatLngAlt();
+        LatLngAlt to = gps.toLatLngAlt();
+        com.meta.spatial.core.Vector3 offset = GeoUtils.calculateOffset(from, to);
 
-        double deltaLat = latRad - originLatRad;
-        double deltaLon = lonRad - originLonRad;
-
-        double north = deltaLat * EARTH_RADIUS_METERS;
-        double east = deltaLon * EARTH_RADIUS_METERS * Math.cos(originLatRad);
-        double up = gps.altitude_gps - origin.altitude_gps;
-
-        return new Vector3(east, up, north);
+        // Convert from Meta Spatial Vector3 to tensor Vector3 (ENU format)
+        return new Vector3(offset.getX(), offset.getY(), offset.getZ());
     }
 
     /** Call every time a fresh GPS sample arrives */

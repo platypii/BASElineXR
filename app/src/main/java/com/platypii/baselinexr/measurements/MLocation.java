@@ -124,6 +124,11 @@ public class MLocation extends Measurement implements Comparable<MLocation> {
         return new LatLng(latitude, longitude);
     }
 
+    @NonNull
+    public LatLngAlt toLatLngAlt() {
+        return new LatLngAlt(latitude, longitude, altitude_gps);
+    }
+
     public double bearingTo(@NonNull MLocation dest) {
         return Geo.bearing(latitude, longitude, dest.latitude, dest.longitude);
     }

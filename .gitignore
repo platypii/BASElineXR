@@ -8,6 +8,7 @@
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
 .DS_Store
+.kotlin
 /app/build
 /app/src/main/assets/scenes/
 /build

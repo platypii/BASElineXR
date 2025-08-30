@@ -55,7 +55,7 @@ public class GeoUtils {
      * Calculate distance between two geographic points using haversine formula
      * Returns distance in meters
      */
-    public static double haversineDistance(LatLngAlt from, LatLngAlt to) {
+    private static double haversineDistance(LatLngAlt from, LatLngAlt to) {
         double lat1 = Math.toRadians(from.lat);
         double lon1 = Math.toRadians(from.lng);
         double lat2 = Math.toRadians(to.lat);
