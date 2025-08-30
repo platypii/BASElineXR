@@ -9,6 +9,7 @@
 /.idea/assetWizardSettings.xml
 .DS_Store
 /app/build
+/app/src/main/assets/scenes/
 /build
 /captures
 .externalNativeBuild
