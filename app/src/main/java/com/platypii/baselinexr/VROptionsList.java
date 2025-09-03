@@ -4,14 +4,15 @@ import com.platypii.baselinexr.measurements.LatLngAlt;
 
 public class VROptionsList {
 
+    // THIS IS THE VROPTIONS TO USE IN LIVE FLIGHT!!
     public static final VROptions LIVE = new VROptions(
             "Live",
             null,
             "branded",
-            // ideal for a kpow west jump run:
-//            new LatLngAlt(47.2245, -123.167, 3710.0),
             // summit over the water tower:
-            new LatLngAlt(47.238, -123.156, 3800.0),
+//            new LatLngAlt(47.238, -123.156, 3800.0),
+            // copy destination from target landing zone
+            new LatLngAlt(VROptions.target.lat, VROptions.target.lng, 3800),
             VROptions.ShaderType.LOD_SHADER,
             false,
             true,

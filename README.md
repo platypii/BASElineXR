@@ -68,6 +68,13 @@ Notes:
  - Left controller hamburger is the ONLY way to force return to home.
  - Meta button + long-press trigger to start/stop recording.
 
+## Configuring a new dropzone
+
+In `VROptions.java` the following options are related to the real world for navigating safely back to the dz:
+
+ - `target`: The target dropzone landing area. A green reticle is drawn with the distance to this target. The altitude is used as ground-level offset for Altitude indicator panel.
+ - `minimap`: The lat/lng bounds and drawable resource (satellite image) for the minimap.
+
 ## Imagery
 
 Source: swisstopo

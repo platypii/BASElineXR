@@ -7,12 +7,9 @@ import android.widget.ImageView
 import kotlin.math.atan2
 import kotlin.math.sqrt
 import com.meta.spatial.core.Entity
-import com.meta.spatial.core.Pose
 import com.meta.spatial.core.SystemBase
 import com.meta.spatial.core.Vector3
-import com.meta.spatial.toolkit.PlayerBodyAttachmentSystem
 import com.meta.spatial.toolkit.SpatialActivityManager
-import com.meta.spatial.toolkit.Transform
 import com.meta.spatial.toolkit.Visible
 
 class MiniMapPanel : SystemBase() {
@@ -26,11 +23,6 @@ class MiniMapPanel : SystemBase() {
     private var greenDot: View? = null
     private var minimapImage: ImageView? = null
 
-    // Minimap bounds - should be set based on the actual minimap image coordinates
-    val latMin = 47.214
-    val latMax = 47.2637
-    val lngMin = -123.2033
-    val lngMax = -123.0856
 
     override fun execute() {
         val activity = SpatialActivityManager.getVrActivity<BaselineActivity>()
@@ -99,6 +91,11 @@ class MiniMapPanel : SystemBase() {
             val imageHeight = image.height
 
             if (imageWidth > 0 && imageHeight > 0) {
+                val latMin = VROptions.minimap.latMin()
+                val latMax = VROptions.minimap.latMax()
+                val lngMin = VROptions.minimap.lngMin()
+                val lngMax = VROptions.minimap.lngMax()
+
                 // Calculate position relative to minimap bounds
                 val latNormalized = (lat - latMin) / (latMax - latMin)
                 val lngNormalized = (lng - lngMin) / (lngMax - lngMin)

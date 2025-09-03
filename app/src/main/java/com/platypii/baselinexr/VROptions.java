@@ -40,18 +40,17 @@ public class VROptions {
         this.portalLocation = portalLocation;
     }
 
-    public String getTerrainModel() {
-        return "terrain/" + sourceModel + "_tile.json";
-    }
-
-    public LatLngAlt getDestination() {
-        // Apply north/east adjustments
-        return GeoUtils.applyOffset(destination,
-            new Vector3(Adjustments.eastAdjustment, 0, Adjustments.northAdjustment));
-    }
-
     // Target landing zone in the real world (kpow student field)
     public static LatLngAlt target = new LatLngAlt(47.2375, -123.1458, 84);
+
+    // Minimap configuration (Kapowsin)
+    public static final MiniMapOptions minimap = new MiniMapOptions(
+        47.214,    // latMin
+        47.2637,   // latMax
+        -123.2033, // lngMin
+        -123.0856, // lngMax
+        R.drawable.minimap_kpow
+    );
 
     // Offset distance when clicking NSEW
     public static float offsetDistance = 300; // meters
@@ -61,4 +60,16 @@ public class VROptions {
     public static final Vector3 SUN_COLOR = new Vector3(1f);
     public static final Vector3 SUN_DIRECTION = new Vector3(-4f, 10f, -2f).normalize();
     public static final float ENVIRONMENT_INTENSITY = 0.01f;
+
+    // Map the short "sourceModel" string to the asset location
+    public String getTerrainModel() {
+        return "terrain/" + sourceModel + "_tile.json";
+    }
+
+    // Get the offset-adjusted destination for the eiger
+    public LatLngAlt getDestination() {
+        // Apply north/east adjustments
+        return GeoUtils.applyOffset(destination,
+                new Vector3(Adjustments.eastAdjustment, 0, Adjustments.northAdjustment));
+    }
 }
