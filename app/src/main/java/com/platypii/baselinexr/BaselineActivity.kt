@@ -35,6 +35,7 @@ class BaselineActivity : AppSystemActivity() {
     private var directionArrowSystem: DirectionArrowSystem? = null
     var hudSystem: HudSystem? = null
     private var flightStatsSystem: FlightStatsSystem? = null
+    private var speedChartSystem: SpeedChartSystem? = null
     private var targetPanelSystem: TargetPanel? = null
     private var portalSystem: PortalSystem? = null
     private var miniMapPanel: MiniMapPanel? = null
@@ -77,6 +78,7 @@ class BaselineActivity : AppSystemActivity() {
         // Create systems
         hudSystem = HudSystem()
         flightStatsSystem = FlightStatsSystem()
+        speedChartSystem = SpeedChartSystem()
         directionArrowSystem = DirectionArrowSystem()
         targetPanelSystem = TargetPanel(gpsTransform)
         portalSystem = PortalSystem(gpsTransform, this)
@@ -85,6 +87,7 @@ class BaselineActivity : AppSystemActivity() {
         // Register systems
         systemManager.registerSystem(hudSystem!!)
         systemManager.registerSystem(flightStatsSystem!!)
+        systemManager.registerSystem(speedChartSystem!!)
         systemManager.registerSystem(directionArrowSystem!!)
         systemManager.registerSystem(targetPanelSystem!!)
         systemManager.registerSystem(portalSystem!!)
@@ -130,6 +133,7 @@ class BaselineActivity : AppSystemActivity() {
         // Clean up all systems that have cleanup methods
         hudSystem?.cleanup()
         flightStatsSystem?.cleanup()
+        speedChartSystem?.cleanup()
         terrainSystem?.cleanup()
         directionArrowSystem?.cleanup()
         targetPanelSystem?.cleanup()
@@ -205,6 +209,18 @@ class BaselineActivity : AppSystemActivity() {
                     val blueDot = rootView?.findViewById<android.view.View>(R.id.blue_dot)
                     val greenDot = rootView?.findViewById<android.view.View>(R.id.green_dot)
                     miniMapPanel?.setViews(minimapImage, redDot, blueDot, greenDot)
+                }
+            },
+            PanelRegistration(R.layout.speed_chart) {
+                config {
+                    themeResourceId = R.style.PanelAppThemeTransparent
+                    includeGlass = false
+                    enableTransparent = true
+                }
+                panel {
+                    // Set up speed chart references
+                    val speedChartLive = rootView?.findViewById<com.platypii.baselinexr.charts.SpeedChartLive>(R.id.speed_chart_live)
+                    speedChartSystem?.setSpeedChart(speedChartLive)
                 }
             })
     }

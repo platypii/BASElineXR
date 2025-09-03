@@ -88,7 +88,7 @@ public class PlotOptions {
     static AxisOptions axisSpeed() {
         return new AxisOptions() {
             {
-                major_units = Convert.metric ? Convert.KPH : Convert.MPH;
+                major_units = Convert.metric ? 50 * Convert.KPH : 50 * Convert.MPH;
             }
 
             @Override
