@@ -6,7 +6,7 @@
 #include <Uniforms.glsl>
 
 const float OPACITY = 1.0;
-const float FADE_START = 500.0;
+const float FADE_START = 400.0;
 const float FADE_END = 800.0;
 const float CUTOFF_DIST = 1200.0;
 const float CLOSE_ALPHA = 1.0;

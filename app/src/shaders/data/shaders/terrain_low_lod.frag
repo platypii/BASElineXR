@@ -5,12 +5,8 @@
 #include <metaSpatialSdkFragmentBase.glsl>
 #include <Uniforms.glsl>
 
-const float OPACITY = 1.0;
-const float FADE_START = 1000.0;
-const float FADE_END = 1200.0;
+const float OPACITY = 0.1;
 const float CUTOFF_DIST = 1000.0;
-const float CLOSE_ALPHA = 0.1;
-const float FAR_ALPHA = 0.1;
 
 float saturate(float x) { return clamp(x, 0.0, 1.0); }
 vec3  saturate(vec3 v)  { return clamp(v, 0.0, 1.0); }
@@ -41,14 +37,6 @@ void main() {
     float diffuseWrap = 0.25;
     float ambientBoost = 0.25;
 
-    // distance fade calculations
-    float s2 = FADE_START * FADE_START;
-    float e2 = FADE_END * FADE_END;
-
-    // linear ramp instead of smoothstep
-    float invRange = 1.0 / max(e2 - s2, 1e-6);
-    float ramp     = saturate((e2 - d2) * invRange);
-    float distFade = mix(FAR_ALPHA, CLOSE_ALPHA, ramp);
 
     // wrapped diffuse so sun reads on grazing slopes
     vec3 N = vertexOut.worldNormal;
@@ -65,7 +53,7 @@ void main() {
     vec3 finalRGB = saturate(filmicTone(lit, exposure));
 
     outColor.rgb = finalRGB;
-    outColor.a = albedo.a * OPACITY * distFade;
+    outColor.a = albedo.a * OPACITY;
 
     // Apply slight depth bias to render high LOD in front of low LOD
     // Push fragments slightly back from camera to avoid z-fighting
