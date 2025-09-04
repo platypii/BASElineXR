@@ -12,7 +12,7 @@ public class VROptionsList {
             // summit over the water tower:
 //            new LatLngAlt(47.238, -123.156, 3800.0),
             // copy destination from target landing zone
-            new LatLngAlt(VROptions.target.lat, VROptions.target.lng, 3800),
+            new LatLngAlt(VROptions.dropzone.lat, VROptions.dropzone.lng, 3800),
             VROptions.ShaderType.LOD_SHADER,
             false,
             true,

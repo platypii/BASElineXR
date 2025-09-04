@@ -5,6 +5,9 @@ import com.platypii.baselinexr.measurements.LatLngAlt;
 
 public class VROptions {
 
+    // Target landing zone in the real world
+    public static LatLngAlt dropzone = new LatLngAlt(47.2375, -123.1458, 84);
+
     // Current active configuration
     public static VROptions current = VROptionsList.EIGER_SKYDIVE;
 
@@ -39,9 +42,6 @@ public class VROptions {
         this.showTarget = showTarget;
         this.portalLocation = portalLocation;
     }
-
-    // Target landing zone in the real world (kpow student field)
-    public static LatLngAlt target = new LatLngAlt(47.2375, -123.1458, 84);
 
     // Minimap configuration (Kapowsin)
     public static final MiniMapOptions minimap = new MiniMapOptions(

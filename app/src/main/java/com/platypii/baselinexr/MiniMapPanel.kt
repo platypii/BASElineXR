@@ -175,7 +175,7 @@ class MiniMapPanel : SystemBase() {
     }
 
     private fun updateGreenDotPosition() {
-        val target = VROptions.target
+        val target = VROptions.dropzone
 
         greenDot?.visibility = View.VISIBLE
 
