@@ -62,7 +62,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="80dp"
-        android:background="#000000"
         android:columnCount="3"
         android:rowCount="3"
         android:visibility="gone">

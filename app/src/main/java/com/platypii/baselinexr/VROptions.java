@@ -18,6 +18,7 @@ public class VROptions {
 
     public final String name;
     public final String mockTrack;
+    // 3D terrain model, options: eiger, kpow, branded (with baselinexr logo on summit)
     public final String sourceModel;
     // Place the summit at the destination
     private final LatLngAlt destination;

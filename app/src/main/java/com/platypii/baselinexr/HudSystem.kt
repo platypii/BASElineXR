@@ -70,7 +70,7 @@ class HudSystem : SystemBase() {
 
   fun setExtraControlsVisible(visible: Boolean) {
     extraControlsVisible = visible
-    val offset = if (visible) Vector3(0f, -1.2f, -1.6f) else Vector3(0f, 1.2f, 1.6f)
+    val offset = if (visible) Vector3(0.2f, -1.4f, -2f) else Vector3(-0.2f, 1.4f, 2f)
     grabbablePanel?.moveByOffset(offset)
   }
 
