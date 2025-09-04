@@ -12,7 +12,7 @@ class HudSystem : SystemBase() {
   private var initialized = false
   private var grabbablePanel: GrabbablePanel? = null
   private var extraControlsVisible = false
-  
+
   // HUD content references
   private var latlngLabel: TextView? = null
   private var speedLabel: TextView? = null
@@ -50,7 +50,7 @@ class HudSystem : SystemBase() {
 
     updateLocation()
   }
-  
+
   private fun updateLocation() {
     val provider = Services.location.dataSource()
     val loc = Services.location.lastLoc
@@ -72,6 +72,10 @@ class HudSystem : SystemBase() {
     extraControlsVisible = visible
     val offset = if (visible) Vector3(0.2f, -1.4f, -2f) else Vector3(-0.2f, 1.4f, 2f)
     grabbablePanel?.moveByOffset(offset)
+
+    // Enlarge DirectionArrow when extra controls are visible
+    val activity = SpatialActivityManager.getVrActivity<BaselineActivity>()
+    activity.directionArrowSystem?.setEnlarged(visible)
   }
 
   fun cleanup() {

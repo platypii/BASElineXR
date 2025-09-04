@@ -23,11 +23,13 @@ class DirectionArrowSystem : SystemBase() {
         private const val ARROW_HEIGHT_OFFSET = -5.0f
         private const val COMPASS_SCALE = 0.12f
         private const val MIN_SPEED_THRESHOLD = 0.9 // m/s minimum speed to show arrow
+        private const val ENLARGEMENT_FACTOR = 10f
     }
 
     private var arrowEntity: Entity? = null
     private var northEntity: Entity? = null
     private var initialized = false
+    private var isEnlarged = false
 
     override fun execute() {
         if (!initialized) {
@@ -92,8 +94,11 @@ class DirectionArrowSystem : SystemBase() {
             val sinHalfAngle = sin(yRotation / 2f)
             val northRotation = Quaternion(0f, sinHalfAngle, 0f, cosHalfAngle)
 
+            // Use enlarged scale if enabled
+            val compassScale = if (isEnlarged) COMPASS_SCALE * ENLARGEMENT_FACTOR else COMPASS_SCALE
+
             northEntity?.setComponents(listOf(
-                Scale(Vector3(COMPASS_SCALE)),
+                Scale(Vector3(compassScale)),
                 Transform(Pose(indicatorPosition, northRotation)),
                 Visible(true)
             ))
@@ -118,10 +123,13 @@ class DirectionArrowSystem : SystemBase() {
             val sinHalfAngle = sin(yRotation / 2f)
             val rotation = Quaternion(0f, sinHalfAngle, 0f, cosHalfAngle)
 
+            // Use enlarged scale if enabled
+            val arrowScale = if (isEnlarged) ARROW_SCALE * ENLARGEMENT_FACTOR else ARROW_SCALE
+
             // Update arrow position and orientation
             arrowEntity?.setComponents(
                 listOf(
-                    Scale(Vector3(ARROW_SCALE)),
+                    Scale(Vector3(arrowScale)),
                     Transform(Pose(indicatorPosition, rotation)),
                     Visible(true)
                 )
@@ -129,7 +137,9 @@ class DirectionArrowSystem : SystemBase() {
         }
     }
 
-
+    fun setEnlarged(enlarged: Boolean) {
+        isEnlarged = enlarged
+    }
 
     fun cleanup() {
         arrowEntity = null

@@ -32,7 +32,7 @@ class BaselineActivity : AppSystemActivity() {
     private val activityScope = CoroutineScope(Dispatchers.Main)
     private var gltfxEntity: Entity? = null
     var terrainSystem: TerrainSystem? = null
-    private var directionArrowSystem: DirectionArrowSystem? = null
+    var directionArrowSystem: DirectionArrowSystem? = null
     var hudSystem: HudSystem? = null
     private var flightStatsSystem: FlightStatsSystem? = null
     private var speedChartSystem: SpeedChartSystem? = null
