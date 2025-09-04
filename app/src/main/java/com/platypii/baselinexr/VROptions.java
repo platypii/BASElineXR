@@ -16,7 +16,9 @@ public class VROptions {
         LOD_SHADER
     }
 
+    // Configuration name (displayed in HUD)
     public final String name;
+    // Replay pre-recorded GPS track. null = live gps data from flysight
     public final String mockTrack;
     // 3D terrain model, options: eiger, kpow, branded (with baselinexr logo on summit)
     public final String sourceModel;

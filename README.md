@@ -75,6 +75,14 @@ In `VROptions.java` the following options are related to the real world for navi
  - `target`: The target dropzone landing area. A green reticle is drawn with the distance to this target. The altitude is used as ground-level offset for Altitude indicator panel.
  - `minimap`: The lat/lng bounds and drawable resource (satellite image) for the minimap.
 
+## Minimap
+
+The minimap displays a satellite view overlay showing your position and navigation waypoints:
+
+- **Red Arrow**: Your current GPS position and direction of movement (hidden if GPS signal is stale)
+- **Green Dot**: Target dropzone landing area (`VROptions.dropzone`)
+- **Blue Dot**: Destination waypoint (configurable per scene, typically a summit or landmark)
+
 ## Imagery
 
 Source: swisstopo
