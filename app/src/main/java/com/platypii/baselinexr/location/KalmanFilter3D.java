@@ -67,11 +67,11 @@ public final class KalmanFilter3D implements MotionEstimator {
         // Process noise
         Q = LinearAlgebra.identity(12);
         // pos
-        Q[0][0] = 0.1; Q[1][1] = 0.1; Q[2][2] = 0.1;
+        Q[0][0] = 0.04; Q[1][1] = 0.04; Q[2][2] = 0.04;
         // vel
-        Q[3][3] = 2.0; Q[4][4] = 2.0; Q[5][5] = 2.0;
+        Q[3][3] = 0.4226; Q[4][4] = 0.4226; Q[5][5] = 0.4226;
         // accel (higher)
-        Q[6][6] = 10.0; Q[7][7] = 10.0; Q[8][8] = 10.0;
+        Q[6][6] = 68.5; Q[7][7] = 68.5; Q[8][8] = 68.5;
         // wingsuit params (slow)
         Q[9][9]   = 0.01;
         Q[10][10] = 0.01;
@@ -80,9 +80,9 @@ public final class KalmanFilter3D implements MotionEstimator {
         // Measurement noise (position+velocity)
         R = LinearAlgebra.identity(6);
         // Position (GPS)
-        R[0][0] = 2.0; R[1][1] = 2.0; R[2][2] = 2.0;
+        R[0][0] = 1.2; R[1][1] = 1.2; R[2][2] = 1.2;
         // Velocity (GPS)
-        R[3][3] = 0.5;  R[4][4] = 0.5;  R[5][5] = 0.5;
+        R[3][3] = 2.25;  R[4][4] = 2.25;  R[5][5] = 2.25;
     }
 
     /** Initialize on first fix, then run predict+update on subsequent fixes. */
@@ -112,9 +112,6 @@ public final class KalmanFilter3D implements MotionEstimator {
                     (vz - lastGps.vN) / dt
             );
         }
-
-        // Update wingsuit parameters from current Kalman v,a (in ENU)
-        updateWingsuitParameters();
 
         // Predict to now
         if (dt > 0.0) predict(dt);
@@ -158,6 +155,9 @@ public final class KalmanFilter3D implements MotionEstimator {
         final double[][] KH   = LinearAlgebra.mul(K, H);
         final double[][] I_KH = LinearAlgebra.sub(LinearAlgebra.identity(12), KH);
         P = LinearAlgebra.mul(I_KH, P);
+
+        // Update wingsuit parameters from current Kalman v,a (in ENU)
+        updateWingsuitParameters();
 
         // Bookkeeping
         lastGps = gps;

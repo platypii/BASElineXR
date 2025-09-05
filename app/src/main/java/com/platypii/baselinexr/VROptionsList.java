@@ -113,11 +113,24 @@ public class VROptionsList {
             null
     );
 
-    public static final VROptions JANK = new VROptions(
+    public static final VROptions JANK_20 = new VROptions(
             "Jank",
             "kpow20hz.csv",
             "eiger",
             new LatLngAlt(47.238, -123.156, 3800.0), // water tower
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            false,
+            false,
+            null
+    );
+
+    public static final VROptions JANK_5 = new VROptions(
+            "Jank",
+            "kpow5hz.csv",
+            "eiger",
+            new LatLngAlt(47.24, -123.1, 3750.0), // water tower
             VROptions.ShaderType.LOD_SHADER,
             false,
             true,
