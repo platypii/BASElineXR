@@ -67,11 +67,11 @@ public final class KalmanFilter3D implements MotionEstimator {
         // Process noise
         Q = LinearAlgebra.identity(12);
         // pos
-        Q[0][0] = 0.04; Q[1][1] = 0.04; Q[2][2] = 0.04;
+        Q[0][0] = 0.12; Q[1][1] = 0.12; Q[2][2] = 0.12;
         // vel
-        Q[3][3] = 0.4226; Q[4][4] = 0.4226; Q[5][5] = 0.4226;
+        Q[3][3] = 9.4226; Q[4][4] = 9.4226; Q[5][5] = 9.4226;
         // accel (higher)
-        Q[6][6] = 68.5; Q[7][7] = 68.5; Q[8][8] = 68.5;
+        Q[6][6] = 470; Q[7][7] = 470; Q[8][8] = 470;
         // wingsuit params (slow)
         Q[9][9]   = 0.01;
         Q[10][10] = 0.01;
@@ -80,7 +80,7 @@ public final class KalmanFilter3D implements MotionEstimator {
         // Measurement noise (position+velocity)
         R = LinearAlgebra.identity(6);
         // Position (GPS)
-        R[0][0] = 1.2; R[1][1] = 1.2; R[2][2] = 1.2;
+        R[0][0] = 8.7; R[1][1] = 8.7; R[2][2] = 8.7;
         // Velocity (GPS)
         R[3][3] = 2.25;  R[4][4] = 2.25;  R[5][5] = 2.25;
     }
@@ -188,6 +188,13 @@ public final class KalmanFilter3D implements MotionEstimator {
         // P = F P F^T + Q
         final double[][] FP   = LinearAlgebra.mul(F, P);
         final double[][] FPFT = LinearAlgebra.mul(FP, LinearAlgebra.transpose(F));
+        // Scale Q by deltaTime for proper discrete-time process noise
+        final double[][] Q_scaled = new double[12][12];
+        for (int i = 0; i < 12; i++) {
+            for (int j = 0; j < 12; j++) {
+                Q_scaled[i][j] = Q[i][j] * deltaTime;
+            }
+        }
         P = LinearAlgebra.add(FPFT, Q);
     }
 
@@ -209,7 +216,7 @@ public final class KalmanFilter3D implements MotionEstimator {
             s = integrateState(s, step);
             remaining -= step;
         }
-        return new Vector3(s[0], s[1], s[2]);
+        return new Vector3(s[0] - x[0], s[1] - x[1], s[2] - x[2]);
     }
 
     /** Current state snapshot. */

@@ -21,6 +21,7 @@ public class VROptionsList {
             new LatLngAlt(46.5785, 7.99, 3040.0)
     );
 
+    // Same as live but with the eiger more eastward toward island lake
     public static final VROptions LIVE_EAST = new VROptions(
             "Live East",
             null,
@@ -108,32 +109,6 @@ public class VROptionsList {
             VROptions.ShaderType.LOD_SHADER,
             true,
             false,
-            false,
-            false,
-            null
-    );
-
-    public static final VROptions JANK_20 = new VROptions(
-            "Jank",
-            "kpow20hz.csv",
-            "eiger",
-            new LatLngAlt(47.238, -123.156, 3800.0), // water tower
-            VROptions.ShaderType.LOD_SHADER,
-            false,
-            true,
-            false,
-            false,
-            null
-    );
-
-    public static final VROptions JANK_5 = new VROptions(
-            "Jank",
-            "kpow5hz.csv",
-            "eiger",
-            new LatLngAlt(47.24, -123.1, 3750.0), // water tower
-            VROptions.ShaderType.LOD_SHADER,
-            false,
-            true,
             false,
             false,
             null
