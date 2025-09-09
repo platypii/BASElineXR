@@ -112,4 +112,16 @@ public class WSE {
         }
         return new WSEParams(kl, kd, roll);
     }
+
+    /**
+     * Convert kl/kd coefficients to angle of attack
+     * @param kl Lift coefficient
+     * @param kd Drag coefficient  
+     * @param polar Wingsuit polar data
+     * @param rho Air density (kg/m³)
+     * @return Angle of attack in radians
+     */
+    public static double klkdToAoa(double kl, double kd, PolarLibrary.WingsuitPolar polar, double rho) {
+        return Math.atan2(kl, kd);
+    }
 }
