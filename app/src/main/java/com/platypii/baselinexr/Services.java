@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import com.platypii.baselinexr.bluetooth.BluetoothService;
 import com.platypii.baselinexr.cloud.AuthState;
 import com.platypii.baselinexr.cloud.tasks.Tasks;
+import com.platypii.baselinexr.jarvis.FlightComputer;
 import com.platypii.baselinexr.location.LocationService;
 import com.platypii.baselinexr.places.Places;
 import com.platypii.baselinexr.tracks.TrackLogger;
@@ -40,6 +41,7 @@ public class Services {
     // Services
     public static final BluetoothService bluetooth = new BluetoothService();
     public static final LocationService location = new LocationService(bluetooth);
+    public static final FlightComputer flightComputer = new FlightComputer();
     public static final Tasks tasks = new Tasks();
     public static final Places places = new Places();
     public static final TrackLogger trackLogger = new TrackLogger();
@@ -81,6 +83,9 @@ public class Services {
 
             Log.i(TAG, "Starting location service");
             location.start(appContext);
+
+            Log.i(TAG, "Starting flight services");
+            flightComputer.start();
 
             Log.i(TAG, "Starting task manager");
             tasks.start(appContext);
@@ -131,6 +136,7 @@ public class Services {
             trackLogger.stop();
             places.stop();
             tasks.stop();
+            flightComputer.stop();
             location.stop();
             bluetooth.stop();
             initialized = false;

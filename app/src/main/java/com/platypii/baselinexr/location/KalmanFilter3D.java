@@ -8,7 +8,11 @@ import android.util.Log;
 import com.platypii.baselinexr.measurements.MLocation;
 import com.platypii.baselinexr.measurements.LatLngAlt;
 import com.platypii.baselinexr.GeoUtils;
+import com.platypii.baselinexr.Services;
+import com.platypii.baselinexr.jarvis.FlightMode;
 import com.platypii.baselinexr.util.tensor.Vector3;
+
+import java.util.Arrays;
 
 /**
  * 12D state Kalman filter for ENU position/velocity/acceleration and wingsuit parameters.
@@ -49,10 +53,13 @@ public final class KalmanFilter3D implements MotionEstimator {
 
     // Constants
     private static final double MAX_STEP = 0.1; // seconds
+    private static final double accelerationLimit = 3.0; // g's
+    // Try to detect ground mode? Or always in flight mode?
+    private static final boolean groundModeEnabled = true;
 
     public KalmanFilter3D() {
         // Initial state
-        for (int i = 0; i < x.length; i++) x[i] = 0.0;
+        Arrays.fill(x, 0.0);
         x[9]  = 0.01; // kl
         x[10] = 0.01; // kd
         x[11] = 0.0;  // roll
@@ -245,6 +252,9 @@ public final class KalmanFilter3D implements MotionEstimator {
         // Accel from WSE given the updated velocity
         final Vector3 aWse = calculateWingsuitAcceleration(new Vector3(nvx, nvy, nvz), new WSEParams(kl, kd, roll));
 
+        // check acceleration components are < 3g, fallback to last accel
+        applyAccelLimits(aWse, ax, ay, az);
+
         // Write back
         x[0] = nx; x[1] = ny; x[2] = nz;
         x[3] = nvx; x[4] = nvy; x[5] = nvz;
@@ -269,6 +279,9 @@ public final class KalmanFilter3D implements MotionEstimator {
 
         final Vector3 aWse = calculateWingsuitAcceleration(new Vector3(nvx, nvy, nvz), new WSEParams(kl, kd, roll));
 
+        // check acceleration components are < 3g, fallback to last accel
+        applyAccelLimits(aWse, ax, ay, az);
+
         final double[] out = s.clone();
         out[0] = nx; out[1] = ny; out[2] = nz;
         out[3] = nvx; out[4] = nvy; out[5] = nvz;
@@ -289,6 +302,25 @@ public final class KalmanFilter3D implements MotionEstimator {
         x[9] = updated.kl();
         x[10] = updated.kd();
         x[11] = updated.roll();
+    }
+
+    private static void applyAccelLimits(Vector3 accelerationVec, double prevAx, double prevAy, double prevAz) {
+        // Apply acceleration magnitude limit
+        if (Math.abs(accelerationVec.x) > accelerationLimit ||
+            Math.abs(accelerationVec.y) > accelerationLimit ||
+            Math.abs(accelerationVec.z) > accelerationLimit) {
+            // Log.d(TAG, "Acceleration limit exceeded. Falling back to previous acceleration.");
+            accelerationVec.x = prevAx;
+            accelerationVec.y = prevAy;
+            accelerationVec.z = prevAz;
+        }
+        // Apply ground mode (set acceleration to zero if on the ground and enabled)
+        final int fm = Services.flightComputer.flightMode;
+        if (groundModeEnabled && fm == FlightMode.MODE_GROUND) {
+            accelerationVec.x = 0.0;
+            accelerationVec.y = 0.0;
+            accelerationVec.z = 0.0;
+        }
     }
 
     /** ENU relative to the first fix (origin). */

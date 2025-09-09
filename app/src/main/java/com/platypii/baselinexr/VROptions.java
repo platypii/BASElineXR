@@ -20,19 +20,20 @@ public class VROptions {
     public final String name;
     // Replay pre-recorded GPS track. null = live gps data from flysight
     public final String mockTrack;
-    // 3D terrain model, options: eiger, kpow, branded (with baselinexr logo on summit)
+    // 3D terrain model, options: eiger, kpow, branded (with BASElineXR logo on summit)
     public final String sourceModel;
-    // Place the summit at the destination
+    // Place the source point-of-interest (summit) at the destination location
     private final LatLngAlt destination;
     // If true, walking around the room moves in the map
     public final boolean roomMovement;
-    // Show direction arrow below for alignment
+    // Show direction arrow below for alignment?
     public final boolean showDirectionArrow;
-    // Show target landing zone
+    // Show target reticle on the dropzone location?
     public final boolean showTarget;
-    // Show speed chart panel
+    // Show speed chart panel?
     public final boolean showSpeedChart;
     public final LatLngAlt portalLocation;
+    // Render options: DEFAULT_SHADER, LOD_SHADER
     public final ShaderType shader;
 
     public VROptions(String name, String mockTrack, String sourceModel, LatLngAlt destination, ShaderType shader,
@@ -41,12 +42,12 @@ public class VROptions {
         this.mockTrack = mockTrack;
         this.sourceModel = sourceModel;
         this.destination = destination;
-        this.shader = shader;
         this.roomMovement = roomMovement;
         this.showDirectionArrow = showDirectionArrow;
         this.showTarget = showTarget;
         this.showSpeedChart = showSpeedChart;
         this.portalLocation = portalLocation;
+        this.shader = shader;
     }
 
     // Minimap configuration (Kapowsin)
