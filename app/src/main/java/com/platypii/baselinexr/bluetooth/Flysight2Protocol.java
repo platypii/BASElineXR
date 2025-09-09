@@ -46,7 +46,8 @@ public class Flysight2Protocol extends BleProtocol {
 
     @Override
     public boolean canParse(@NonNull BluetoothPeripheral peripheral, @Nullable ScanRecord record) {
-        return peripheral.getName().equals("KFS1975");
+        //Log.i(TAG, "Found flysight device: " + peripheral.getName() + " " + peripheral.getAddress());
+        return peripheral.getName().equals("FlySight");
 //        if (isFlysight(peripheral, record)) {
 //            Log.i(TAG, "Found flysight device: " + peripheral.getName() + " " + peripheral.getAddress());
 //            return true;

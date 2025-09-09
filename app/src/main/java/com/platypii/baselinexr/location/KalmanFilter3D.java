@@ -5,6 +5,9 @@ import static com.platypii.baselinexr.location.WSE.calculateWingsuitParameters;
 
 import android.util.Log;
 
+import com.platypii.baselinexr.Services;
+import com.platypii.baselinexr.jarvis.FlightComputer;
+import com.platypii.baselinexr.jarvis.FlightMode;
 import com.platypii.baselinexr.measurements.MLocation;
 import com.platypii.baselinexr.measurements.LatLngAlt;
 import com.platypii.baselinexr.GeoUtils;
@@ -49,6 +52,8 @@ public final class KalmanFilter3D implements MotionEstimator {
 
     // Constants
     private static final double MAX_STEP = 0.1; // seconds
+    private static final double accelerationLimit = 9.81 * 3.0; // 3 g on each axis limit for stability
+    private static final boolean groundModeEnabled = true;// set ground accel to 0
 
     public KalmanFilter3D() {
         // Initial state
@@ -63,15 +68,15 @@ public final class KalmanFilter3D implements MotionEstimator {
         P[9][9]   = 0.1;
         P[10][10] = 0.1;
         P[11][11] = 0.005;
-
+/*
         // Process noise
         Q = LinearAlgebra.identity(12);
         // pos
-        Q[0][0] = 0.1; Q[1][1] = 0.1; Q[2][2] = 0.1;
+        Q[0][0] = 0.04; Q[1][1] =0.04; Q[2][2] = 0.04;
         // vel
-        Q[3][3] = 2.0; Q[4][4] = 2.0; Q[5][5] = 2.0;
+        Q[3][3] = 0.4226; Q[4][4] = 0.4226; Q[5][5] = 0.4226;
         // accel (higher)
-        Q[6][6] = 10.0; Q[7][7] = 10.0; Q[8][8] = 10.0;
+        Q[6][6] = 68.5; Q[7][7] = 68.5; Q[8][8] = 68.5;
         // wingsuit params (slow)
         Q[9][9]   = 0.01;
         Q[10][10] = 0.01;
@@ -80,9 +85,32 @@ public final class KalmanFilter3D implements MotionEstimator {
         // Measurement noise (position+velocity)
         R = LinearAlgebra.identity(6);
         // Position (GPS)
-        R[0][0] = 2.0; R[1][1] = 2.0; R[2][2] = 2.0;
+        R[0][0] = 1.2; R[1][1] = 1.2; R[2][2] = 1.2;
         // Velocity (GPS)
-        R[3][3] = 0.5;  R[4][4] = 0.5;  R[5][5] = 0.5;
+        R[3][3] = 2.25;  R[4][4] = 2.25;  R[5][5] = 2.25;
+*/
+// 5 hz settings
+        // Process noise
+        Q = LinearAlgebra.identity(12);
+        // pos
+        Q[0][0] = 0.12; Q[1][1] =0.12; Q[2][2] = 0.12;
+        // vel
+        Q[3][3] = 9.4226; Q[4][4] = 9.4226; Q[5][5] = 9.4226;
+        // accel (higher)
+        Q[6][6] = 470; Q[7][7] = 470; Q[8][8] = 470;
+        // wingsuit params (slow)
+        Q[9][9]   = 0.01;
+        Q[10][10] = 0.01;
+        Q[11][11] = 0.001;
+
+        // Measurement noise (position+velocity)
+        R = LinearAlgebra.identity(6);
+        // Position (GPS)
+        R[0][0] = 8.7; R[1][1] = 8.7; R[2][2] = 8.7;
+        // Velocity (GPS)
+        R[3][3] = 2.25;  R[4][4] = 2.25;  R[5][5] = 2.25;
+
+
     }
 
     /** Initialize on first fix, then run predict+update on subsequent fixes. */
@@ -112,9 +140,6 @@ public final class KalmanFilter3D implements MotionEstimator {
                     (vz - lastGps.vN) / dt
             );
         }
-
-        // Update wingsuit parameters from current Kalman v,a (in ENU)
-        updateWingsuitParameters();
 
         // Predict to now
         if (dt > 0.0) predict(dt);
@@ -159,6 +184,10 @@ public final class KalmanFilter3D implements MotionEstimator {
         final double[][] I_KH = LinearAlgebra.sub(LinearAlgebra.identity(12), KH);
         P = LinearAlgebra.mul(I_KH, P);
 
+        // Update wingsuit parameters from current Kalman v,a (in ENU)
+        updateWingsuitParameters();
+
+
         // Bookkeeping
         lastGps = gps;
 
@@ -188,7 +217,14 @@ public final class KalmanFilter3D implements MotionEstimator {
         // P = F P F^T + Q
         final double[][] FP   = LinearAlgebra.mul(F, P);
         final double[][] FPFT = LinearAlgebra.mul(FP, LinearAlgebra.transpose(F));
-        P = LinearAlgebra.add(FPFT, Q);
+        // Scale Q by deltaTime for proper discrete-time process noise
+        final double[][] Q_scaled = new double[12][12];
+        for (int i = 0; i < 12; i++) {
+            for (int j = 0; j < 12; j++) {
+                Q_scaled[i][j] = this.Q[i][j] * deltaTime;
+            }
+        }
+        P = LinearAlgebra.add(FPFT, Q_scaled);
     }
 
     /** Predict the state (without mutating this filter) at a given wallclock time in ms. */
@@ -198,7 +234,8 @@ public final class KalmanFilter3D implements MotionEstimator {
         final double adjustedCurrentTime = TimeOffset.phoneToGpsTime(currentTimeMillis);
 
         double dt = (adjustedCurrentTime - lastGps.millis) * 1e-3;
-        // clamp if asked for the past
+        Log.i(TAG,"predictDelta dt=" + dt + " adjustedcurrentTimeMillis=" + adjustedCurrentTime + "lastGps " + lastGps);
+                // clamp if asked for the past
         if (dt <= 0) return new Vector3(x[0], x[1], x[2]);
 
         // Clone state and step forward in small increments
@@ -209,7 +246,9 @@ public final class KalmanFilter3D implements MotionEstimator {
             s = integrateState(s, step);
             remaining -= step;
         }
-        return new Vector3(s[0], s[1], s[2]);
+        Log.i(TAG,s[0] + "," + s[1] + "," + s[2]);
+
+        return new Vector3(s[0]-x[0], s[1]-x[1], s[2]-x[2]);
     }
 
     /** Current state snapshot. */
@@ -238,6 +277,9 @@ public final class KalmanFilter3D implements MotionEstimator {
         // Accel from WSE given the updated velocity
         final Vector3 aWse = calculateWingsuitAcceleration(new Vector3(nvx, nvy, nvz), new WSEParams(kl, kd, roll));
 
+        // check acceleration components are < 2g, fallback to last accel
+        applyAccelLimits(aWse, ax, ay, az);
+
         // Write back
         x[0] = nx; x[1] = ny; x[2] = nz;
         x[3] = nvx; x[4] = nvy; x[5] = nvz;
@@ -246,7 +288,7 @@ public final class KalmanFilter3D implements MotionEstimator {
     }
 
     /** Pure function variant of integrateStep for predictAt() */
-    private static double[] integrateState(double[] s, double dt) {
+    private double[] integrateState(double[] s, double dt) {
         final double px = s[0], py = s[1], pz = s[2];
         final double vx = s[3], vy = s[4], vz = s[5];
         final double ax = s[6], ay = s[7], az = s[8];
@@ -262,14 +304,37 @@ public final class KalmanFilter3D implements MotionEstimator {
 
         final Vector3 aWse = calculateWingsuitAcceleration(new Vector3(nvx, nvy, nvz), new WSEParams(kl, kd, roll));
 
+        // check acceleration components are < 3g, fallback to last accel
+        applyAccelLimits(aWse, ax, ay, az);
+
         final double[] out = s.clone();
         out[0] = nx; out[1] = ny; out[2] = nz;
         out[3] = nvx; out[4] = nvy; out[5] = nvz;
         out[6] = aWse.x; out[7] = aWse.y; out[8] = aWse.z;
         // params unchanged
+        Log.i(TAG,"integrateState " + out[9] + "," + out[10] + "," + out[11]);
+
         return out;
     }
 
+    private void applyAccelLimits(Vector3 accelerationVec, double prevAx, double prevAy, double prevAz) {
+        // Apply acceleration magnitude limit
+        if (Math.abs(accelerationVec.x) > accelerationLimit ||
+                Math.abs(accelerationVec.y) > accelerationLimit ||
+                Math.abs(accelerationVec.z) > accelerationLimit) {
+            // Log.d(TAG, "Acceleration limit exceeded. Falling back to previous acceleration.");
+            accelerationVec.x = prevAx;
+            accelerationVec.y = prevAy;
+            accelerationVec.z = prevAz;
+        }
+        int fm =Services.flightComputer.flightMode;
+        Log.d(TAG, "flight mode: "+Services.flightComputer.flightMode);
+        // Apply ground mode (set acceleration to zero if on the ground and enabled)
+        if(groundModeEnabled && (fm == FlightMode.MODE_GROUND)){
+            accelerationVec.x = 0.0;
+            accelerationVec.y = 0.0;accelerationVec.z = 0.0;
+        }
+    }
 
     /** Update wingsuit parameters from current Kalman v,a (skip at very low speed). */
     private void updateWingsuitParameters() {

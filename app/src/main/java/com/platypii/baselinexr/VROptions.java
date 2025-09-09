@@ -6,10 +6,12 @@ import com.platypii.baselinexr.measurements.LatLngAlt;
 public class VROptions {
 
     // Target landing zone in the real world
-    public static LatLngAlt dropzone = new LatLngAlt(47.2375, -123.1458, 84);
+    // Ogden 41.199716, -112.001832, 2086 m 1353M
+    // kpow 47.2375, -123.1458, 84
+    public static LatLngAlt dropzone = new LatLngAlt(41.199716, -112.001832, 1353);
 
     // Current active configuration
-    public static VROptions current = VROptionsList.EIGER_SKYDIVE;
+    public static VROptions current = VROptionsList.LIVE_POTM;
 
     public enum ShaderType {
         DEFAULT_SHADER,
@@ -47,14 +49,7 @@ public class VROptions {
         this.portalLocation = portalLocation;
     }
 
-    // Minimap configuration (Kapowsin)
-    public static final MiniMapOptions minimap = new MiniMapOptions(
-        47.214,    // latMin
-        47.2637,   // latMax
-        -123.2033, // lngMin
-        -123.0856, // lngMax
-        R.drawable.minimap_kpow
-    );
+    public static final MiniMapOptions minimap = VROptionsList.MM_OGDEN;
 
     // Offset distance when clicking NSEW
     public static float offsetDistance = 300; // meters

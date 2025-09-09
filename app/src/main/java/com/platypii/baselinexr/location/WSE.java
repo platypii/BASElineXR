@@ -1,5 +1,6 @@
 package com.platypii.baselinexr.location;
 
+import static com.platypii.baselinexr.util.Numbers.isReal;
 import static java.lang.Math.signum;
 
 import com.platypii.baselinexr.util.tensor.Vector3;
@@ -27,12 +28,12 @@ public class WSE {
 
         double v = velocity.magnitude();
         if (v < 0.1) {
-            return new Vector3(0, -G, 0); // Handle near-zero velocity
+            return new Vector3(0, 0, 0); // Handle near-zero velocity on ground
         }
 
         double groundSpeed = Math.sqrt(vN * vN + vE * vE);
         if (groundSpeed < 0.1) {
-            return new Vector3(0, -G, 0); // Handle near-zero groundspeed
+            return new Vector3(0, 0, 0); // Handle near-zero groundspeed
         }
 
         double cosRoll = Math.cos(roll);
@@ -100,10 +101,15 @@ public class WSE {
             if (Math.abs(rollArg) <= 1.0) {
                 double rollMagnitude = Math.acos(rollArg);
                 double rollSign = signum(liftN * -vE + liftE * vN);
-                roll = rollSign * rollMagnitude;
+                //use roll if it is a number and between-PI to PI
+                if(isReal(rollSign * rollMagnitude)) // This is line 104
+                    roll = rollSign * rollMagnitude;
             }
         }
-
+        // check KL and KD are finite
+        if(Double.isInfinite(kl) || Double.isInfinite(kd) || Double.isNaN(kl) || Double.isNaN(kd)){
+            return new WSEParams(wseParams.kl(), wseParams.kd(), roll);
+        }
         return new WSEParams(kl, kd, roll);
     }
 }

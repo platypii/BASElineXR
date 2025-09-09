@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 
 import com.platypii.baselinexr.VROptions;
 import com.platypii.baselinexr.bluetooth.BluetoothService;
+import com.platypii.baselinexr.jarvis.FlightComputer;
 import com.platypii.baselinexr.measurements.MLocation;
 import com.platypii.baselinexr.util.PubSub.Subscriber;
 
@@ -38,7 +39,7 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
     private final MockLocationProvider locationProviderMock;
 
     // Motion estimator for sophisticated position prediction
-    public final MotionEstimator motionEstimator = new SimpleEstimator();
+    public final MotionEstimator motionEstimator = new KalmanFilter3D();
 
     public LocationService(@NonNull BluetoothService bluetooth) {
         this.bluetooth = bluetooth;

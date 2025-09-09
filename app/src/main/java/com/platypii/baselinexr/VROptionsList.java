@@ -21,6 +21,22 @@ public class VROptionsList {
             new LatLngAlt(46.5785, 7.99, 3040.0)
     );
 
+    public static final VROptions LIVE_POTM = new VROptions(
+            "Live",
+            null,
+            "branded",
+            // summit over the water tower:
+//            new LatLngAlt(47.238, -123.156, 3800.0),
+            // copy destination from target landing zone
+            new LatLngAlt(40.4750657,-111.8902499,1563.063),
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            true,
+            false,
+            new LatLngAlt(46.5785, 7.99, 3040.0)
+    );
+
     public static final VROptions LIVE_EAST = new VROptions(
             "Live East",
             null,
@@ -138,5 +154,49 @@ public class VROptionsList {
             false,
             new LatLngAlt(46.57835, 7.984, 2670.5)
     );
+
+    public static final VROptions SQUAW = new VROptions(
+            "Squaw",
+            "squaw.csv",
+            "eiger",
+            new LatLngAlt(40.2709309,-111.620655,2146.342
+            ), // kpow portal run
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            false,
+            false,
+            new LatLngAlt(46.57835, 7.984, 2670.5)
+    );
+
+    public static final VROptions CHINA = new VROptions(
+            "china",
+            "china.csv",
+            "eiger",
+            new LatLngAlt(27.4065070,103.2274659,2132.344
+            ), // kpow portal run
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            false,
+            false,
+            new LatLngAlt(46.57835, 7.984, 2670.5)
+    );
+
+            public static final MiniMapOptions MM_KPOW = new MiniMapOptions(
+                  47.214,    // latMin
+                 47.2637,   // latMax
+                   -123.2033, // lngMin
+                   -123.0856, // lngMax
+                  R.drawable.minimap_kpow
+              );
+//ogden
+            public static final MiniMapOptions MM_OGDEN = new MiniMapOptions(
+                    41.186030,    // latMin
+                    41.213530,    // latMax
+                    -112.020010,  // lngMin
+                    -111.983510,  // lngMax
+            R.drawable.minimap_ogden
+            );
 
 }
