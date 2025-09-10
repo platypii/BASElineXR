@@ -53,7 +53,7 @@ public final class KalmanFilter3D implements MotionEstimator {
     // Constants
     private static final double MAX_STEP = 0.1; // seconds
     private static final double accelerationLimit = 9.81 * 3.0; // 3 g on each axis limit for stability
-    private static final boolean groundModeEnabled = true;// set ground accel to 0
+    private static final boolean groundModeEnabled = false;// set ground accel to 0
 
     public KalmanFilter3D() {
         // Initial state
