@@ -106,20 +106,20 @@ class TerrainSystem(
         val currentTime = System.currentTimeMillis()
         val motionEstimator = Services.location.motionEstimator
 
-        // Get destination position in world coordinates (where user is)
+        // Get destination position in world coordinates
         val dest = VROptions.current.destination
 
         // Calculate the offset from terrainOrigin to pointOfInterest using geographic math
         val terrainToPoiOffset = GeoUtils.calculateOffset(terrainConfig!!.pointOfInterest, terrainConfig!!.terrainOrigin)
 
-        // Get head pose for optional room movement translation
+        // Get head pose for optional room movement correction
         val headPose = HeadPoseUtil.getHeadPose(systemManager)
 
         terrainTiles.forEach { tile ->
             // Calculate offset from tileOrigin to terrainOrigin using geographic math
             val tileToTerrainOffset = GeoUtils.calculateOffset(terrainConfig!!.terrainOrigin, tile.config.tileOrigin)
 
-            // Apply offsets to destination using helper function
+            // Apply offsets to destination
             val offsetDest = GeoUtils.applyOffset(dest, terrainToPoiOffset, tileToTerrainOffset)
 
             var tilePosition = gpsToWorldTransform.toWorldCoordinates(offsetDest.lat, offsetDest.lng, offsetDest.alt, currentTime, motionEstimator)

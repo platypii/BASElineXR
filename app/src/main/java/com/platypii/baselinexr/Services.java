@@ -84,7 +84,7 @@ public class Services {
             Log.i(TAG, "Starting location service");
             location.start(appContext);
 
-            Log.i(TAG, "Starting flight computer");
+            Log.i(TAG, "Starting flight services");
             flightComputer.start();
 
             Log.i(TAG, "Starting task manager");

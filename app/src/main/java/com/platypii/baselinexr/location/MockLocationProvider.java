@@ -81,7 +81,7 @@ public class MockLocationProvider extends LocationProvider {
         try (BufferedReader br = new BufferedReader(new InputStreamReader(context.getAssets().open(filename), StandardCharsets.UTF_8))) {
             return TrackFileReader.parse(br);
         } catch (IOException e) {
-            Log.e(TAG, "Error reading track data from eiger.csv", e);
+            Log.e(TAG, "Error reading track data from " + filename, e);
             return List.of();
         }
     }
