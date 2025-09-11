@@ -11,7 +11,7 @@ public class VROptions {
     public static LatLngAlt dropzone = new LatLngAlt(41.199716, -112.001832, 1353);
 
     // Current active configuration
-    public static VROptions current = VROptionsList.LIVE_POTM;
+    public static VROptions current = VROptionsList.LIVE;
 
     public enum ShaderType {
         DEFAULT_SHADER,

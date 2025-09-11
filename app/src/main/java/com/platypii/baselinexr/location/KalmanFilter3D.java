@@ -88,7 +88,7 @@ public final class KalmanFilter3D implements MotionEstimator {
         R[0][0] = 1.2; R[1][1] = 1.2; R[2][2] = 1.2;
         // Velocity (GPS)
         R[3][3] = 2.25;  R[4][4] = 2.25;  R[5][5] = 2.25;
-*/
+
 // 5 hz settings
         // Process noise
         Q = LinearAlgebra.identity(12);
@@ -107,6 +107,27 @@ public final class KalmanFilter3D implements MotionEstimator {
         R = LinearAlgebra.identity(6);
         // Position (GPS)
         R[0][0] = 8.7; R[1][1] = 8.7; R[2][2] = 8.7;
+        // Velocity (GPS)
+        R[3][3] = 2.25;  R[4][4] = 2.25;  R[5][5] = 2.25;
+*/
+// other5 hz settings
+        // Process noise
+        Q = LinearAlgebra.identity(12);
+        // pos
+        Q[0][0] = 0.12; Q[1][1] =0.12; Q[2][2] = 0.12;
+        // vel
+        Q[3][3] = 7.8401; Q[4][4] = 7.8401; Q[5][5] = 7.8401;
+        // accel (higher)
+        Q[6][6] = 26.4501; Q[7][7] = 26.4501; Q[8][8] = 26.4501;
+        // wingsuit params (slow)
+        Q[9][9]   = 0.01;
+        Q[10][10] = 0.01;
+        Q[11][11] = 0.001;
+
+        // Measurement noise (position+velocity)
+        R = LinearAlgebra.identity(6);
+        // Position (GPS)
+        R[0][0] = 4.7; R[1][1] = 4.7; R[2][2] = 4.7;
         // Velocity (GPS)
         R[3][3] = 2.25;  R[4][4] = 2.25;  R[5][5] = 2.25;
 

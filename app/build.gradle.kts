@@ -20,7 +20,7 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
     // Update the ndkVersion to the right version for your app
-    ndkVersion = "29.0.13846066"
+    ndkVersion = "29.0.13599879"
   }
 
   packaging { resources.excludes.add("META-INF/LICENSE") }
