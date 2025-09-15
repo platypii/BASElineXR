@@ -17,6 +17,7 @@ public class VROptionsList {
             false,
             true,
             true,
+            true,
             false,
             new LatLngAlt(40.5785, 7.99, 2440.0)
     );
@@ -33,6 +34,7 @@ public class VROptionsList {
             false,
             true,
             true,
+            true,
             false,
             new LatLngAlt(46.5785, 7.99, 3040.0)
     );
@@ -45,6 +47,7 @@ public class VROptionsList {
             new LatLngAlt(47.236, -123.132, 3710.0),
             VROptions.ShaderType.LOD_SHADER,
             false,
+            true,
             true,
             true,
             false,
@@ -60,6 +63,7 @@ public class VROptionsList {
             false,
             true,
             true,
+            true,
             false,
             null
     );
@@ -71,6 +75,7 @@ public class VROptionsList {
             new LatLngAlt(47.2338, -123.167, 3800.0), // kpow prison
             VROptions.ShaderType.LOD_SHADER,
             false,
+            true,
             true,
             true,
             false,
@@ -85,6 +90,7 @@ public class VROptionsList {
             VROptions.ShaderType.LOD_SHADER,
             false,
             true,
+            false,
             true,
             false,
             null
@@ -98,6 +104,7 @@ public class VROptionsList {
             VROptions.ShaderType.LOD_SHADER,
             false,
             true,
+            false,
             true,
             false,
             null
@@ -111,6 +118,7 @@ public class VROptionsList {
             VROptions.ShaderType.LOD_SHADER,
             false,
             true,
+            false,
             true,
             false,
             null
@@ -123,6 +131,7 @@ public class VROptionsList {
             new LatLngAlt(47.2375, -123.1458, 1584.0), // kpow + 4500
             VROptions.ShaderType.LOD_SHADER,
             true,
+            false,
             false,
             false,
             false,
@@ -139,6 +148,7 @@ public class VROptionsList {
             true,
             false,
             false,
+            false,
             null
     );
 
@@ -149,6 +159,7 @@ public class VROptionsList {
             new LatLngAlt(47.2288, -123.112, 3710.0), // kpow portal run
             VROptions.ShaderType.LOD_SHADER,
             false,
+            true,
             true,
             true,
             false,
@@ -166,6 +177,7 @@ public class VROptionsList {
             true,
             false,
             false,
+            false,
             new LatLngAlt(46.57835, 7.984, 2670.5)
     );
 
@@ -178,6 +190,7 @@ public class VROptionsList {
             VROptions.ShaderType.LOD_SHADER,
             false,
             true,
+            false,
             false,
             false,
             new LatLngAlt(46.57835, 7.984, 2670.5)

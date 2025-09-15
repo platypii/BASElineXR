@@ -33,6 +33,7 @@ class BaselineActivity : AppSystemActivity() {
     private var gltfxEntity: Entity? = null
     var terrainSystem: TerrainSystem? = null
     var directionArrowSystem: DirectionArrowSystem? = null
+    var wingsuitCanopySystem: WingsuitCanopySystem? = null
     var hudSystem: HudSystem? = null
     private var flightStatsSystem: FlightStatsSystem? = null
     private var speedChartSystem: SpeedChartSystem? = null
@@ -80,6 +81,7 @@ class BaselineActivity : AppSystemActivity() {
         flightStatsSystem = FlightStatsSystem()
         speedChartSystem = SpeedChartSystem()
         directionArrowSystem = DirectionArrowSystem()
+        wingsuitCanopySystem = WingsuitCanopySystem()
         targetPanelSystem = TargetPanel(gpsTransform)
         portalSystem = PortalSystem(gpsTransform, this)
         miniMapPanel = MiniMapPanel()
@@ -89,6 +91,7 @@ class BaselineActivity : AppSystemActivity() {
         systemManager.registerSystem(flightStatsSystem!!)
         systemManager.registerSystem(speedChartSystem!!)
         systemManager.registerSystem(directionArrowSystem!!)
+        systemManager.registerSystem(wingsuitCanopySystem!!)
         systemManager.registerSystem(targetPanelSystem!!)
         systemManager.registerSystem(portalSystem!!)
         systemManager.registerSystem(miniMapPanel!!)
@@ -136,6 +139,7 @@ class BaselineActivity : AppSystemActivity() {
         speedChartSystem?.cleanup()
         terrainSystem?.cleanup()
         directionArrowSystem?.cleanup()
+        wingsuitCanopySystem?.cleanup()
         targetPanelSystem?.cleanup()
         portalSystem?.cleanup()
         miniMapPanel?.cleanup()

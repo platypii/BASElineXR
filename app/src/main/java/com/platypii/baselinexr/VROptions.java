@@ -30,6 +30,8 @@ public class VROptions {
     public final boolean roomMovement;
     // Show direction arrow below for alignment?
     public final boolean showDirectionArrow;
+    // Show wingsuit/canopy 3D models?
+    public final boolean showWingsuitCanopy;
     // Show target reticle on the dropzone location?
     public final boolean showTarget;
     // Show speed chart panel?
@@ -39,13 +41,14 @@ public class VROptions {
     public final ShaderType shader;
 
     public VROptions(String name, String mockTrack, String sourceModel, LatLngAlt destination, ShaderType shader,
-                     boolean roomMovement, boolean showDirectionArrow, boolean showTarget, boolean showSpeedChart, LatLngAlt portalLocation) {
+                     boolean roomMovement, boolean showDirectionArrow, boolean showWingsuitCanopy, boolean showTarget, boolean showSpeedChart, LatLngAlt portalLocation) {
         this.name = name;
         this.mockTrack = mockTrack;
         this.sourceModel = sourceModel;
         this.destination = destination;
         this.roomMovement = roomMovement;
         this.showDirectionArrow = showDirectionArrow;
+        this.showWingsuitCanopy = showWingsuitCanopy;
         this.showTarget = showTarget;
         this.showSpeedChart = showSpeedChart;
         this.portalLocation = portalLocation;
