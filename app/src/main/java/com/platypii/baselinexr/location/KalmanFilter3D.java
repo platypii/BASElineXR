@@ -68,7 +68,7 @@ public final class KalmanFilter3D implements MotionEstimator {
         P[9][9]   = 0.1;
         P[10][10] = 0.1;
         P[11][11] = 0.005;
-/*
+
         // Process noise
         Q = LinearAlgebra.identity(12);
         // pos
@@ -88,7 +88,7 @@ public final class KalmanFilter3D implements MotionEstimator {
         R[0][0] = 1.2; R[1][1] = 1.2; R[2][2] = 1.2;
         // Velocity (GPS)
         R[3][3] = 2.25;  R[4][4] = 2.25;  R[5][5] = 2.25;
-
+/*
 // 5 hz settings
         // Process noise
         Q = LinearAlgebra.identity(12);
@@ -109,7 +109,7 @@ public final class KalmanFilter3D implements MotionEstimator {
         R[0][0] = 8.7; R[1][1] = 8.7; R[2][2] = 8.7;
         // Velocity (GPS)
         R[3][3] = 2.25;  R[4][4] = 2.25;  R[5][5] = 2.25;
-*/
+
 // other5 hz settings
         // Process noise
         Q = LinearAlgebra.identity(12);
@@ -130,7 +130,7 @@ public final class KalmanFilter3D implements MotionEstimator {
         R[0][0] = 4.7; R[1][1] = 4.7; R[2][2] = 4.7;
         // Velocity (GPS)
         R[3][3] = 2.25;  R[4][4] = 2.25;  R[5][5] = 2.25;
-
+*/
 
     }
 
@@ -333,7 +333,7 @@ public final class KalmanFilter3D implements MotionEstimator {
         out[3] = nvx; out[4] = nvy; out[5] = nvz;
         out[6] = aWse.x; out[7] = aWse.y; out[8] = aWse.z;
         // params unchanged
-        Log.i(TAG,"integrateState " + out[9] + "," + out[10] + "," + out[11]);
+        //Log.i(TAG,"integrateState " + out[9] + "," + out[10] + "," + out[11]);
 
         return out;
     }
@@ -349,7 +349,7 @@ public final class KalmanFilter3D implements MotionEstimator {
             accelerationVec.z = prevAz;
         }
         int fm =Services.flightComputer.flightMode;
-        Log.d(TAG, "flight mode: "+Services.flightComputer.flightMode);
+        //Log.d(TAG, "flight mode: "+Services.flightComputer.flightMode);
         // Apply ground mode (set acceleration to zero if on the ground and enabled)
         if(groundModeEnabled && (fm == FlightMode.MODE_GROUND)){
             accelerationVec.x = 0.0;

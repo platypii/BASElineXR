@@ -17,6 +17,7 @@ public class VROptionsList {
             false,
             true,
             true,
+            true,
             false,
             new LatLngAlt(40.5785, 7.99, 2440.0)
     );
@@ -33,6 +34,7 @@ public class VROptionsList {
             false,
             true,
             true,
+            true,
             false,
             new LatLngAlt(46.5785, 7.99, 3040.0)
     );
@@ -45,6 +47,7 @@ public class VROptionsList {
             new LatLngAlt(47.236, -123.132, 3710.0),
             VROptions.ShaderType.LOD_SHADER,
             false,
+            true,
             true,
             true,
             false,
@@ -60,6 +63,7 @@ public class VROptionsList {
             false,
             true,
             true,
+            true,
             false,
             null
     );
@@ -73,7 +77,8 @@ public class VROptionsList {
             false,
             true,
             true,
-            false,
+            true,
+            true,
             new LatLngAlt(46.5785, 7.99, 3050.0)
     );
 
@@ -85,6 +90,7 @@ public class VROptionsList {
             VROptions.ShaderType.LOD_SHADER,
             false,
             true,
+            false,
             true,
             false,
             null
@@ -98,6 +104,7 @@ public class VROptionsList {
             VROptions.ShaderType.LOD_SHADER,
             false,
             true,
+            false,
             true,
             false,
             null
@@ -111,6 +118,7 @@ public class VROptionsList {
             VROptions.ShaderType.LOD_SHADER,
             false,
             true,
+            false,
             true,
             false,
             null
@@ -123,6 +131,7 @@ public class VROptionsList {
             new LatLngAlt(47.2375, -123.1458, 1584.0), // kpow + 4500
             VROptions.ShaderType.LOD_SHADER,
             true,
+            false,
             false,
             false,
             false,
@@ -139,6 +148,7 @@ public class VROptionsList {
             true,
             false,
             false,
+            false,
             null
     );
 
@@ -149,6 +159,7 @@ public class VROptionsList {
             new LatLngAlt(47.2288, -123.112, 3710.0), // kpow portal run
             VROptions.ShaderType.LOD_SHADER,
             false,
+            true,
             true,
             true,
             false,
@@ -164,8 +175,9 @@ public class VROptionsList {
             VROptions.ShaderType.LOD_SHADER,
             false,
             true,
+            true,
             false,
-            false,
+            true,
             new LatLngAlt(46.57835, 7.984, 2670.5)
     );
 
@@ -178,25 +190,26 @@ public class VROptionsList {
             VROptions.ShaderType.LOD_SHADER,
             false,
             true,
+            true,
             false,
-            false,
+            true,
             new LatLngAlt(46.57835, 7.984, 2670.5)
     );
 
-            public static final MiniMapOptions MM_KPOW = new MiniMapOptions(
-                  47.214,    // latMin
-                 47.2637,   // latMax
-                   -123.2033, // lngMin
-                   -123.0856, // lngMax
-                  R.drawable.minimap_kpow
-              );
-//ogden
-            public static final MiniMapOptions MM_OGDEN = new MiniMapOptions(
-                    41.186030,    // latMin
-                    41.213530,    // latMax
-                    -112.020010,  // lngMin
-                    -111.983510,  // lngMax
+    public static final MiniMapOptions MM_KPOW = new MiniMapOptions(
+            47.214,    // latMin
+            47.2637,   // latMax
+            -123.2033, // lngMin
+            -123.0856, // lngMax
+            R.drawable.minimap_kpow
+    );
+    //ogden
+    public static final MiniMapOptions MM_OGDEN = new MiniMapOptions(
+            41.186030,    // latMin
+            41.213530,    // latMax
+            -112.020010,  // lngMin
+            -111.983510,  // lngMax
             R.drawable.minimap_ogden
-            );
+    );
 
 }

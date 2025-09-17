@@ -11,7 +11,7 @@ public class VROptions {
     public static LatLngAlt dropzone = new LatLngAlt(41.199716, -112.001832, 1353);
 
     // Current active configuration
-    public static VROptions current = VROptionsList.LIVE;
+    public static VROptions current = VROptionsList.CHINA;
 
     public enum ShaderType {
         DEFAULT_SHADER,
@@ -31,6 +31,9 @@ public class VROptions {
     // Show direction arrow below for alignment?
     public final boolean showDirectionArrow;
     // Show target reticle on the dropzone location?
+    // Show wingsuit/canopy 3D models?
+    public final boolean showWingsuitCanopy;
+
     public final boolean showTarget;
     // Show speed chart panel?
     public final boolean showSpeedChart;
@@ -39,13 +42,14 @@ public class VROptions {
     public final ShaderType shader;
 
     public VROptions(String name, String mockTrack, String sourceModel, LatLngAlt destination, ShaderType shader,
-                     boolean roomMovement, boolean showDirectionArrow, boolean showTarget, boolean showSpeedChart, LatLngAlt portalLocation) {
+                     boolean roomMovement, boolean showDirectionArrow, boolean showWingsuitCanopy, boolean showTarget, boolean showSpeedChart, LatLngAlt portalLocation) {
         this.name = name;
         this.mockTrack = mockTrack;
         this.sourceModel = sourceModel;
         this.destination = destination;
         this.roomMovement = roomMovement;
         this.showDirectionArrow = showDirectionArrow;
+        this.showWingsuitCanopy = showWingsuitCanopy;
         this.showTarget = showTarget;
         this.showSpeedChart = showSpeedChart;
         this.portalLocation = portalLocation;

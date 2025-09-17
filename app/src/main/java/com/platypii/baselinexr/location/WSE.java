@@ -98,13 +98,13 @@ public class WSE {
 
         if (smoothGroundspeed > 1.0) {
             double rollArg = (1 - accelD / gravity - kd * vel * vD) / (kl * smoothGroundspeed * vel);
-            if (Math.abs(rollArg) <= 1.0) {
+            //if (Math.abs(rollArg) <= 1.0) {
                 double rollMagnitude = Math.acos(rollArg);
                 double rollSign = signum(liftN * -vE + liftE * vN);
                 //use roll if it is a number and between-PI to PI
                 if(isReal(rollSign * rollMagnitude)) // This is line 104
                     roll = rollSign * rollMagnitude;
-            }
+            //}
         }
         // check KL and KD are finite
         if(Double.isInfinite(kl) || Double.isInfinite(kd) || Double.isNaN(kl) || Double.isNaN(kd)){
