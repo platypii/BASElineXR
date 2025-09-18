@@ -8,6 +8,8 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.platypii.baselinexr.Services;
+import com.platypii.baselinexr.location.KalmanFilter3D;
 import com.platypii.baselinexr.location.LocationProvider;
 import com.platypii.baselinexr.location.TimeOffset;
 import com.platypii.baselinexr.measurements.MLocation;
@@ -16,6 +18,8 @@ import com.platypii.baselinexr.util.Bounds;
 import com.platypii.baselinexr.util.Convert;
 import com.platypii.baselinexr.util.PubSub.Subscriber;
 import com.platypii.baselinexr.util.SyncedList;
+
+import static com.platypii.baselinexr.util.Numbers.isReal;
 
 public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation> {
 
@@ -28,6 +32,20 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
 
     private static final long window = 15000; // The size of the view window, in milliseconds
     private final SyncedList<MLocation> history = new SyncedList<>();
+
+    // Sustained speed history data structure
+    private static class SustainedSpeedPoint {
+        final long millis;
+        final double vxs;
+        final double vys;
+
+        SustainedSpeedPoint(long millis, double vxs, double vys) {
+            this.millis = millis;
+            this.vxs = vxs;
+            this.vys = vys;
+        }
+    }
+    private final SyncedList<SustainedSpeedPoint> sustainedHistory = new SyncedList<>();
 
     @Nullable
     private LocationProvider locationService = null;
@@ -52,6 +70,7 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
         options.axis.x = options.axis.y = PlotOptions.axisSpeed();
 
         history.setMaxSize(300);
+        sustainedHistory.setMaxSize(300); // Same max size as regular history
 
         // Add layers
         ellipses = new EllipseLayer(options.density);
@@ -73,14 +92,23 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
                 final double vy = locationService.lastLoc.climb;
                 drawSpeedLines(plot, vx, vy);
 
-                // Draw history
-                drawHistory(plot);
+                // Draw accelBall first (large white dot)
+                drawAccelBall(plot);
+
+                // Draw sustained speed history first (background)
+                drawSustainedSpeedHistory(plot, currentTime);
+
+                // Draw current sustained speeds (if available)
+                drawCurrentSustainedSpeeds(plot);
+
+                // Draw regular speed history
+                drawHistory(plot, currentTime);
 
                 // Draw horizontal, vertical speed labels
                 drawSpeedLabels(plot, vx, vy);
 
                 // Draw current location
-                drawLocation(plot, loc.millis, vx, vy);
+                drawLocation(plot, currentTime, loc.millis, vx, vy);
             } else {
                 // Draw "no gps signal"
                 ellipses.setEnabled(false);
@@ -94,8 +122,7 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
     /**
      * Draw historical points
      */
-    private void drawHistory(@NonNull Plot plot) {
-        final long currentTime = TimeOffset.phoneToGpsTime(System.currentTimeMillis());
+    private void drawHistory(@NonNull Plot plot, long currentTime) {
         synchronized (history) {
             plot.paint.setStyle(Paint.Style.FILL);
             for (MLocation loc : history) {
@@ -124,11 +151,100 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
     }
 
     /**
+     * Draw sustained speed history (background layer)
+     */
+    private void drawSustainedSpeedHistory(@NonNull Plot plot, long currentTime) {
+        synchronized (sustainedHistory) {
+            plot.paint.setStyle(Paint.Style.FILL);
+            for (SustainedSpeedPoint point : sustainedHistory) {
+                final int t = (int) (currentTime - point.millis);
+                if (t <= window ) { // Don't draw the most recent point (it's drawn separately)
+                    // Style point based on freshness (similar to regular history but green)
+                    final int green = 0x00ff88;
+                    int darkness = 0xbb * (15000 - t) / (15000 - 1000); // Fade color to dark
+                    darkness = Math.max(0x44, Math.min(darkness, 0xbb));
+                    final int rgb = darken(green, darkness);
+                    int alpha = 0xff * (15000 - t) / (15000 - 10000); // fade out at t=10..15
+                    alpha = Math.max(0, Math.min(alpha, 0xff));
+                    final int color = (alpha << 24) + rgb;
+
+                    // Draw point with size based on age
+                    float radius = 8f * (4000 - t) / 6000;
+                    radius = Math.max(2, Math.min(radius, 8));
+                    plot.paint.setColor(color);
+                    plot.drawPoint(AXIS_SPEED, point.vxs, point.vys, radius);
+                }
+            }
+        }
+    }
+
+    /**
+     * Draw current sustained speeds
+     */
+    private void drawCurrentSustainedSpeeds(@NonNull Plot plot) {
+        if (Services.location != null && Services.location.motionEstimator instanceof KalmanFilter3D) {
+            final KalmanFilter3D kf3d = (KalmanFilter3D) Services.location.motionEstimator;
+            final KalmanFilter3D.KFState state = kf3d.getState();
+
+            if (isReal(state.kl()) && isReal(state.kd())) {
+                // Calculate sustained speeds: vxs = kl/(kl²+kd²)^1.5, vys = kd/(kl²+kd²)^1.5
+                final double klkd_squared = state.kl() * state.kl() + state.kd() * state.kd();
+                final double klkd_power = Math.pow(klkd_squared, 0.75);
+
+                final double vxs = state.kl() / klkd_power;
+                final double vys = -state.kd() / klkd_power;
+
+                // Draw current sustained speeds with a distinct style
+                plot.paint.setStyle(Paint.Style.FILL);
+                final int color = 0xff00ff88; // Solid green for current point
+                plot.paint.setColor(color);
+                plot.drawPoint(AXIS_SPEED, vxs, vys, 10f);
+            }
+        }
+    }
+
+    /**
+     * Draw accelBall (speeds + c * acceleration) as a large white dot
+     */
+    private void drawAccelBall(@NonNull Plot plot) {
+        if (Services.location != null && Services.location.motionEstimator instanceof KalmanFilter3D) {
+            final KalmanFilter3D kf3d = (KalmanFilter3D) Services.location.motionEstimator;
+            final KalmanFilter3D.KFState state = kf3d.getState();
+
+            // Get velocity and acceleration from the filter state
+            final double vx = state.velocity().x;
+            final double vz = state.velocity().z;
+            final double ax = state.acceleration().x;
+            final double az = state.acceleration().z;
+            final double vax = Math.sqrt((vx+ax)*(vx+ax) + (vz+az)*(vz+az));
+            final double vay = state.acceleration().y+state.velocity().y ;
+
+
+
+            final double vy = state.velocity().y;
+
+            final double ay = state.acceleration().y;
+
+            if (isReal(vax) && isReal(vay) ) {
+                // Calculate accelBall position: speeds + c * acceleration
+               // final double c = 1.2; // Acceleration scaling constant
+                final double accelBallX = vax ;
+                final double accelBallY = vay ;
+
+                // Draw large white dot
+                plot.paint.setStyle(Paint.Style.FILL);
+                final int color = 0xffffffff; // White
+                plot.paint.setColor(color);
+                plot.drawPoint(AXIS_SPEED, accelBallX, accelBallY, 15f); // Large radius
+            }
+        }
+    }
+
+    /**
      * Draw the current location, including position, glide slope, and x and y axis ticks.
      */
-    private void drawLocation(@NonNull Plot plot, long millis, double vx, double vy) {
+    private void drawLocation(@NonNull Plot plot, long currentTime, long millis, double vx, double vy) {
         // Style point based on freshness
-        final long currentTime = TimeOffset.phoneToGpsTime(System.currentTimeMillis());
         final int t = (int) (currentTime - millis);
         final int rgb = 0x5500ff;
         int alpha = 0xff * (30000 - t) / (30000 - 10000);
@@ -234,11 +350,32 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
         if (locationService != null) {
             locationService.locationUpdates.unsubscribe(this);
         }
+        // Clear sustained speed history
+        //synchronized (sustainedHistory) {
+           // sustainedHistory.clear();
+       //}
     }
 
     @Override
     public void apply(@NonNull MLocation loc) {
         history.append(loc);
+
+        // Also add sustained speed point if KalmanFilter3D is available
+        if (Services.location != null && Services.location.motionEstimator instanceof KalmanFilter3D) {
+            final KalmanFilter3D kf3d = (KalmanFilter3D) Services.location.motionEstimator;
+            final KalmanFilter3D.KFState state = kf3d.getState();
+
+            if (isReal(state.kl()) && isReal(state.kd())) {
+                // Calculate sustained speeds: vxs = kl/(kl²+kd²)^1.5, vys = kd/(kl²+kd²)^1.5
+                final double klkd_squared = state.kl() * state.kl() + state.kd() * state.kd();
+                final double klkd_power = Math.pow(klkd_squared, 0.75);
+
+                final double vxs = state.kl() / klkd_power;
+                final double vys = -state.kd() / klkd_power;
+                final long currentTime = TimeOffset.phoneToGpsTime(System.currentTimeMillis());
+                sustainedHistory.append(new SustainedSpeedPoint(currentTime, vxs, vys));
+            }
+        }
     }
 
 }
