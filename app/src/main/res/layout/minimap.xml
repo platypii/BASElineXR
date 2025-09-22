@@ -4,15 +4,15 @@
     android:layout_height="wrap_content"
     android:clipToOutline="true">
 
+    <!-- Blue dot for summit -->
     <ImageView
         android:id="@+id/minimap_image"
         android:layout_width="500dp"
         android:layout_height="340dp"
+        android:background="#00000000"
         android:scaleType="centerCrop"
-        android:src="@drawable/minimap_ogden"
-        android:background="#00000000" />
+        android:src="@drawable/minimap_tooele" />
 
-    <!-- Blue dot for summit -->
     <View
         android:id="@+id/blue_dot"
         android:layout_width="10dp"

@@ -12,13 +12,13 @@ public class VROptionsList {
             // summit over the water tower:
 //            new LatLngAlt(47.238, -123.156, 3800.0),
             // copy destination from target landing zone
-            new LatLngAlt(VROptions.dropzone.lat, VROptions.dropzone.lng, 3200),
+            new LatLngAlt(40.6109180, -112.3480495, 3200),
             VROptions.ShaderType.LOD_SHADER,
             false,
             true,
             true,
             true,
-            false,
+            true,
             new LatLngAlt(40.5785, 7.99, 2440.0)
     );
 
@@ -35,7 +35,7 @@ public class VROptionsList {
             true,
             true,
             true,
-            false,
+            true,
             new LatLngAlt(46.5785, 7.99, 3040.0)
     );
 
@@ -132,9 +132,9 @@ public class VROptionsList {
             VROptions.ShaderType.LOD_SHADER,
             true,
             false,
+            true,
             false,
-            false,
-            false,
+            true,
             null
     );
 
@@ -146,7 +146,7 @@ public class VROptionsList {
             VROptions.ShaderType.LOD_SHADER,
             false,
             true,
-            false,
+            true,
             false,
             false,
             null
@@ -162,12 +162,27 @@ public class VROptionsList {
             true,
             true,
             true,
-            false,
+            true,
             new LatLngAlt(46.57835, 7.984, 2670.5)
     );
 
     public static final VROptions SQUAW = new VROptions(
             "Squaw",
+            "squaw.csv",
+            "eiger",
+            new LatLngAlt(40.2709309,-111.620655,2146.342
+            ), // kpow portal run
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            true,
+            false,
+            true,
+            new LatLngAlt(46.57835, 7.984, 2670.5)
+    );
+
+    public static final VROptions TOOELE_SKYDIVE = new VROptions(
+            "Tooele",
             "squaw.csv",
             "eiger",
             new LatLngAlt(40.2709309,-111.620655,2146.342
@@ -210,6 +225,11 @@ public class VROptionsList {
             -112.020010,  // lngMin
             -111.983510,  // lngMax
             R.drawable.minimap_ogden
+    );
+
+    public static final MiniMapOptions MM_TOOELE = new MiniMapOptions(
+            40.5447, 40.6771, -112.4505, -112.2456,
+            R.drawable.minimap_tooele
     );
 
 }

@@ -8,11 +8,11 @@ public class VROptions {
     // Target landing zone in the real world
     // Ogden 41.199716, -112.001832, 2086 m 1353M
     // kpow 47.2375, -123.1458, 84
-    public static LatLngAlt dropzone = new LatLngAlt(41.199716, -112.001832, 1353);
+    // tooele 40.6109180, -112.3480495, 1314
+    public static LatLngAlt dropzone = new LatLngAlt(40.6109180, -112.3480495, 1314);
 
     // Current active configuration
-    public static VROptions current = VROptionsList.CHINA;
-
+    public static VROptions current = VROptionsList.LIVE;
     public enum ShaderType {
         DEFAULT_SHADER,
         LOD_SHADER
@@ -56,7 +56,7 @@ public class VROptions {
         this.shader = shader;
     }
 
-    public static final MiniMapOptions minimap = VROptionsList.MM_OGDEN;
+    public static final MiniMapOptions minimap = VROptionsList.MM_TOOELE;
 
     // Offset distance when clicking NSEW
     public static float offsetDistance = 300; // meters

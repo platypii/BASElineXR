@@ -170,7 +170,7 @@ class WingsuitCanopySystem : SystemBase() {
         val modelRotation = createQuaternionFromEuler(0f, (Math.PI).toFloat()+aoa.toFloat(), (-Math.PI/2).toFloat()+Adjustments.yawAdjustment)
 
         // 2. Flight attitude
-        val attitudeRotation = createQuaternionFromEuler(rollRad, pitchRad, flightYaw)
+        val attitudeRotation = createQuaternionFromEuler(-rollRad, -pitchRad, flightYaw)
 
         // Combine rotations: first apply offset, then attitude
         val rotation = multiplyQuaternions(modelRotation, attitudeRotation)
@@ -237,7 +237,7 @@ class WingsuitCanopySystem : SystemBase() {
 
         // 2. Flight attitude relative to model's axes
         // Note: Model faces +Z, so pitch around X-axis, roll around +Z-axis (model's forward)
-        val attitudeRotation = createQuaternionFromEuler(rollRad, pitchRad, flightYaw)
+        val attitudeRotation = createQuaternionFromEuler(-rollRad, -pitchRad, flightYaw)
 
         // Combine rotations: first apply heading, then attitude
         val rotation = multiplyQuaternions(modelRotation, attitudeRotation)
