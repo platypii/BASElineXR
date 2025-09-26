@@ -49,6 +49,7 @@ public final class KalmanFilter3D implements MotionEstimator {
     // For plotting / inspection
     private Vector3 aMeasured = new Vector3();
     private Vector3 aWSE = new Vector3();
+    private Vector3 kalmanStep = new Vector3();
 
     // Constants
     private static final double MAX_STEP = 0.1; // seconds
@@ -165,6 +166,7 @@ public final class KalmanFilter3D implements MotionEstimator {
         // Predict to now
         if (dt > 0.0) predict(dt);
 
+
         // --- Measurement update (position + velocity) ---
         // H: 6x12 maps [p,v] to measurement
         final double[][] H = LinearAlgebra.zeros(6, 12);
@@ -196,6 +198,11 @@ public final class KalmanFilter3D implements MotionEstimator {
         // x = x + K y
         final double[] Ky = LinearAlgebra.mul(K, y);
         for (int i = 0; i < 12; i++) x[i] += Ky[i];
+
+        // save kalman step
+        kalmanStep.x = Ky[0];
+        kalmanStep.y = Ky[1];
+        kalmanStep.z = Ky[2];
 
         // For plotting: WSE accel from measured velocity
         aWSE = calculateWingsuitAcceleration(new Vector3(vx, vy, vz), new WSEParams(x[9], x[10], x[11]));
@@ -269,7 +276,13 @@ public final class KalmanFilter3D implements MotionEstimator {
         }
         Log.i(TAG,s[0] + "," + s[1] + "," + s[2]);
 
-        return new Vector3(s[0]-x[0], s[1]-x[1], s[2]-x[2]);
+        // smooth kalman step position for 20hz
+        double alpha = 1-(dt * 20);//Services.location.refreshRate.refreshRate; // todo, use gps update rate
+        if (alpha < 0) alpha = 0;
+        if (alpha > 1) alpha = 1;
+        Vector3 ps = kalmanStep.mul(alpha);
+        //return new Vector3(s[0]-x[0], s[1]-x[1], s[2]-x[2]);
+        return new Vector3(s[0]-x[0]-ps.x, s[1]-x[1]-ps.y, s[2]-x[2]-ps.z);
     }
 
     /** Current state snapshot. */
@@ -380,6 +393,9 @@ public final class KalmanFilter3D implements MotionEstimator {
 
         // Convert from Meta Spatial Vector3 to tensor Vector3 (ENU format)
         return new Vector3(offset.getX(), offset.getY(), offset.getZ());
+    }
+    private Vector3 getKalmanStep(){                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+        return kalmanStep;
     }
 
     /** Convert any state vector into an immutable snapshot. */
