@@ -55,6 +55,7 @@ public final class KalmanFilter3D implements MotionEstimator {
     private static final double MAX_STEP = 0.1; // seconds
     private static final double accelerationLimit = 9.81 * 3.0; // 3 g on each axis limit for stability
     private static final boolean groundModeEnabled = false;// set ground accel to 0
+    private static final boolean stepSmoothing = true;
 
     public KalmanFilter3D() {
         // Initial state
@@ -275,6 +276,8 @@ public final class KalmanFilter3D implements MotionEstimator {
             remaining -= step;
         }
         Log.i(TAG,s[0] + "," + s[1] + "," + s[2]);
+
+        if(!stepSmoothing) return new Vector3(s[0]-x[0], s[1]-x[1], s[2]-x[2]);
 
         // smooth kalman step position for 20hz
         double alpha = 1-(dt * 20);//Services.location.refreshRate.refreshRate; // todo, use gps update rate

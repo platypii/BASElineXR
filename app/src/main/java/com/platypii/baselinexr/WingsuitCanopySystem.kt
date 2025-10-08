@@ -56,7 +56,7 @@ class WingsuitCanopySystem : SystemBase() {
         // Create canopy entity using cp1.glb model
         canopyEntity = Entity.create(
             Mesh("cp1.glb".toUri()),
-            Transform(Pose(Vector3(0f))),
+            Transform(Pose(Vector3(0f))), // add transform here?
             Scale(Vector3(CANOPY_SCALE)),
             Visible(false) // Start invisible
         )
@@ -223,7 +223,7 @@ class WingsuitCanopySystem : SystemBase() {
             }
             else -> 0f // Default to no roll for other estimator types
         }
-// Calculate pitch (angle from horizontal)
+        // Calculate pitch (angle from horizontal)
         val horizontalSpeed = sqrt(velocity.x * velocity.x + velocity.z * velocity.z).toFloat()
         val pitchRad = atan2(-velocity.y.toFloat(), horizontalSpeed) // Negative because up is positive
 
@@ -241,10 +241,6 @@ class WingsuitCanopySystem : SystemBase() {
 
         // Combine rotations: first apply heading, then attitude
         val rotation = multiplyQuaternions(modelRotation, attitudeRotation)
-
-
-        // Option 2: Alternative using rotation matrix approach
-        // val rotation = createQuaternionFromRotationMatrix(rollRad, pitchRad, yawRad)
 
         // Use enlarged scale if enabled
         val scale = if (isEnlarged) CANOPY_SCALE * ENLARGEMENT_FACTOR else CANOPY_SCALE
@@ -287,23 +283,6 @@ class WingsuitCanopySystem : SystemBase() {
         val qy = sy * cp * cr - cy * sp * sr
         val qz = cy * cp * sr - sy * sp * cr
 
-        // pitch yaw roll
-      //  val qw = cp * cy * cr + sp * sy * sr
-      //  val qx = cp * sy * cr + sp * cy * sr
-      //  val qy = sp * cy * cr - cp * sy * sr
-       // val qz = cp * cy * sr - sp * sy * cr
-
-        // (Assuming Quaternion constructor order: qx, qy, qz, qw)
-        //val qw = cr * cp * cy + sr * sp * sy
-       // val qx = sr * cp * cy - cr * sp * sy
-       // val qy = cr * sp * cy + sr * cp * sy
-       // val qz = cr * cp * sy - sr * sp * cy
-
-     //   val qw = cr * cy * cp + sr * sy * sp
-     //   val qx = cr * cy * sp + sr * sy * cp
-     //   val qy = cr * sy * cp - sr * cy * sp
-    //    val qz = sr * cy * cp - cr * sy * sp
-
         return Quaternion(qx, qy, qz, qw)
     }
 
@@ -319,87 +298,6 @@ class WingsuitCanopySystem : SystemBase() {
 
         return Quaternion(x, y, z, w)
     }
-
-
-    /**
-     * Alternative approach: Create quaternion from rotation matrix
-     * This shows how to convert a 3x3 rotation matrix to quaternion
-     */
-    private fun createQuaternionFromRotationMatrix(roll: Float, pitch: Float, yaw: Float): Quaternion {
-        // Build rotation matrix for Y-up coordinate system
-        // R = R_yaw * R_pitch * R_roll
-
-        val cy = cos(yaw)
-        val sy = sin(yaw)
-        val cp = cos(pitch)
-        val sp = sin(pitch)
-        val cr = cos(roll)
-        val sr = sin(roll)
-
-        // Combined rotation matrix (3x3)
-        // R_yaw * R_pitch * R_roll multiplication
-        val m00 = cy * cp
-        val m01 = cy * sp * sr - sy * cr
-        val m02 = cy * sp * cr + sy * sr
-
-        val m10 = sy * cp
-        val m11 = sy * sp * sr + cy * cr
-        val m12 = sy * sp * cr - cy * sr
-
-        val m20 = -sp
-        val m21 = cp * sr
-        val m22 = cp * cr
-
-        // Convert rotation matrix to quaternion
-        return rotationMatrixToQuaternion(m00, m01, m02, m10, m11, m12, m20, m21, m22)
-    }
-
-    /**
-     * Convert 3x3 rotation matrix to quaternion
-     * Using Shepperd's method for numerical stability
-     */
-    private fun rotationMatrixToQuaternion(
-        m00: Float, m01: Float, m02: Float,
-        m10: Float, m11: Float, m12: Float,
-        m20: Float, m21: Float, m22: Float
-    ): Quaternion {
-        val trace = m00 + m11 + m22
-
-        return if (trace > 0) {
-            // Standard case
-            val s = sqrt(trace + 1.0f) * 2  // s = 4 * qw
-            val w = 0.25f * s
-            val x = (m21 - m12) / s
-            val y = (m02 - m20) / s
-            val z = (m10 - m01) / s
-            Quaternion(x, y, z, w)
-        } else if ((m00 > m11) && (m00 > m22)) {
-            // m00 is largest
-            val s = sqrt(1.0f + m00 - m11 - m22) * 2  // s = 4 * qx
-            val w = (m21 - m12) / s
-            val x = 0.25f * s
-            val y = (m01 + m10) / s
-            val z = (m02 + m20) / s
-            Quaternion(x, y, z, w)
-        } else if (m11 > m22) {
-            // m11 is largest
-            val s = sqrt(1.0f + m11 - m00 - m22) * 2  // s = 4 * qy
-            val w = (m02 - m20) / s
-            val x = (m01 + m10) / s
-            val y = 0.25f * s
-            val z = (m12 + m21) / s
-            Quaternion(x, y, z, w)
-        } else {
-            // m22 is largest
-            val s = sqrt(1.0f + m22 - m00 - m11) * 2  // s = 4 * qz
-            val w = (m10 - m01) / s
-            val x = (m02 + m20) / s
-            val y = (m12 + m21) / s
-            val z = 0.25f * s
-            Quaternion(x, y, z, w)
-        }
-    }
-
 
     fun setEnlarged(enlarged: Boolean) {
         isEnlarged = enlarged

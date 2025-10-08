@@ -9,8 +9,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.platypii.baselinexr.Services;
+import com.platypii.baselinexr.location.AtmosphericModel;
 import com.platypii.baselinexr.location.KalmanFilter3D;
 import com.platypii.baselinexr.location.LocationProvider;
+import com.platypii.baselinexr.location.PolarLibrary;
 import com.platypii.baselinexr.location.TimeOffset;
 import com.platypii.baselinexr.measurements.MLocation;
 import com.platypii.baselinexr.util.AdjustBounds;
@@ -24,6 +26,18 @@ import static com.platypii.baselinexr.util.Numbers.isReal;
 public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation> {
 
     private static final int AXIS_SPEED = 0;
+    private static final double GRAVITY = 9.80665; // m/s²
+
+    // Sustained speeds result class
+    private static class SustainedSpeeds {
+        final double vxs;
+        final double vys;
+
+        SustainedSpeeds(double vxs, double vys) {
+            this.vxs = vxs;
+            this.vys = vys;
+        }
+    }
     @NonNull
     private final EllipseLayer ellipses;
     private final Bounds inner = new Bounds();
@@ -86,6 +100,9 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
             final MLocation loc = locationService.lastLoc;
             if (loc != null && currentTime - loc.millis <= window) {
                 ellipses.setEnabled(true);
+
+                // Draw Aura5 polar first (background)
+                drawAura5Polar(plot);
 
                 // Draw horizontal, vertical speed
                 final double vx = locationService.lastLoc.groundSpeed();
@@ -227,7 +244,7 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
 
             if (isReal(vax) && isReal(vay) ) {
                 // Calculate accelBall position: speeds + c * acceleration
-               // final double c = 1.2; // Acceleration scaling constant
+                // final double c = 1.2; // Acceleration scaling constant
                 final double accelBallX = vax ;
                 final double accelBallY = vay ;
 
@@ -238,6 +255,105 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
                 plot.drawPoint(AXIS_SPEED, accelBallX, accelBallY, 15f); // Large radius
             }
         }
+    }
+
+    /**
+     * Convert CL/CD coefficients to sustained speeds using atmospheric density
+     */
+    private static SustainedSpeeds coefftoss(double cl, double cd, double s, double m, double rho) {
+        final double k = 0.5 * rho * s / m;
+        final double kl = cl * k / GRAVITY;
+        final double kd = cd * k / GRAVITY;
+        final double denom = Math.pow(kl * kl + kd * kd, 0.75);
+        return new SustainedSpeeds(kl / denom, kd / denom);
+    }
+
+    /**
+     * Draw Aura5 polar on the speed chart
+     */
+    private void drawAura5Polar(@NonNull Plot plot) {
+        final PolarLibrary.WingsuitPolar polar = PolarLibrary.AURA_FIVE_POLAR;
+
+        // Get current altitude for density calculation (use GPS altitude or default to 1000m)
+        float altitude = 1000f; // Default altitude
+        if (locationService != null && locationService.lastLoc != null) {
+            altitude = (float) locationService.lastLoc.altitude_gps;
+        }
+
+        // Calculate density with 10 degree temperature offset
+        final float density = AtmosphericModel.calculateDensity(altitude, 10f);
+
+        plot.paint.setStyle(Paint.Style.STROKE);
+        plot.paint.setStrokeWidth(2 * options.density); // 2dp thick line
+        plot.paint.setStrokeCap(Paint.Cap.ROUND);
+
+        SustainedSpeeds prevSpeeds = null;
+
+        // Draw line segments connecting the polar points
+        for (int i = 0; i < polar.stallPoint.size(); i++) {
+            PolarLibrary.PolarPoint point = polar.stallPoint.get(i);
+
+            // Convert to sustained speeds
+            SustainedSpeeds speeds = coefftoss(point.cl, point.cd, polar.s, polar.m, density);
+
+            // Draw line segment from previous point to current point
+            if (prevSpeeds != null) {
+                // Get AOA for color (use index to map to AOA array)
+                int aoa = 0;
+                if (i < polar.aoas.length) {
+                    aoa = polar.aoas[i];
+                }
+
+                // Color based on AOA - gradient from blue (low AOA) to red (high AOA)
+                int color = getAOAColor(aoa);
+                plot.paint.setColor(color);
+
+                // Draw line segment
+                final float x1 = plot.getX(prevSpeeds.vxs);
+                final float y1 = plot.getY(-prevSpeeds.vys);
+                final float x2 = plot.getX(speeds.vxs);
+                final float y2 = plot.getY(-speeds.vys);
+
+                plot.canvas.drawLine(x1, y1, x2, y2, plot.paint);
+            }
+
+            prevSpeeds = speeds;
+        }
+    }
+
+    /**
+     * Get color based on AOA (angle of attack)
+     * @param aoa Angle of attack in degrees
+     * @return ARGB color
+     */
+    private static int getAOAColor(int aoa) {
+        // Normalize AOA to 0-1 range (assuming AOA range 0-90 degrees)
+        float normalized = Math.max(0f, Math.min(1f, aoa / 90f));
+
+        // Create color gradient: Blue (low AOA) -> Green -> Yellow -> Red (high AOA)
+        int red, green, blue;
+
+        if (normalized < 0.33f) {
+            // Blue to Green
+            float t = normalized / 0.33f;
+            red = 0;
+            green = (int) (255 * t);
+            blue = (int) (255 * (1 - t));
+        } else if (normalized < 0.66f) {
+            // Green to Yellow
+            float t = (normalized - 0.33f) / 0.33f;
+            red = (int) (255 * t);
+            green = 255;
+            blue = 0;
+        } else {
+            // Yellow to Red
+            float t = (normalized - 0.66f) / 0.34f;
+            red = 255;
+            green = (int) (255 * (1 - t));
+            blue = 0;
+        }
+
+        return 0x88000000 | (red << 16) | (green << 8) | blue; // Semi-transparent
     }
 
     /**
@@ -352,8 +468,8 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
         }
         // Clear sustained speed history
         //synchronized (sustainedHistory) {
-           // sustainedHistory.clear();
-       //}
+        // sustainedHistory.clear();
+        //}
     }
 
     @Override

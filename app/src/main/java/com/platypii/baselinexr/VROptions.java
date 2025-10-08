@@ -12,7 +12,7 @@ public class VROptions {
     public static LatLngAlt dropzone = new LatLngAlt(40.6109180, -112.3480495, 1314);
 
     // Current active configuration
-    public static VROptions current = VROptionsList.CHINA;
+    public static VROptions current = VROptionsList.SQUAW;
     public enum ShaderType {
         DEFAULT_SHADER,
         LOD_SHADER
