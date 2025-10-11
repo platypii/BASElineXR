@@ -45,22 +45,25 @@ class WingsuitCanopySystem : SystemBase() {
     }
 
     private fun initializeModels() {
-        // Create wingsuit entity using tsimwingsuit.glb model
+        // Initial model alignment rotation (to fix model orientation)
+        val initialWingsuitRotation = createQuaternionFromEuler(0f, (Math.PI).toFloat(), (-Math.PI/2).toFloat()+Adjustments.yawAdjustment)
+        val initialCanopyRotation = createQuaternionFromEuler(0f, (Math.PI).toFloat(), (-Math.PI/2).toFloat()+Adjustments.yawAdjustment)
+
+        // Create wingsuit entity using tsimwingsuit.glb model with initial rotation
         wingsuitEntity = Entity.create(
             Mesh("tsimwingsuit.glb".toUri()),
-            Transform(Pose(Vector3(0f))),
+            Transform(Pose(Vector3(0f), initialWingsuitRotation)),
             Scale(Vector3(WINGSUIT_SCALE)),
             Visible(false) // Start invisible
         )
 
-        // Create canopy entity using cp1.glb model
+        // Create canopy entity using cp1.glb model with initial rotation
         canopyEntity = Entity.create(
             Mesh("cp1.glb".toUri()),
-            Transform(Pose(Vector3(0f))), // add transform here?
+            Transform(Pose(Vector3(0f), initialCanopyRotation)),
             Scale(Vector3(CANOPY_SCALE)),
             Visible(false) // Start invisible
         )
-
         initialized = true
         Log.i(TAG, "WingsuitCanopySystem initialized")
     }
@@ -161,20 +164,22 @@ class WingsuitCanopySystem : SystemBase() {
 
         // Calculate flight yaw for +Z forward coordinate system
         // For +Z forward: yaw = atan2(vZ, vX) where vZ=North, vX=East
-        val flightYaw = atan2(velocity.z.toFloat(), velocity.x.toFloat())
+        val flightYaw = -atan2(velocity.z.toFloat(), velocity.x.toFloat())
 
         val aoa = 10*Math.PI/180
 
         // Create two separate rotations and combine them
         // 1. Model  offset
-        val modelRotation = createQuaternionFromEuler(0f, (Math.PI).toFloat()+aoa.toFloat(), (-Math.PI/2).toFloat()+Adjustments.yawAdjustment)
+        val modelRotation = createQuaternionFromEuler(0f, (Math.PI).toFloat()+aoa.toFloat(), (Math.PI).toFloat())
 
         // 2. Flight attitude
-        val attitudeRotation = createQuaternionFromEuler(-rollRad, -pitchRad, flightYaw)
-
+        val attitudeRotation = createQuaternionFromEuler(rollRad, pitchRad, (-flightYaw -Math.PI/2 -  Adjustments.yawAdjustment   ).toFloat())
+            val controlRotation = createQuaternionFromEuler(0f, aoa.toFloat(), 0f)
         // Combine rotations: first apply offset, then attitude
-        val rotation = multiplyQuaternions(modelRotation, attitudeRotation)
 
+        val wsRotation = multiplyQuaternions(attitudeRotation, controlRotation)
+
+        val rotation = multiplyQuaternions(modelRotation, attitudeRotation)
 
         // Use enlarged scale if enabled
         val scale = if (isEnlarged) WINGSUIT_SCALE * ENLARGEMENT_FACTOR else WINGSUIT_SCALE

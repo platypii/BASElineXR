@@ -23,6 +23,10 @@ class MiniMapPanel : SystemBase() {
     private var greenDot: View? = null
     private var minimapImage: ImageView? = null
 
+    // For periodic auto-selection
+    private var lastAutoSelectTime = 0L
+    private val autoSelectInterval = 10000L // Check every 10 seconds
+
 
     override fun execute() {
         val activity = SpatialActivityManager.getVrActivity<BaselineActivity>()
@@ -36,6 +40,14 @@ class MiniMapPanel : SystemBase() {
             grabbablePanel?.setupInteraction()
             grabbablePanel?.updatePosition()
             updateMiniMapPosition()
+
+            // Periodically check if we should auto-select a different minimap
+            val currentTime = System.currentTimeMillis()
+            if (currentTime - lastAutoSelectTime > autoSelectInterval) {
+                autoSelectMinimap()
+                lastAutoSelectTime = currentTime
+            }
+
             updateRedDotPosition()
             updateBlueDotPosition()
             updateGreenDotPosition()
@@ -83,6 +95,45 @@ class MiniMapPanel : SystemBase() {
         this.redDot = redDot
         this.blueDot = blueDot
         this.greenDot = greenDot
+
+        // Load the current minimap image
+        loadCurrentMinimap()
+    }
+
+    /**
+     * Load the currently configured minimap image
+     */
+    private fun loadCurrentMinimap() {
+        minimapImage?.let { imageView ->
+            imageView.setImageResource(VROptions.minimap.drawableResource())
+            Log.i("MiniMapPanel", "Loaded minimap: ${VROptions.minimap.drawableResource()}")
+        }
+    }
+
+    /**
+     * Update minimap based on current GPS location (auto-select best minimap)
+     */
+    fun autoSelectMinimap() {
+        val loc = Services.location.lastLoc
+        if (loc != null) {
+            val currentMinimap = VROptions.minimap
+            VROptions.autoSelectMinimap(loc.latitude, loc.longitude)
+
+            // If minimap changed, reload the image
+            if (VROptions.minimap != currentMinimap) {
+                loadCurrentMinimap()
+                Log.i("MiniMapPanel", "Auto-switched minimap to: ${VROptions.minimap.drawableResource()}")
+            }
+        }
+    }
+
+    /**
+     * Manually switch to a specific minimap
+     */
+    fun switchMinimap(newMinimap: MiniMapOptions) {
+        VROptions.setMinimap(newMinimap)
+        loadCurrentMinimap()
+        Log.i("MiniMapPanel", "Manually switched minimap to: ${newMinimap.drawableResource()}")
     }
 
     private fun translateLatLngToMinimapPixels(lat: Double, lng: Double): Pair<Int, Int>? {
@@ -200,5 +251,6 @@ class MiniMapPanel : SystemBase() {
         blueDot = null
         greenDot = null
         minimapImage = null
+        lastAutoSelectTime = 0L
     }
 }

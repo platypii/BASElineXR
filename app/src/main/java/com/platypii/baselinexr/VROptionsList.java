@@ -9,21 +9,21 @@ public class VROptionsList {
             "Live",
             null,
             "branded",
-            // summit over the water tower:
-//            new LatLngAlt(47.238, -123.156, 3800.0),
+            // ogden over hangars:
+//           new LatLngAlt(41.191222, -112.010510,4197.728),
             // copy destination from target landing zone
-            new LatLngAlt(40.6109180, -112.3480495, 3200),
+            new LatLngAlt(41.193, -112.008,4197.728),
             VROptions.ShaderType.LOD_SHADER,
             false,
             true,
             true,
             true,
             true,
-            new LatLngAlt(40.5785, 7.99, 2440.0)
+            new LatLngAlt(41.191222, 7.99, 3440.0)
     );
 
     public static final VROptions LIVE_POTM = new VROptions(
-            "Live",
+            "Livep",
             null,
             "branded",
             // summit over the water tower:
@@ -187,6 +187,21 @@ public class VROptionsList {
             "eiger",
             new LatLngAlt(40.2709309,-111.620655,2146.342
             ), // kpow portal run
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            true,
+            false,
+            true,
+            new LatLngAlt(46.57835, 7.984, 2670.5)
+    );
+
+    public static final VROptions OGDEN_SKYDIVE = new VROptions(
+            "Ogden",
+            "ogden.csv",
+            "eiger",
+            new LatLngAlt(41.2148900,-111.9970277,4197.728
+            ), //
             VROptions.ShaderType.LOD_SHADER,
             false,
             true,

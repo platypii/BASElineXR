@@ -10,8 +10,7 @@
         android:layout_width="500dp"
         android:layout_height="340dp"
         android:background="#00000000"
-        android:scaleType="centerCrop"
-        android:src="@drawable/minimap_tooele" />
+        android:scaleType="centerCrop"  />
 
     <View
         android:id="@+id/blue_dot"

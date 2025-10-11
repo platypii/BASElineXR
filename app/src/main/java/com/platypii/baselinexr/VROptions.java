@@ -6,13 +6,14 @@ import com.platypii.baselinexr.measurements.LatLngAlt;
 public class VROptions {
 
     // Target landing zone in the real world
-    // Ogden 41.199716, -112.001832, 2086 m 1353M
+    // Ogden 41.199716, -112.001832, 2086 m 1353M 41.213346, -111.984535, 2420
     // kpow 47.2375, -123.1458, 84
     // tooele 40.6109180, -112.3480495, 1314
-    public static LatLngAlt dropzone = new LatLngAlt(40.6109180, -112.3480495, 1314);
+    //public static LatLngAlt dropzone = new LatLngAlt(41.199716, -112.001832, 1351);
+    public static LatLngAlt dropzone = new LatLngAlt(47.2375, -123.1458, 84);
 
     // Current active configuration
-    public static VROptions current = VROptionsList.SQUAW;
+    public static VROptions current = VROptionsList.EIGER_SKYDIVE;
     public enum ShaderType {
         DEFAULT_SHADER,
         LOD_SHADER
@@ -56,10 +57,42 @@ public class VROptions {
         this.shader = shader;
     }
 
-    public static final MiniMapOptions minimap = VROptionsList.MM_TOOELE;
+    public static MiniMapOptions minimap = VROptionsList.MM_OGDEN;
+
 
     // Offset distance when clicking NSEW
     public static float offsetDistance = 300; // meters
+
+
+
+    /**
+     * Auto-select the best minimap based on GPS coordinates
+     */
+    public static void autoSelectMinimap(double lat, double lng) {
+        // Check if coordinates are within any minimap bounds
+        MiniMapOptions[] availableMinimaps = {
+                VROptionsList.MM_TOOELE,
+                VROptionsList.MM_OGDEN,
+                VROptionsList.MM_KPOW
+        };
+
+        for (MiniMapOptions map : availableMinimaps) {
+            if (lat >= map.latMin() && lat <= map.latMax() &&
+                    lng >= map.lngMin() && lng <= map.lngMax()) {
+                minimap = map;
+                return;
+            }
+        }
+
+        // If no match found, keep current minimap
+    }
+
+    /**
+     * Manually set the minimap
+     */
+    public static void setMinimap(MiniMapOptions newMinimap) {
+        minimap = newMinimap;
+    }
 
     // Default lighting constants
     public static final Vector3 AMBIENT_COLOR = new Vector3(1.4f);
