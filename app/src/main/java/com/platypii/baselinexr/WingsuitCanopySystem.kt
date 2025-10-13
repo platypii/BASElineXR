@@ -16,6 +16,7 @@ import com.platypii.baselinexr.util.HeadPoseUtil
 import com.platypii.baselinexr.jarvis.FlightMode
 import com.platypii.baselinexr.location.MotionEstimator
 import com.platypii.baselinexr.location.KalmanFilter3D
+import com.platypii.baselinexr.location.PolarLibrary
 import com.platypii.baselinexr.location.SimpleEstimator
 import kotlin.math.*
 
@@ -127,10 +128,10 @@ class WingsuitCanopySystem : SystemBase() {
     private fun updateWingsuitOrientation(motionEstimator: MotionEstimator, position: Vector3, hasNewGpsData: Boolean) {
         val wingsuitEntity = this.wingsuitEntity ?: return
 
-        // Use cached predicted state from 90Hz GpsToWorldTransform updates
+        // Use cached predicted state from 90Hz GpsToWorldTransform updates with interpolated wingsuit parameters
         val (velocity, rollRad) = when (motionEstimator) {
             is KalmanFilter3D -> {
-                // Get cached predicted state from last predictDelta() call
+                // Get cached predicted state from last predictDelta() call with 90Hz interpolated roll
                 val predictedState = motionEstimator.getCachedPredictedState(System.currentTimeMillis())
                 Pair(predictedState.velocity, predictedState.roll.toFloat())
             }
@@ -156,7 +157,21 @@ class WingsuitCanopySystem : SystemBase() {
         // For +Z forward: yaw = atan2(vZ, vX) where vZ=North, vX=East
         val flightYaw = -atan2(velocity.z.toFloat(), velocity.x.toFloat())
 
-        val aoa = 10*Math.PI/180
+        // Calculate AOA from measured KL/KD coefficients using polar data
+        val aoaDeg = when (motionEstimator) {
+            is KalmanFilter3D -> {
+                val predictedState = motionEstimator.getCachedPredictedState(System.currentTimeMillis())
+                val lastUpdate = motionEstimator.getLastUpdate()
+                if (lastUpdate != null) {
+                    PolarLibrary.convertKlKdToAOA(predictedState.kl, predictedState.kd, lastUpdate.altitude_gps,
+                        PolarLibrary.AURA_FIVE_POLAR)
+                } else {
+                    10.0 // Default AOA if no GPS data
+                }
+            }
+            else -> 10.0 // Default AOA for other estimators
+        }
+        val aoa = aoaDeg * Math.PI / 180 // Convert to radians
 
         // Create two separate rotations and combine them
         // 1. Model  offset
@@ -164,10 +179,10 @@ class WingsuitCanopySystem : SystemBase() {
 
         // 2. Flight attitude
         val attitudeRotation = createQuaternionFromEuler(rollRad, pitchRad, (-flightYaw -Math.PI/2 -  Adjustments.yawAdjustment   ).toFloat())
-       // val controlRotation = createQuaternionFromEuler(0f, aoa.toFloat(), 0f)
+        // val controlRotation = createQuaternionFromEuler(0f, aoa.toFloat(), 0f)
         // Combine rotations: first apply offset, then attitude
 
-       // val wsRotation = multiplyQuaternions(attitudeRotation, controlRotation)
+        // val wsRotation = multiplyQuaternions(attitudeRotation, controlRotation)
 
         val rotation = multiplyQuaternions(modelRotation, attitudeRotation)
 
@@ -183,15 +198,15 @@ class WingsuitCanopySystem : SystemBase() {
             )
         )
 
-        Log.d(TAG, "Wingsuit: vE=${velocity.x.toInt()}, vN=${velocity.z.toInt()}, climb=${velocity.y.toInt()}, pitch=${Math.toDegrees(pitchRad.toDouble()).toInt()}°, heading=${Math.toDegrees(flightYaw.toDouble()).toInt()}°, roll=${Math.toDegrees(rollRad.toDouble()).toInt()}° | Model forward=+Z, left=+X")
+        Log.d(TAG, "Wingsuit: vE=${velocity.x.toInt()}, vN=${velocity.z.toInt()}, climb=${velocity.y.toInt()}, pitch=${Math.toDegrees(pitchRad.toDouble()).toInt()}°, heading=${Math.toDegrees(flightYaw.toDouble()).toInt()}°, roll=${Math.toDegrees(rollRad.toDouble()).toInt()}°, AOA=${aoaDeg.toInt()}° | Model forward=+Z, left=+X")
     }
 
     private fun updateCanopyOrientation(motionEstimator: MotionEstimator, position: Vector3, hasNewGpsData: Boolean) {
         val canopyEntity = this.canopyEntity ?: return
-        // Use cached predicted state from 90Hz GpsToWorldTransform updates
+        // Use cached predicted state from 90Hz GpsToWorldTransform updates with interpolated wingsuit parameters
         val (velocity, rollRad) = when (motionEstimator) {
             is KalmanFilter3D -> {
-                // Get cached predicted state from last predictDelta() call
+                // Get cached predicted state from last predictDelta() call with 90Hz interpolated roll
                 val predictedState = motionEstimator.getCachedPredictedState(System.currentTimeMillis())
                 Pair(predictedState.velocity, predictedState.roll.toFloat())
             }

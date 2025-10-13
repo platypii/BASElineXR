@@ -163,4 +163,37 @@ public class PolarLibrary {
         2.0,            // s (wing area in m²)
         77.5            // m (mass in kg)
     );
+
+    /**
+     * Convert measured KL/KD coefficients to Angle of Attack (AOA) in degrees
+     * Uses atmospheric model for density calculation and specified polar parameters
+     *
+     * @param kl Measured lift coefficient (from Kalman filter)
+     * @param kd Measured drag coefficient (from Kalman filter)
+     * @param altitudeGps GPS altitude in meters
+     * @param polar Wingsuit polar data containing s (wing area) and m (mass)
+     * @return AOA in degrees, clamped between 0 and 30 degrees
+     */
+    public static double convertKlKdToAOA(double kl, double kd, double altitudeGps, WingsuitPolar polar) {
+        // Constants
+        final double GRAVITY = 9.80665; // m/s²
+        final double TEMP_OFFSET = 10.0f; // Temperature offset in degrees C
+
+        // Calculate atmospheric density using altitude + 10°C temperature offset
+        final double rho = AtmosphericModel.calculateDensity((float)altitudeGps, 10);
+
+        // Calculate k factor: k = 0.5 * rho * s / m
+        final double k = 0.5 * rho * polar.s / polar.m;
+
+        // Convert KL/KD to CL/CD: cl = kl / k * gravity, cd = kd / k * gravity
+        final double cl = kl / k * GRAVITY;
+        final double cd = kd / k * GRAVITY;
+
+        // Calculate AOA using formula: aoadeg = 20.874*sqrt(cl^2+cd^2) - 1.1733
+        final double clcdMagnitude = Math.sqrt(cl * cl + cd * cd);
+        final double aoaDeg = 20.874 * clcdMagnitude - 1.1733;
+
+        // Clamp between 0 and 30 degrees
+        return Math.max(0.0, Math.min(35.0, aoaDeg));
+    }
 }
