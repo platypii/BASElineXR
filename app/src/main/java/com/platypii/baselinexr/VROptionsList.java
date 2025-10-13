@@ -64,7 +64,7 @@ public class VROptionsList {
             true,
             true,
             true,
-            false,
+            true,
             null
     );
 
@@ -104,9 +104,9 @@ public class VROptionsList {
             VROptions.ShaderType.LOD_SHADER,
             false,
             true,
-            false,
             true,
-            false,
+            true,
+            true,
             null
     );
 
@@ -148,7 +148,7 @@ public class VROptionsList {
             true,
             true,
             false,
-            false,
+            true,
             null
     );
 

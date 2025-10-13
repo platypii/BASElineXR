@@ -41,6 +41,7 @@ class WingsuitCanopySystem : SystemBase() {
             initializeModels()
         }
 
+        // Update driven by 90Hz GpsToWorldTransform predictDelta() calls
         updateModelOrientationAndVisibility()
     }
 
@@ -126,36 +127,25 @@ class WingsuitCanopySystem : SystemBase() {
     private fun updateWingsuitOrientation(motionEstimator: MotionEstimator, position: Vector3, hasNewGpsData: Boolean) {
         val wingsuitEntity = this.wingsuitEntity ?: return
 
-        // Only update orientation when we have new GPS data
-        if (!hasNewGpsData) {
-            // Just update position, keep existing orientation
-            wingsuitEntity.setComponent(Transform(Pose(position, wingsuitEntity.getComponent<Transform>().transform.q)))
-            return
-        }
-
-        // Get velocity from motion estimator (ENU coordinates: East, North, Up)
-        // Cast to access velocity and roll properties
-        val velocity = when (motionEstimator) {
-            is SimpleEstimator -> motionEstimator.v
+        // Use cached predicted state from 90Hz GpsToWorldTransform updates
+        val (velocity, rollRad) = when (motionEstimator) {
             is KalmanFilter3D -> {
-                val state = motionEstimator.state // Property access
-                state.velocity
-                //com.platypii.baselinexr.util.tensor.Vector3(lastUpdate.vE, lastUpdate.climb, lastUpdate.vN)
+                // Get cached predicted state from last predictDelta() call
+                val predictedState = motionEstimator.getCachedPredictedState(System.currentTimeMillis())
+                Pair(predictedState.velocity, predictedState.roll.toFloat())
+            }
+            is SimpleEstimator -> {
+                Pair(motionEstimator.v, 0f)
             }
             else -> {
                 // Fallback to GPS velocity if not a known estimator type
                 val lastUpdate = motionEstimator.getLastUpdate()
-                com.platypii.baselinexr.util.tensor.Vector3(lastUpdate.vE, lastUpdate.climb, lastUpdate.vN)
+                if (lastUpdate != null) {
+                    Pair(com.platypii.baselinexr.util.tensor.Vector3(lastUpdate.vE, lastUpdate.climb, lastUpdate.vN), 0f)
+                } else {
+                    return // No data available
+                }
             }
-        }
-
-        // Get roll angle from motion estimator if available
-        val rollRad = when (motionEstimator) {
-            is KalmanFilter3D -> {
-                val state = motionEstimator.state // Property access
-                state.roll.toFloat()
-            }
-            else -> 0f // Default to no roll for other estimator types
         }
 
         // Calculate pitch (angle from horizontal)
@@ -174,10 +164,10 @@ class WingsuitCanopySystem : SystemBase() {
 
         // 2. Flight attitude
         val attitudeRotation = createQuaternionFromEuler(rollRad, pitchRad, (-flightYaw -Math.PI/2 -  Adjustments.yawAdjustment   ).toFloat())
-            val controlRotation = createQuaternionFromEuler(0f, aoa.toFloat(), 0f)
+       // val controlRotation = createQuaternionFromEuler(0f, aoa.toFloat(), 0f)
         // Combine rotations: first apply offset, then attitude
 
-        val wsRotation = multiplyQuaternions(attitudeRotation, controlRotation)
+       // val wsRotation = multiplyQuaternions(attitudeRotation, controlRotation)
 
         val rotation = multiplyQuaternions(modelRotation, attitudeRotation)
 
@@ -198,53 +188,47 @@ class WingsuitCanopySystem : SystemBase() {
 
     private fun updateCanopyOrientation(motionEstimator: MotionEstimator, position: Vector3, hasNewGpsData: Boolean) {
         val canopyEntity = this.canopyEntity ?: return
-
-        // Only update orientation when we have new GPS data
-        if (!hasNewGpsData) {
-            // Just update position, keep existing orientation
-            canopyEntity.setComponent(Transform(Pose(position, canopyEntity.getComponent<Transform>().transform.q)))
-            return
-        }
-
-        // Get velocity from motion estimator (ENU coordinates: East, North, Up)
-        val velocity = when (motionEstimator) {
-            is SimpleEstimator -> motionEstimator.v
+        // Use cached predicted state from 90Hz GpsToWorldTransform updates
+        val (velocity, rollRad) = when (motionEstimator) {
             is KalmanFilter3D -> {
-                val state = motionEstimator.state // Property access
-                state.velocity
+                // Get cached predicted state from last predictDelta() call
+                val predictedState = motionEstimator.getCachedPredictedState(System.currentTimeMillis())
+                Pair(predictedState.velocity, predictedState.roll.toFloat())
+            }
+            is SimpleEstimator -> {
+                Pair(motionEstimator.v, 0f)
             }
             else -> {
                 // Fallback to GPS velocity if not a known estimator type
                 val lastUpdate = motionEstimator.getLastUpdate()
-                com.platypii.baselinexr.util.tensor.Vector3(lastUpdate.vE, lastUpdate.climb, lastUpdate.vN)
+                if (lastUpdate != null) {
+                    Pair(com.platypii.baselinexr.util.tensor.Vector3(lastUpdate.vE, lastUpdate.climb, lastUpdate.vN), 0f)
+                } else {
+                    return // No data available
+                }
             }
         }
 
-        // Get roll angle from motion estimator if available
-        val rollRad = when (motionEstimator) {
-            is KalmanFilter3D -> {
-                val state = motionEstimator.state // Property access
-                (state.roll).toFloat() 
-            }
-            else -> 0f // Default to no roll for other estimator types
-        }
         // Calculate pitch (angle from horizontal)
         val horizontalSpeed = sqrt(velocity.x * velocity.x + velocity.z * velocity.z).toFloat()
         val pitchRad = atan2(-velocity.y.toFloat(), horizontalSpeed) // Negative because up is positive
 
         // Calculate flight yaw for +Z forward coordinate system
         // For +Z forward: yaw = atan2(vZ, vX) where vZ=North, vX=East
-        val flightYaw = atan2(velocity.z.toFloat(), velocity.x.toFloat())
+        val flightYaw = -atan2(velocity.z.toFloat(), velocity.x.toFloat())
 
+        val aoa = 10*Math.PI/180
         // Create two separate rotations and combine them
-        // 1. Model heading offset (to align model's forward direction with flight path)
-        val modelRotation = createQuaternionFromEuler(0f, (Math.PI).toFloat(), (-Math.PI/2).toFloat()+Adjustments.yawAdjustment)
+        // 1. Model  offset
+        val modelRotation = createQuaternionFromEuler(0f, (Math.PI).toFloat()+aoa.toFloat(), (Math.PI).toFloat())
 
-        // 2. Flight attitude relative to model's axes
-        // Note: Model faces +Z, so pitch around X-axis, roll around +Z-axis (model's forward)
-        val attitudeRotation = createQuaternionFromEuler(-rollRad, -pitchRad, flightYaw)
+        // 2. Flight attitude
+        val attitudeRotation = createQuaternionFromEuler(rollRad, pitchRad, (-flightYaw -Math.PI/2 -  Adjustments.yawAdjustment   ).toFloat())
+        // val controlRotation = createQuaternionFromEuler(0f, aoa.toFloat(), 0f)
+        // Combine rotations: first apply offset, then attitude
 
-        // Combine rotations: first apply heading, then attitude
+        // val wsRotation = multiplyQuaternions(attitudeRotation, controlRotation)
+
         val rotation = multiplyQuaternions(modelRotation, attitudeRotation)
 
         // Use enlarged scale if enabled

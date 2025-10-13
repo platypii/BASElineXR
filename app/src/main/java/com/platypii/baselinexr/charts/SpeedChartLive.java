@@ -83,8 +83,8 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
 
         options.axis.x = options.axis.y = PlotOptions.axisSpeed();
 
-        history.setMaxSize(300);
-        sustainedHistory.setMaxSize(300); // Same max size as regular history
+        history.setMaxSize(200);
+        sustainedHistory.setMaxSize(200); // Same max size as regular history
 
         // Add layers
         ellipses = new EllipseLayer(options.density);
@@ -104,9 +104,20 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
                 // Draw Aura5 polar first (background)
                 drawAura5Polar(plot);
 
-                // Draw horizontal, vertical speed
-                final double vx = locationService.lastLoc.groundSpeed();
-                final double vy = locationService.lastLoc.climb;
+                // Get predicted velocity for 90Hz updates
+                double vx, vy;
+                if (Services.location != null && Services.location.motionEstimator instanceof KalmanFilter3D) {
+                    final KalmanFilter3D kf3d = (KalmanFilter3D) Services.location.motionEstimator;
+                    final KalmanFilter3D.KFState predictedState = kf3d.getCachedPredictedState(System.currentTimeMillis());
+                    vx = Math.sqrt(predictedState.velocity().x * predictedState.velocity().x + predictedState.velocity().z * predictedState.velocity().z);
+                    vy = predictedState.velocity().y;
+                } else {
+                    // Fallback to GPS velocity
+                    vx = locationService.lastLoc.groundSpeed();
+                    vy = locationService.lastLoc.climb;
+                }
+
+                // Draw horizontal, vertical speed using predicted velocity
                 drawSpeedLines(plot, vx, vy);
 
                 // Draw accelBall first (large white dot)
@@ -118,13 +129,13 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
                 // Draw current sustained speeds (if available)
                 drawCurrentSustainedSpeeds(plot);
 
-                // Draw regular speed history
+                // Draw regular speed history at 90Hz with predicted state
                 drawHistory(plot, currentTime);
 
-                // Draw horizontal, vertical speed labels
+                // Draw horizontal, vertical speed labels using predicted velocity
                 drawSpeedLabels(plot, vx, vy);
 
-                // Draw current location
+                // Draw current location using predicted velocity
                 drawLocation(plot, currentTime, loc.millis, vx, vy);
             } else {
                 // Draw "no gps signal"
@@ -137,7 +148,7 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
     }
 
     /**
-     * Draw historical points
+     * Draw historical points at 90Hz with predicted state for current location
      */
     private void drawHistory(@NonNull Plot plot, long currentTime) {
         synchronized (history) {
@@ -145,8 +156,19 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
             for (MLocation loc : history) {
                 final int t = (int) (currentTime - loc.millis);
                 if (t <= window) {
-                    final double vx = loc.groundSpeed();
-                    final double vy = loc.climb;
+                    double vx, vy;
+
+                    // Use predicted velocity for the most recent point (90Hz updates)
+                    if (t < 100 && Services.location != null && Services.location.motionEstimator instanceof KalmanFilter3D) {
+                        final KalmanFilter3D kf3d = (KalmanFilter3D) Services.location.motionEstimator;
+                        final KalmanFilter3D.KFState predictedState = kf3d.getCachedPredictedState(System.currentTimeMillis());
+                        vx = Math.sqrt(predictedState.velocity().x * predictedState.velocity().x + predictedState.velocity().z * predictedState.velocity().z);
+                        vy = predictedState.velocity().y;
+                    } else {
+                        // Use GPS velocity for historical points
+                        vx = loc.groundSpeed();
+                        vy = loc.climb;
+                    }
 
                     // Style point based on freshness
                     final int purple = 0x5500ff;
@@ -196,12 +218,14 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
     }
 
     /**
-     * Draw current sustained speeds
+     * Draw current sustained speeds using cached predicted state from 90Hz GpsToWorldTransform updates
      */
     private void drawCurrentSustainedSpeeds(@NonNull Plot plot) {
         if (Services.location != null && Services.location.motionEstimator instanceof KalmanFilter3D) {
             final KalmanFilter3D kf3d = (KalmanFilter3D) Services.location.motionEstimator;
-            final KalmanFilter3D.KFState state = kf3d.getState();
+
+            // Use cached predicted state from last predictDelta() call
+            final KalmanFilter3D.KFState state = kf3d.getCachedPredictedState(System.currentTimeMillis());
 
             if (isReal(state.kl()) && isReal(state.kd())) {
                 // Calculate sustained speeds: vxs = kl/(kl²+kd²)^1.5, vys = kd/(kl²+kd²)^1.5
@@ -221,14 +245,16 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
     }
 
     /**
-     * Draw accelBall (speeds + c * acceleration) as a large white dot
+     * Draw accelBall (speeds + c * acceleration) as a large white dot using cached predicted state from 90Hz GpsToWorldTransform updates
      */
     private void drawAccelBall(@NonNull Plot plot) {
         if (Services.location != null && Services.location.motionEstimator instanceof KalmanFilter3D) {
             final KalmanFilter3D kf3d = (KalmanFilter3D) Services.location.motionEstimator;
-            final KalmanFilter3D.KFState state = kf3d.getState();
 
-            // Get velocity and acceleration from the filter state
+            // Use cached predicted state from last predictDelta() call
+            final KalmanFilter3D.KFState state = kf3d.getCachedPredictedState(System.currentTimeMillis());
+
+            // Get velocity and acceleration from the predicted filter state
             final double vx = state.velocity().x;
             final double vz = state.velocity().z;
             final double ax = state.acceleration().x;
@@ -236,10 +262,7 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
             final double vax = Math.sqrt((vx+ax)*(vx+ax) + (vz+az)*(vz+az));
             final double vay = state.acceleration().y+state.velocity().y ;
 
-
-
             final double vy = state.velocity().y;
-
             final double ay = state.acceleration().y;
 
             if (isReal(vax) && isReal(vay) ) {
@@ -270,6 +293,7 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
 
     /**
      * Draw Aura5 polar on the speed chart
+     * todo optimize this
      */
     private void drawAura5Polar(@NonNull Plot plot) {
         final PolarLibrary.WingsuitPolar polar = PolarLibrary.AURA_FIVE_POLAR;

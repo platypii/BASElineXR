@@ -45,16 +45,17 @@ public final class KalmanFilter3D implements MotionEstimator {
     // Last timing & reference
     private MLocation origin = null;
     private MLocation lastGps = null;
-
-    // For plotting / inspection
-    private Vector3 aMeasured = new Vector3();
-    private Vector3 aWSE = new Vector3();
+    // saved kalman gain
     private Vector3 kalmanStep = new Vector3();
+    private Vector3 kalmanVelStep = new Vector3();
+    private Vector3 kalmanAccelStep = new Vector3();
 
     // Constants
     private static final double MAX_STEP = 0.1; // seconds
     private static final double accelerationLimit = 9.81 * 3.0; // 3 g on each axis limit for stability
-    private static final boolean groundModeEnabled = false;// set ground accel to 0
+
+    private static final double groundAccelerationLimit = 9.81 ; // 1 g on each axis limit on ground
+    private static final boolean groundModeEnabled = true;// set ground accel limits
     private static final boolean stepSmoothing = true;
 
     public KalmanFilter3D() {
@@ -90,7 +91,7 @@ public final class KalmanFilter3D implements MotionEstimator {
         R[0][0] = 1.2; R[1][1] = 1.2; R[2][2] = 1.2;
         // Velocity (GPS)
         R[3][3] = 2.25;  R[4][4] = 2.25;  R[5][5] = 2.25;
-/*
+
         //smooth20hz
         // Process noise
         Q = LinearAlgebra.identity(12);
@@ -111,7 +112,7 @@ public final class KalmanFilter3D implements MotionEstimator {
         R[0][0] = 1.21; R[1][1] = 1.21; R[2][2] = 1.21;
         // Velocity (GPS)
         R[3][3] = 2.25;  R[4][4] = 2.25;  R[5][5] = 2.25;
-
+/*
 // 5 hz settings
         // Process noise
         Q = LinearAlgebra.identity(12);
@@ -175,15 +176,9 @@ public final class KalmanFilter3D implements MotionEstimator {
         final Vector3 pMeas = gpsToEnu(gps);
         final double vx = gps.vE, vy = gps.climb, vz = gps.vN;
 
-        // Measured acceleration by finite difference of measured velocity
+        // time step
         final double dt = Math.max(0.0, 1e-3 * (tNow - lastGps.millis));
-        if (dt > 0.0 && lastGps != null) {
-            aMeasured = new Vector3(
-                    (vx - lastGps.vE) / dt,
-                    (vy - lastGps.climb) / dt,
-                    (vz - lastGps.vN) / dt
-            );
-        }
+
 
         // Predict to now
         if (dt > 0.0) predict(dt);
@@ -221,13 +216,19 @@ public final class KalmanFilter3D implements MotionEstimator {
         final double[] Ky = LinearAlgebra.mul(K, y);
         for (int i = 0; i < 12; i++) x[i] += Ky[i];
 
-        // save kalman step
-        kalmanStep.x = Ky[0];
+        // save kalman steps for smoothing
+        kalmanStep.x = Ky[0];       // position step
         kalmanStep.y = Ky[1];
         kalmanStep.z = Ky[2];
+        kalmanVelStep.x = Ky[3];    // velocity step
+        kalmanVelStep.y = Ky[4];
+        kalmanVelStep.z = Ky[5];
+        kalmanAccelStep.x = Ky[6];  // acceleration step
+        kalmanAccelStep.y = Ky[7];
+        kalmanAccelStep.z = Ky[8];
 
         // For plotting: WSE accel from measured velocity
-        aWSE = calculateWingsuitAcceleration(new Vector3(vx, vy, vz), new WSEParams(x[9], x[10], x[11]));
+        //aWSE = calculateWingsuitAcceleration(new Vector3(vx, vy, vz), new WSEParams(x[9], x[10], x[11]));
 
         // P = (I - K H) P
         final double[][] KH   = LinearAlgebra.mul(K, H);
@@ -277,16 +278,24 @@ public final class KalmanFilter3D implements MotionEstimator {
         P = LinearAlgebra.add(FPFT, Q_scaled);
     }
 
+    // Cached predicted state for 90Hz updates
+    private KFState cachedPredictedState = null;
+    private long cachedPredictionTime = 0;
+
     /** Predict the state (without mutating this filter) at a given wallclock time in ms. */
     public Vector3 predictDelta(long currentTimeMillis) {
         if (lastGps == null) return new Vector3();
+
         // Correct for phone/gps time skew
         final double adjustedCurrentTime = TimeOffset.phoneToGpsTime(currentTimeMillis);
-
         double dt = (adjustedCurrentTime - lastGps.millis) * 1e-3;
-        Log.i(TAG,"predictDelta dt=" + dt + " adjustedcurrentTimeMillis=" + adjustedCurrentTime + "lastGps " + lastGps);
-                // clamp if asked for the past
-        if (dt <= 0) return new Vector3(x[0], x[1], x[2]);
+
+        // clamp if asked for the past
+        if (dt <= 0) {
+            cachedPredictedState = toState(x);
+            cachedPredictionTime = currentTimeMillis;
+            return new Vector3(x[0], x[1], x[2]);
+        }
 
         // Clone state and step forward in small increments
         double[] s = x.clone();
@@ -296,17 +305,50 @@ public final class KalmanFilter3D implements MotionEstimator {
             s = integrateState(s, step);
             remaining -= step;
         }
-        Log.i(TAG,s[0] + "," + s[1] + "," + s[2]);
 
-        if(!stepSmoothing) return new Vector3(s[0]-x[0], s[1]-x[1], s[2]-x[2]);
+        if(!stepSmoothing) {
+            cachedPredictedState = toState(s);
+            cachedPredictionTime = currentTimeMillis;
+            return new Vector3(s[0]-x[0], s[1]-x[1], s[2]-x[2]);
+        }
 
-        // smooth kalman step position for 20hz
-        double alpha = 1-(dt * 20);//Services.location.refreshRate.refreshRate; // todo, use gps update rate
+        // Apply Kalman gain smoothing to position, velocity, and acceleration
+        //Log.d(TAG, "refreshrate: " + Services.location.refreshRate.refreshRate);
+        double alpha = 1-(dt * 20);//Services.location.refreshRate.refreshRate); // Services.location.refreshRate.refreshRate; // todo, use gps update rate
         if (alpha < 0) alpha = 0;
         if (alpha > 1) alpha = 1;
+
+        // Smooth position, velocity, and acceleration with Kalman step
         Vector3 ps = kalmanStep.mul(alpha);
-        //return new Vector3(s[0]-x[0], s[1]-x[1], s[2]-x[2]);
-        return new Vector3(s[0]-x[0]-ps.x, s[1]-x[1]-ps.y, s[2]-x[2]-ps.z);
+        Vector3 vs = kalmanVelStep.mul(alpha);
+        Vector3 as = kalmanAccelStep.mul(alpha);
+
+        // Apply smoothing to predicted state
+        s[0] = s[0] - ps.x;  // position
+        s[1] = s[1] - ps.y;
+        s[2] = s[2] - ps.z;
+        s[3] = s[3] - vs.x;  // velocity
+        s[4] = s[4] - vs.y;
+        s[5] = s[5] - vs.z;
+        s[6] = s[6] - as.x;  // acceleration
+        s[7] = s[7] - as.y;
+        s[8] = s[8] - as.z;
+
+        // Cache the full predicted state for other systems to use
+        cachedPredictedState = toState(s);
+        cachedPredictionTime = currentTimeMillis;
+
+        return new Vector3(s[0]-x[0], s[1]-x[1], s[2]-x[2]);
+    }
+
+    /** Get the cached predicted state from the last predictDelta() call */
+    public KFState getCachedPredictedState(long currentTimeMillis) {
+        // Return cached state if it's recent (within 20ms for 90Hz updates)
+        if (cachedPredictedState != null && Math.abs(currentTimeMillis - cachedPredictionTime) <= 20) {
+            return cachedPredictedState;
+        }
+        // Fallback to current state if cache is stale
+        return toState(x);
     }
 
     /** Current state snapshot. */
@@ -377,20 +419,18 @@ public final class KalmanFilter3D implements MotionEstimator {
 
     private void applyAccelLimits(Vector3 accelerationVec, double prevAx, double prevAy, double prevAz) {
         // Apply acceleration magnitude limit
-        if (Math.abs(accelerationVec.x) > accelerationLimit ||
-                Math.abs(accelerationVec.y) > accelerationLimit ||
-                Math.abs(accelerationVec.z) > accelerationLimit) {
-            // Log.d(TAG, "Acceleration limit exceeded. Falling back to previous acceleration.");
-            accelerationVec.x = prevAx;
-            accelerationVec.y = prevAy;
-            accelerationVec.z = prevAz;
-        }
+        if (Math.abs(accelerationVec.x) > accelerationLimit ) accelerationVec.x = prevAx;
+        if (Math.abs(accelerationVec.y) > accelerationLimit ) accelerationVec.y = prevAy;
+        if (Math.abs(accelerationVec.z) > accelerationLimit) accelerationVec.z = prevAz;
         int fm =Services.flightComputer.flightMode;
         //Log.d(TAG, "flight mode: "+Services.flightComputer.flightMode);
         // Apply ground mode (set acceleration to zero if on the ground and enabled)
         if(groundModeEnabled && (fm == FlightMode.MODE_GROUND)){
-            accelerationVec.x = 0.0;
-            accelerationVec.y = 0.0;accelerationVec.z = 0.0;
+            // Apply acceleration magnitude limit
+            if (Math.abs(accelerationVec.x) > groundAccelerationLimit ) accelerationVec.x = prevAx;
+            if (Math.abs(accelerationVec.y) > groundAccelerationLimit ) accelerationVec.y = prevAy;
+            if (Math.abs(accelerationVec.z) > groundAccelerationLimit) accelerationVec.z = prevAz;
+
         }
     }
 
@@ -418,7 +458,7 @@ public final class KalmanFilter3D implements MotionEstimator {
         // Convert from Meta Spatial Vector3 to tensor Vector3 (ENU format)
         return new Vector3(offset.getX(), offset.getY(), offset.getZ());
     }
-    private Vector3 getKalmanStep(){                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+    private Vector3 getKalmanStep(){
         return kalmanStep;
     }
 
@@ -428,8 +468,8 @@ public final class KalmanFilter3D implements MotionEstimator {
                 new Vector3(s[0], s[1], s[2]),
                 new Vector3(s[3], s[4], s[5]),
                 new Vector3(s[6], s[7], s[8]),
-                aMeasured,
-                aWSE,
+                new Vector3(s[6], s[7], s[8]),
+                new Vector3(s[6], s[7], s[8]),
                 s[9], s[10], s[11]
         );
     }
