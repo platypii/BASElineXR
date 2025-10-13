@@ -4,8 +4,10 @@ import android.widget.TextView
 import com.meta.spatial.core.SystemBase
 import com.meta.spatial.core.Vector3
 import com.meta.spatial.toolkit.SpatialActivityManager
+import com.platypii.baselinexr.location.KalmanFilter3D
 import com.platypii.baselinexr.util.Convert
 import com.platypii.baselinexr.util.GpsFreshnessColor
+import kotlin.math.sqrt
 
 class FlightStatsSystem : SystemBase() {
     private var initialized = false
@@ -53,14 +55,15 @@ class FlightStatsSystem : SystemBase() {
         val millisecondsSinceLastFix = Services.location.lastFixDuration()
 
         if (loc != null) {
-            // Altitude
-            altitudeLabel?.text = Convert.distance(loc.altitude_gps - VROptions.dropzone.alt)
+            // Use high-speed predicted data for position and velocity when available
+            val (altitude, groundSpeed, climb) = getHighSpeedData(loc)
+
+            // Altitude with 90Hz updates
+            altitudeLabel?.text = Convert.distance(altitude - VROptions.dropzone.alt)
 
             // Combine other stats into single string
-            val groundSpeed = loc.groundSpeed()
             val horizontalSpeedText = "H: ${Convert.speed(groundSpeed)}"
 
-            val climb = loc.climb
             val verticalSpeedText = if (!climb.isNaN()) {
                 "V: ${Convert.speed(-climb)}" // Negative climb for fall rate display
             } else {
@@ -95,6 +98,33 @@ class FlightStatsSystem : SystemBase() {
             otherStatsLabel?.text = ""
         } else {
             otherStatsLabel?.setTextColor(color)
+        }
+    }
+
+    /**
+     * Get position and velocity data using high-speed predicted state (90Hz) when available,
+     * fallback to GPS data for backwards compatibility
+     */
+    private fun getHighSpeedData(loc: com.platypii.baselinexr.measurements.MLocation): Triple<Double, Double, Double> {
+        return if (Services.location.motionEstimator is KalmanFilter3D) {
+            val kf3d = Services.location.motionEstimator as KalmanFilter3D
+            val predictedState = kf3d.getCachedPredictedState(System.currentTimeMillis())
+
+            // Get predicted position delta and add to GPS baseline
+            val positionDelta = kf3d.predictDelta(System.currentTimeMillis())
+            val predictedAltitude = loc.altitude_gps + positionDelta.y
+
+            // Calculate ground speed from predicted velocity components
+            val groundSpeed = sqrt(
+                predictedState.velocity().x * predictedState.velocity().x +
+                        predictedState.velocity().z * predictedState.velocity().z
+            )
+            val climb = predictedState.velocity().y
+
+            Triple(predictedAltitude, groundSpeed, climb)
+        } else {
+            // Fallback to GPS data
+            Triple(loc.altitude_gps, loc.groundSpeed(), loc.climb)
         }
     }
 

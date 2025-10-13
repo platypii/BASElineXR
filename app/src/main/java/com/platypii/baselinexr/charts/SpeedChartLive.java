@@ -61,6 +61,21 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
     }
     private final SyncedList<SustainedSpeedPoint> sustainedHistory = new SyncedList<>();
 
+    // High-speed velocity history data structure for 90Hz updates
+    private static class HighSpeedPoint {
+        final long millis;
+        final double vx;
+        final double vy;
+
+        HighSpeedPoint(long millis, double vx, double vy) {
+            this.millis = millis;
+            this.vx = vx;
+            this.vy = vy;
+        }
+    }
+    private final SyncedList<HighSpeedPoint> highSpeedHistory = new SyncedList<>();
+    private long lastHighSpeedUpdate = 0;
+
     @Nullable
     private LocationProvider locationService = null;
 
@@ -83,8 +98,9 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
 
         options.axis.x = options.axis.y = PlotOptions.axisSpeed();
 
-        history.setMaxSize(200);
-        sustainedHistory.setMaxSize(200); // Same max size as regular history
+        history.setMaxSize(300);
+        sustainedHistory.setMaxSize(300); // Same max size as regular history
+        highSpeedHistory.setMaxSize(1350); // 90Hz * 15 seconds = 1350 points for window
 
         // Add layers
         ellipses = new EllipseLayer(options.density);
@@ -104,13 +120,16 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
                 // Draw Aura5 polar first (background)
                 drawAura5Polar(plot);
 
-                // Get predicted velocity for 90Hz updates
+                // Get predicted velocity for 90Hz updates and collect high-speed data
                 double vx, vy;
                 if (Services.location != null && Services.location.motionEstimator instanceof KalmanFilter3D) {
                     final KalmanFilter3D kf3d = (KalmanFilter3D) Services.location.motionEstimator;
                     final KalmanFilter3D.KFState predictedState = kf3d.getCachedPredictedState(System.currentTimeMillis());
                     vx = Math.sqrt(predictedState.velocity().x * predictedState.velocity().x + predictedState.velocity().z * predictedState.velocity().z);
                     vy = predictedState.velocity().y;
+
+                    // Collect high-speed velocity data at ~90Hz
+                    updateHighSpeedHistory(currentTime, vx, vy);
                 } else {
                     // Fallback to GPS velocity
                     vx = locationService.lastLoc.groundSpeed();
@@ -129,8 +148,8 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
                 // Draw current sustained speeds (if available)
                 drawCurrentSustainedSpeeds(plot);
 
-                // Draw regular speed history at 90Hz with predicted state
-                drawHistory(plot, currentTime);
+                // Draw high-speed history using 90Hz predicted state data
+                drawHighSpeedHistory(plot, currentTime);
 
                 // Draw horizontal, vertical speed labels using predicted velocity
                 drawSpeedLabels(plot, vx, vy);
@@ -148,7 +167,46 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
     }
 
     /**
-     * Draw historical points at 90Hz with predicted state for current location
+     * Update high-speed history with predicted velocity data at ~90Hz
+     */
+    private void updateHighSpeedHistory(long currentTime, double vx, double vy) {
+        // Throttle to ~90Hz (every 11ms)
+        if (currentTime - lastHighSpeedUpdate >= 11) {
+            highSpeedHistory.append(new HighSpeedPoint(currentTime, vx, vy));
+            lastHighSpeedUpdate = currentTime;
+        }
+    }
+
+    /**
+     * Draw high-speed historical points using 90Hz predicted velocity data
+     */
+    private void drawHighSpeedHistory(@NonNull Plot plot, long currentTime) {
+        synchronized (highSpeedHistory) {
+            plot.paint.setStyle(Paint.Style.FILL);
+            for (HighSpeedPoint point : highSpeedHistory) {
+                final int t = (int) (currentTime - point.millis);
+                if (t <= window) {
+                    // Style point based on freshness
+                    final int purple = 0x5500ff;
+                    int darkness = 0xbb * (15000 - t) / (15000 - 1000); // Fade color to dark
+                    darkness = Math.max(0x88, Math.min(darkness, 0xbb));
+                    final int rgb = darken(purple, darkness);
+                    int alpha = 0xff * (15000 - t) / (15000 - 10000); // fade out at t=10..15
+                    alpha = Math.max(0, Math.min(alpha, 0xff));
+                    final int color = (alpha << 24) + rgb; // 0xff5500ff
+
+                    // Draw point with size based on age
+                    float radius = 12f * (4000 - t) / 6000;
+                    radius = Math.max(3, Math.min(radius, 12));
+                    plot.paint.setColor(color);
+                    plot.drawPoint(AXIS_SPEED, point.vx, point.vy, radius);
+                }
+            }
+        }
+    }
+
+    /**
+     * Draw historical points at 90Hz with predicted state for current location (legacy GPS-based)
      */
     private void drawHistory(@NonNull Plot plot, long currentTime) {
         synchronized (history) {
@@ -187,9 +245,7 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
                 }
             }
         }
-    }
-
-    /**
+    }    /**
      * Draw sustained speed history (background layer)
      */
     private void drawSustainedSpeedHistory(@NonNull Plot plot, long currentTime) {
@@ -490,6 +546,10 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
         if (locationService != null) {
             locationService.locationUpdates.unsubscribe(this);
         }
+        // Clear high-speed history
+       // synchronized (highSpeedHistory) {
+        //    highSpeedHistory.clear();
+        //}
         // Clear sustained speed history
         //synchronized (sustainedHistory) {
         // sustainedHistory.clear();
