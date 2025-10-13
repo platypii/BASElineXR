@@ -49,6 +49,10 @@ public final class KalmanFilter3D implements MotionEstimator {
     private Vector3 kalmanStep = new Vector3();
     private Vector3 kalmanVelStep = new Vector3();
     private Vector3 kalmanAccelStep = new Vector3();
+    // wingsuit parameter kalman steps
+    private double kalmanKlStep = 0.0;
+    private double kalmanKdStep = 0.0;
+    private double kalmanRollStep = 0.0;
 
     // Constants
     private static final double MAX_STEP = 0.1; // seconds
@@ -179,6 +183,11 @@ public final class KalmanFilter3D implements MotionEstimator {
         // time step
         final double dt = Math.max(0.0, 1e-3 * (tNow - lastGps.millis));
 
+        // save wse
+        final double Kl = x[9];       // wingsuit parameter steps
+        final double Kd = x[10];
+        final double Roll = x[11];
+
 
         // Predict to now
         if (dt > 0.0) predict(dt);
@@ -227,6 +236,7 @@ public final class KalmanFilter3D implements MotionEstimator {
         kalmanAccelStep.y = Ky[7];
         kalmanAccelStep.z = Ky[8];
 
+
         // For plotting: WSE accel from measured velocity
         //aWSE = calculateWingsuitAcceleration(new Vector3(vx, vy, vz), new WSEParams(x[9], x[10], x[11]));
 
@@ -235,9 +245,18 @@ public final class KalmanFilter3D implements MotionEstimator {
         final double[][] I_KH = LinearAlgebra.sub(LinearAlgebra.identity(12), KH);
         P = LinearAlgebra.mul(I_KH, P);
 
+        // Save old wingsuit parameters before update
+        final double oldKl = x[9];
+        final double oldKd = x[10];
+        final double oldRoll = x[11];
+
         // Update wingsuit parameters from current Kalman v,a (in ENU)
         updateWingsuitParameters();
 
+        // Calculate wingsuit parameter steps as difference between new and old values
+        kalmanKlStep = x[9] - oldKl;       // wingsuit parameter steps
+        kalmanKdStep = x[10] - oldKd;
+        kalmanRollStep = x[11] - oldRoll;
 
         // Bookkeeping
         lastGps = gps;
@@ -333,6 +352,10 @@ public final class KalmanFilter3D implements MotionEstimator {
         s[6] = s[6] - as.x;  // acceleration
         s[7] = s[7] - as.y;
         s[8] = s[8] - as.z;
+        // Smooth wingsuit parameters
+        s[9] = s[9] - (kalmanKlStep * alpha);    // kl
+        s[10] = s[10] - (kalmanKdStep * alpha);  // kd
+        s[11] = s[11] - (kalmanRollStep * alpha); // roll
 
         // Cache the full predicted state for other systems to use
         cachedPredictedState = toState(s);

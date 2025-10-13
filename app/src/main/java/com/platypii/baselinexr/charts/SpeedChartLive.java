@@ -75,6 +75,7 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
     }
     private final SyncedList<HighSpeedPoint> highSpeedHistory = new SyncedList<>();
     private long lastHighSpeedUpdate = 0;
+    private long lastSustainedSpeedUpdate = 0;
 
     @Nullable
     private LocationProvider locationService = null;
@@ -98,8 +99,8 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
 
         options.axis.x = options.axis.y = PlotOptions.axisSpeed();
 
-        history.setMaxSize(300);
-        sustainedHistory.setMaxSize(300); // Same max size as regular history
+        history.setMaxSize(200);
+        sustainedHistory.setMaxSize(200); // Same max size as regular history
         highSpeedHistory.setMaxSize(1350); // 90Hz * 15 seconds = 1350 points for window
 
         // Add layers
@@ -174,6 +175,18 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
         if (currentTime - lastHighSpeedUpdate >= 11) {
             highSpeedHistory.append(new HighSpeedPoint(currentTime, vx, vy));
             lastHighSpeedUpdate = currentTime;
+        }
+    }
+
+    /**
+     * Update sustained speed history with 90Hz interpolated kl/kd parameters
+     */
+    private void updateSustainedSpeedHistory(double vxs, double vys) {
+        final long currentTime = TimeOffset.phoneToGpsTime(System.currentTimeMillis());
+        // Throttle to ~90Hz (every 11ms)
+        if (currentTime - lastSustainedSpeedUpdate >= 11) {
+            sustainedHistory.append(new SustainedSpeedPoint(currentTime, vxs, vys));
+            lastSustainedSpeedUpdate = currentTime;
         }
     }
 
@@ -274,22 +287,25 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
     }
 
     /**
-     * Draw current sustained speeds using cached predicted state from 90Hz GpsToWorldTransform updates
+     * Draw current sustained speeds using cached predicted state from 90Hz updates with interpolated kl/kd
      */
     private void drawCurrentSustainedSpeeds(@NonNull Plot plot) {
         if (Services.location != null && Services.location.motionEstimator instanceof KalmanFilter3D) {
             final KalmanFilter3D kf3d = (KalmanFilter3D) Services.location.motionEstimator;
 
-            // Use cached predicted state from last predictDelta() call
+            // Use cached predicted state from last predictDelta() call with 90Hz interpolated kl/kd
             final KalmanFilter3D.KFState state = kf3d.getCachedPredictedState(System.currentTimeMillis());
 
             if (isReal(state.kl()) && isReal(state.kd())) {
-                // Calculate sustained speeds: vxs = kl/(kl²+kd²)^1.5, vys = kd/(kl²+kd²)^1.5
+                // Calculate sustained speeds using 90Hz interpolated wingsuit parameters
                 final double klkd_squared = state.kl() * state.kl() + state.kd() * state.kd();
                 final double klkd_power = Math.pow(klkd_squared, 0.75);
 
                 final double vxs = state.kl() / klkd_power;
                 final double vys = -state.kd() / klkd_power;
+
+                // Update sustained speed history at 90Hz
+                updateSustainedSpeedHistory(vxs, vys);
 
                 // Draw current sustained speeds with a distinct style
                 plot.paint.setStyle(Paint.Style.FILL);
@@ -547,35 +563,24 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
             locationService.locationUpdates.unsubscribe(this);
         }
         // Clear high-speed history
-       // synchronized (highSpeedHistory) {
+        //synchronized (highSpeedHistory) {
         //    highSpeedHistory.clear();
         //}
         // Clear sustained speed history
         //synchronized (sustainedHistory) {
-        // sustainedHistory.clear();
+        //    sustainedHistory.clear();
         //}
+        // Reset timing counters
+        lastHighSpeedUpdate = 0;
+        lastSustainedSpeedUpdate = 0;
     }
 
     @Override
     public void apply(@NonNull MLocation loc) {
         history.append(loc);
 
-        // Also add sustained speed point if KalmanFilter3D is available
-        if (Services.location != null && Services.location.motionEstimator instanceof KalmanFilter3D) {
-            final KalmanFilter3D kf3d = (KalmanFilter3D) Services.location.motionEstimator;
-            final KalmanFilter3D.KFState state = kf3d.getState();
-
-            if (isReal(state.kl()) && isReal(state.kd())) {
-                // Calculate sustained speeds: vxs = kl/(kl²+kd²)^1.5, vys = kd/(kl²+kd²)^1.5
-                final double klkd_squared = state.kl() * state.kl() + state.kd() * state.kd();
-                final double klkd_power = Math.pow(klkd_squared, 0.75);
-
-                final double vxs = state.kl() / klkd_power;
-                final double vys = -state.kd() / klkd_power;
-                final long currentTime = TimeOffset.phoneToGpsTime(System.currentTimeMillis());
-                sustainedHistory.append(new SustainedSpeedPoint(currentTime, vxs, vys));
-            }
-        }
+        // Sustained speed history is now updated at 90Hz in drawCurrentSustainedSpeeds()
+        // No need to add GPS-rate sustained speed points here
     }
 
 }
