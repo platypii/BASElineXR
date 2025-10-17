@@ -380,12 +380,12 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
         final float density = AtmosphericModel.calculateDensity(altitude, 10f);
 
         plot.paint.setStyle(Paint.Style.STROKE);
-        plot.paint.setStrokeWidth(2 * options.density); // 2dp thick line
+        plot.paint.setStrokeWidth(6* options.density); // 2dp thick line
         plot.paint.setStrokeCap(Paint.Cap.ROUND);
 
         SustainedSpeeds prevSpeeds = null;
 
-        // Draw line segments connecting the polar points
+        // Draw line segmnts connecting the polar points
         for (int i = 0; i < polar.stallPoint.size(); i++) {
             PolarLibrary.PolarPoint point = polar.stallPoint.get(i);
 

@@ -196,6 +196,21 @@ public class VROptionsList {
             new LatLngAlt(46.57835, 7.984, 2670.5)
     );
 
+    public static final VROptions SQUAW_CANOPY = new VROptions(
+            "Squaw Canopy",
+            "squawcanopy.csv",
+            "eiger",
+            new LatLngAlt(40.2709309,-111.620655,1946.342
+            ),
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            true,
+            false,
+            true,
+            new LatLngAlt(46.57835, 7.984, 2670.5)
+    );
+
     public static final VROptions OGDEN_SKYDIVE = new VROptions(
             "Ogden",
             "ogden.csv",

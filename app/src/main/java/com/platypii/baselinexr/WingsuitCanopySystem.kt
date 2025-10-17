@@ -1,5 +1,6 @@
 package com.platypii.baselinexr
 
+// import com.platypii.baselinexr.measurements.MLocation // Unused
 import android.util.Log
 import androidx.core.net.toUri
 import com.meta.spatial.core.Entity
@@ -11,15 +12,155 @@ import com.meta.spatial.toolkit.Mesh
 import com.meta.spatial.toolkit.Scale
 import com.meta.spatial.toolkit.Transform
 import com.meta.spatial.toolkit.Visible
-// import com.platypii.baselinexr.measurements.MLocation // Unused
-import com.platypii.baselinexr.util.HeadPoseUtil
 import com.platypii.baselinexr.jarvis.FlightMode
-import com.platypii.baselinexr.location.MotionEstimator
+import com.platypii.baselinexr.location.AtmosphericModel
 import com.platypii.baselinexr.location.KalmanFilter3D
+import com.platypii.baselinexr.location.MotionEstimator
 import com.platypii.baselinexr.location.PolarLibrary
 import com.platypii.baselinexr.location.SimpleEstimator
+import com.platypii.baselinexr.util.HeadPoseUtil
 import kotlin.math.*
 
+/**
+ * Canopy data point structure matching the TypeScript Cpoint format
+ */
+data class CanopyPoint(
+    val millis: Long = 0,
+    // canopy position relative to pilot
+    val cpE: Double = 0.0,
+    val cpD: Double = 0.0,
+    val cpN: Double = 0.0,
+    // canopy speed
+    val vcpE: Double = 0.0,
+    val vcpD: Double = 0.0,
+    val vcpN: Double = 0.0,
+    // aoa
+    val cpaoa: Double = 0.0,
+    // sustained
+    val cpvxs: Double = 0.0,
+    val cpvys: Double = 0.0,
+    // roll
+    val roll: Double = 0.0
+)
+
+/**
+ * Compute wind-adjusted canopy orientation for a single time step using 90Hz predicted state
+ * Converted from TypeScript computewindadjustedcanopyorientation function
+ */
+fun computeCanopyOrientation(
+    predictedState: KalmanFilter3D.KFState,
+    gpsaltitude: Double,
+    currentMillis: Long,
+    useRealOrientation: Boolean = false
+): CanopyPoint {
+    val GRAVITY = 9.80665 // m/s²
+
+    // Get velocity components from predicted state (ENU coordinates)
+    val vN = predictedState.velocity.z  // North velocity
+    val vE = predictedState.velocity.x  // East velocity
+    val vD = -predictedState.velocity.y // Down velocity (negative of up velocity)
+    // Get velocity components from predicted state (ENU coordinates)
+    val aN = predictedState.acceleration().z  // North velocity
+    val aE = predictedState.acceleration().x  // East velocity
+    val aD = -predictedState.acceleration().y // Down velocity (negative of up velocity)
+
+    val vel = sqrt(vN * vN + vE * vE + vD * vD)
+
+    val accelDminusG: Double = aD - GRAVITY
+
+
+    // Calculate acceleration due to drag (projection onto velocity)
+
+
+
+    val proj: Double = (aN * vN + aE * vE + accelDminusG * vD) / vel
+
+    val dragN = proj * vN / vel
+    val dragE = proj * vE / vel
+    val dragD = proj * vD / vel
+
+    // Calculate correct sign for drag
+    val dragSign = -sign(dragN * vN + dragE * vE + dragD * vD)
+
+    //val accelDrag = dragSign * sqrt(dragN * dragN + dragE * dragE + dragD * dragD)
+
+
+    // Calculate acceleration due to lift (rejection from velocity)
+    val liftN: Double = aN - dragN
+    val liftE: Double = aE - dragE
+    val liftD = accelDminusG - dragD
+    // val accelLift = sqrt(liftN * liftN + liftE * liftE + liftD * liftD)
+
+    // Wingsuit/pilot parameters
+    val m = 77.5 // mass in kg
+    val s = 2.0  // wing area in m²
+
+    // Calculate atmospheric density
+    val rho = AtmosphericModel.calculateDensity(gpsaltitude.toFloat(), 10f).toDouble()
+
+    // Calculate pilot's drag contribution
+    val dynamicPressure = rho * vel * vel / 2
+    val pilotCd = 0.35
+    val pilotAccelDrag = pilotCd * dynamicPressure * s / m
+
+    // Pilot's drag components
+    val pdragN = if (vel > 0) -vN / vel * pilotAccelDrag else 0.0
+    val pdragE = if (vel > 0) -vE / vel * pilotAccelDrag else 0.0
+    val pdragD = if (vel > 0) -vD / vel * pilotAccelDrag else 0.0
+
+    // Calculate canopy normal force (subtract pilot's drag from total aerodynamic force)
+    // Using predicted acceleration components
+    val cnormN = liftN + dragN - pdragN
+    val cnormE = liftE + dragE - pdragE
+    val cnormD = liftD + dragD - pdragD
+
+    // Canopy position relative to pilot
+     //   .cpE * ((5.1 - .325) / 3) + (cdata[p].cplng - cdata[cur].cplng) * 111320 * Math.cos(cdata[p].cplat * Math.PI / 180), y: -cdata[p].cpD * ((5.1 - .325) / 3) + (cdata[cur].cpalt - cdata[p].cpalt), z: cdata[p].cpN * ((5.1 - .325) / 3
+    val lineLength = if (useRealOrientation) 3.0 else 3.0 // meters from pilot's CG to aerodynamic center
+    val magf = sqrt(cnormN * cnormN + cnormE * cnormE + cnormD * cnormD)
+
+    val cpE = if (magf > 0) lineLength * cnormE / magf else 0.0
+    val cpD = if (magf > 0) lineLength * cnormD / magf else 0.0
+    val cpN = if (magf > 0) lineLength * cnormN / magf else 0.0
+
+    // Global canopy position (simplified - would need proper coordinate conversion)
+    //val cplat = gpsLocation.latitude + cpN / 111320.0
+    //val cplng = gpsLocation.longitude + cpE / (111320.0 * cos(gpsLocation.latitude * PI / 180))
+    //val cpalt = gpsLocation.altitude_gps - cpD
+
+    // For single time step, canopy speed equals pilot speed (no rotation calculation)
+    // In full implementation, this would use historical data for rotation speed
+    val vcpE = vE
+    val vcpD = vD
+    val vcpN = vN
+
+    // Calculate canopy AOA
+    // Angle between canopy position vector and velocity vector
+    val dot = cpE * vcpE + cpD * vcpD + cpN * vcpN
+    val cpMag = sqrt(cpE * cpE + cpD * cpD + cpN * cpN)
+    val vcpMag = sqrt(vcpE * vcpE + vcpD * vcpD + vcpN * vcpN)
+
+    val anglenv = if (cpMag > 0 && vcpMag > 0) {
+        PI - acos(dot / (cpMag * vcpMag))
+    } else {
+        0.0
+    }
+
+    val trimAngle = PI / 2 + 6 * PI / 180 // 6 degrees
+    val cpaoa = PI - trimAngle - anglenv
+
+    return CanopyPoint(
+        millis = currentMillis,
+        cpE = cpE,
+        cpD = cpD,
+        cpN = cpN,
+        vcpE = vcpE,
+        vcpD = vcpD,
+        vcpN = vcpN,
+        cpaoa = cpaoa,
+        roll = predictedState.roll // Use roll from predicted state
+    )
+}
 class WingsuitCanopySystem : SystemBase() {
 
     companion object {
@@ -27,7 +168,8 @@ class WingsuitCanopySystem : SystemBase() {
         private const val WINGSUIT_SCALE = 0.05f
         private const val CANOPY_SCALE = 0.08f
         private const val MODEL_HEIGHT_OFFSET = -3.0f
-        private const val MIN_SPEED_THRESHOLD = 2.0 // m/s minimum speed to show models
+        private const val CANOPY_MODEL_HEIGHT_OFFSET = -0.3f
+        private const val MIN_SPEED_THRESHOLD = 0.5 // m/s minimum speed to show models
         private const val ENLARGEMENT_FACTOR = 5f
     }
 
@@ -36,6 +178,7 @@ class WingsuitCanopySystem : SystemBase() {
     private var initialized = false
     private var isEnlarged = false
     private var lastGpsTime: Long = 0 // Track when GPS data was last updated
+    private final var isRealCanopyOrientation = true // Flag to control canopy positioning mode
 
     override fun execute() {
         if (!initialized) {
@@ -47,7 +190,7 @@ class WingsuitCanopySystem : SystemBase() {
     }
 
     private fun initializeModels() {
-        // Initial model alignment rotation (to fix model orientation)
+        // Initial model alignment rotation (to fix model orientation) needs to be applied every time...
         val initialWingsuitRotation = createQuaternionFromEuler(0f, (Math.PI).toFloat(), (-Math.PI/2).toFloat()+Adjustments.yawAdjustment)
         val initialCanopyRotation = createQuaternionFromEuler(0f, (Math.PI).toFloat(), (-Math.PI/2).toFloat()+Adjustments.yawAdjustment)
 
@@ -59,9 +202,9 @@ class WingsuitCanopySystem : SystemBase() {
             Visible(false) // Start invisible
         )
 
-        // Create canopy entity using cp1.glb model with initial rotation
+        // Create canopy entity using cp2 model with initial rotation
         canopyEntity = Entity.create(
-            Mesh("cp1.glb".toUri()),
+            Mesh("cp2.gltf".toUri()),
             Transform(Pose(Vector3(0f), initialCanopyRotation)),
             Scale(Vector3(CANOPY_SCALE)),
             Visible(false) // Start invisible
@@ -86,7 +229,10 @@ class WingsuitCanopySystem : SystemBase() {
         if (headPose == Pose()) return
 
         // Position models below and in front of the head
-        val modelPosition = headPose.t + Vector3(0f, MODEL_HEIGHT_OFFSET, 0f)
+        val wingsuitPosition = headPose.t + Vector3(0f, MODEL_HEIGHT_OFFSET, 0f)
+
+        val ofst = if (isRealCanopyOrientation) -0.3f else MODEL_HEIGHT_OFFSET
+        val canopyPosition = headPose.t + Vector3(0f, ofst, 0f)
 
         // Check if we have fresh GPS data and location is valid
         if (lastUpdate == null || !Services.location.isFresh) {
@@ -112,16 +258,16 @@ class WingsuitCanopySystem : SystemBase() {
 
         // Determine which model to show based on flight mode
         val flightMode = Services.flightComputer.flightMode
-        val isCanopyMode = flightMode == FlightMode.MODE_CANOPY
+        val isCanopyMode = flightMode == FlightMode.MODE_CANOPY || flightMode == FlightMode.MODE_GROUND
 
         if (isCanopyMode) {
             // Show canopy, hide wingsuit
             wingsuitEntity?.setComponent(Visible(false))
-            updateCanopyOrientation(motionEstimator, modelPosition, hasNewGpsData)
+            updateCanopyOrientation(motionEstimator, canopyPosition, hasNewGpsData)
         } else {
             // Show wingsuit, hide canopy (for all other flight modes)
             canopyEntity?.setComponent(Visible(false))
-            updateWingsuitOrientation(motionEstimator, modelPosition, hasNewGpsData)
+            updateWingsuitOrientation(motionEstimator, wingsuitPosition, hasNewGpsData)
         }
     }
 
@@ -203,57 +349,91 @@ class WingsuitCanopySystem : SystemBase() {
 
     private fun updateCanopyOrientation(motionEstimator: MotionEstimator, position: Vector3, hasNewGpsData: Boolean) {
         val canopyEntity = this.canopyEntity ?: return
-        // Use cached predicted state from 90Hz GpsToWorldTransform updates with interpolated wingsuit parameters
-        val (velocity, rollRad) = when (motionEstimator) {
+
+        // Compute advanced canopy orientation using physics modeling
+        val canopyPoint = when (motionEstimator) {
             is KalmanFilter3D -> {
-                // Get cached predicted state from last predictDelta() call with 90Hz interpolated roll
                 val predictedState = motionEstimator.getCachedPredictedState(System.currentTimeMillis())
-                Pair(predictedState.velocity, predictedState.roll.toFloat())
-            }
-            is SimpleEstimator -> {
-                Pair(motionEstimator.v, 0f)
-            }
-            else -> {
-                // Fallback to GPS velocity if not a known estimator type
                 val lastUpdate = motionEstimator.getLastUpdate()
                 if (lastUpdate != null) {
-                    Pair(com.platypii.baselinexr.util.tensor.Vector3(lastUpdate.vE, lastUpdate.climb, lastUpdate.vN), 0f)
+                    computeCanopyOrientation(predictedState, lastUpdate.altitude_gps, System.currentTimeMillis(), isRealCanopyOrientation)
                 } else {
-                    return // No data available
+                    return // No GPS data available
                 }
+            }
+            else -> {
+                // Fallback to simple orientation for other estimators
+                val velocity = when (motionEstimator) {
+                    is SimpleEstimator -> motionEstimator.v
+                    else -> {
+                        val lastUpdate = motionEstimator.getLastUpdate()
+                        if (lastUpdate != null) {
+                            com.platypii.baselinexr.util.tensor.Vector3(lastUpdate.vE, lastUpdate.climb, lastUpdate.vN)
+                        } else {
+                            return // No data available
+                        }
+                    }
+                }
+
+                // Simple physics for non-Kalman estimators
+                val horizontalSpeed = sqrt(velocity.x * velocity.x + velocity.z * velocity.z).toFloat()
+                val pitchRad = atan2(-velocity.y.toFloat(), horizontalSpeed)
+                val flightYaw = -atan2(velocity.z.toFloat(), velocity.x.toFloat())
+                val rollRad = 0f // No roll data for simple estimators
+
+                // Create simple rotations
+                val modelRotation = createQuaternionFromEuler(0f, (Math.PI).toFloat(), (Math.PI).toFloat())
+                val attitudeRotation = createQuaternionFromEuler(rollRad, pitchRad, (-flightYaw - Math.PI/2 - Adjustments.yawAdjustment).toFloat())
+                val rotation = multiplyQuaternions(modelRotation, attitudeRotation)
+
+                // Update canopy with simple physics and return
+                val scale = if (isRealCanopyOrientation) 4.0f else CANOPY_SCALE
+                canopyEntity.setComponents(
+                    listOf(
+                        Scale(Vector3(scale)),
+                        Transform(Pose(position, rotation)),
+                        Visible(true)
+                    )
+                )
+                return
             }
         }
 
-        // Calculate pitch (angle from horizontal)
-        val horizontalSpeed = sqrt(velocity.x * velocity.x + velocity.z * velocity.z).toFloat()
-        val pitchRad = atan2(-velocity.y.toFloat(), horizontalSpeed) // Negative because up is positive
+        // Use advanced canopy physics results for orientation
+        // Calculate flight attitude from velocity components in canopy point
+        val horizontalSpeed = sqrt(canopyPoint.vcpE * canopyPoint.vcpE + canopyPoint.vcpN * canopyPoint.vcpN).toFloat()
+        val pitchRad = atan2( canopyPoint.vcpD.toFloat(), horizontalSpeed) // Negative because up is positive
+        val flightYaw = -atan2(canopyPoint.vcpN.toFloat(), canopyPoint.vcpE.toFloat()) // +Z forward coordinate system
+        val rollRad = canopyPoint.roll.toFloat() // Use computed roll from canopy physics
 
-        // Calculate flight yaw for +Z forward coordinate system
-        // For +Z forward: yaw = atan2(vZ, vX) where vZ=North, vX=East
-        val flightYaw = -atan2(velocity.z.toFloat(), velocity.x.toFloat())
+        // Use computed AOA from canopy physics
+        val aoa = (canopyPoint.cpaoa ).toFloat()
 
-        val aoa = 10*Math.PI/180
-        // Create two separate rotations and combine them
-        // 1. Model  offset
-        val modelRotation = createQuaternionFromEuler(0f, (Math.PI).toFloat()+aoa.toFloat(), (Math.PI).toFloat())
+        // Create rotations using physics-based values
+        // 1. Model offset with computed AOA
+        val modelRotation = createQuaternionFromEuler(0f, (Math.PI).toFloat() + aoa, (Math.PI).toFloat())
 
-        // 2. Flight attitude
-        val attitudeRotation = createQuaternionFromEuler(rollRad, pitchRad, (-flightYaw -Math.PI/2 -  Adjustments.yawAdjustment   ).toFloat())
-        // val controlRotation = createQuaternionFromEuler(0f, aoa.toFloat(), 0f)
-        // Combine rotations: first apply offset, then attitude
+        // 2. Flight attitude with physics-based roll
+        val attitudeRotation = createQuaternionFromEuler(rollRad, pitchRad, (-flightYaw - Math.PI/2 - Adjustments.yawAdjustment).toFloat())
 
-        // val wsRotation = multiplyQuaternions(attitudeRotation, controlRotation)
-
+        // Combine rotations
         val rotation = multiplyQuaternions(modelRotation, attitudeRotation)
 
+
         // Use enlarged scale if enabled
-        val scale = if (isEnlarged) CANOPY_SCALE * ENLARGEMENT_FACTOR else CANOPY_SCALE
+        val scale = if (isRealCanopyOrientation) 1.0f else CANOPY_SCALE
+
+        // Position calculation based on canopy orientation mode
+        val finalPosition = position //if (isRealCanopyOrientation) {
+            // Real canopy mode: Position canopy model at its actual location using physics
+            // The model is centered on top of canopy, so we need to account for line length
+
 
         // Update canopy position and orientation
         canopyEntity.setComponents(
             listOf(
                 Scale(Vector3(scale)),
-                Transform(Pose(position, rotation)),
+                Transform(Pose(finalPosition, rotation)),
                 Visible(true)
             )
         )

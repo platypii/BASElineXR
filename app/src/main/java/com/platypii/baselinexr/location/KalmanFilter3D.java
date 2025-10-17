@@ -59,7 +59,7 @@ public final class KalmanFilter3D implements MotionEstimator {
     private static final double accelerationLimit = 9.81 * 3.0; // 3 g on each axis limit for stability
 
     private static final double groundAccelerationLimit = 9.81 ; // 1 g on each axis limit on ground
-    private static final boolean groundModeEnabled = true;// set ground accel limits
+    private static final boolean groundModeEnabled = false;// set ground accel limits
     private static final boolean stepSmoothing = true;
 
     public KalmanFilter3D() {
