@@ -59,7 +59,7 @@ public final class KalmanFilter3D implements MotionEstimator {
     private static final double accelerationLimit = 9.81 * 3.0; // 3 g on each axis limit for stability
 
     private static final double groundAccelerationLimit = 9.81 ; // 1 g on each axis limit on ground
-    private static final boolean groundModeEnabled = false;// set ground accel limits
+    private static final boolean groundModeEnabled = true;// set ground accel limits
     private static final boolean stepSmoothing = true;
 
     public KalmanFilter3D() {
@@ -442,18 +442,20 @@ public final class KalmanFilter3D implements MotionEstimator {
 
     private void applyAccelLimits(Vector3 accelerationVec, double prevAx, double prevAy, double prevAz) {
         // Apply acceleration magnitude limit
-        if (Math.abs(accelerationVec.x) > accelerationLimit ) accelerationVec.x = prevAx;
-        if (Math.abs(accelerationVec.y) > accelerationLimit ) accelerationVec.y = prevAy;
-        if (Math.abs(accelerationVec.z) > accelerationLimit) accelerationVec.z = prevAz;
+        if (Math.abs(accelerationVec.x) > accelerationLimit ||
+                Math.abs(accelerationVec.y) > accelerationLimit ||
+                Math.abs(accelerationVec.z) > accelerationLimit) {
+            // Log.d(TAG, "Acceleration limit exceeded. Falling back to previous acceleration.");
+            accelerationVec.x = prevAx;
+            accelerationVec.y = prevAy;
+            accelerationVec.z = prevAz;
+        }
         int fm =Services.flightComputer.flightMode;
         //Log.d(TAG, "flight mode: "+Services.flightComputer.flightMode);
         // Apply ground mode (set acceleration to zero if on the ground and enabled)
         if(groundModeEnabled && (fm == FlightMode.MODE_GROUND)){
-            // Apply acceleration magnitude limit
-            if (Math.abs(accelerationVec.x) > groundAccelerationLimit ) accelerationVec.x = prevAx;
-            if (Math.abs(accelerationVec.y) > groundAccelerationLimit ) accelerationVec.y = prevAy;
-            if (Math.abs(accelerationVec.z) > groundAccelerationLimit) accelerationVec.z = prevAz;
-
+            accelerationVec.x = 0.0;
+            accelerationVec.y = 0.0;accelerationVec.z = 0.0;
         }
     }
 

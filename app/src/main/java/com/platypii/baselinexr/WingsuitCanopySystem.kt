@@ -258,7 +258,7 @@ class WingsuitCanopySystem : SystemBase() {
 
         // Determine which model to show based on flight mode
         val flightMode = Services.flightComputer.flightMode
-        val isCanopyMode = flightMode == FlightMode.MODE_CANOPY || flightMode == FlightMode.MODE_GROUND
+        val isCanopyMode = flightMode == FlightMode.MODE_CANOPY
 
         if (isCanopyMode) {
             // Show canopy, hide wingsuit
@@ -438,7 +438,7 @@ class WingsuitCanopySystem : SystemBase() {
             )
         )
 
-        //Log.d(TAG, "Canopy: vE=${velocity.x}, vN=${velocity.z}, climb=${velocity.y}, pitch=${Math.toDegrees(pitchRad.toDouble())}°, yaw=${Math.toDegrees(yawRad)}°, roll=${Math.toDegrees(rollRad.toDouble())}°")
+      //-  Log.d(TAG, "Canopy: , pitch=${Math.toDegrees(pitchRad.toDouble())}°, yaw=${Math.toDegrees(flightYaw.toDouble())}°, roll=${Math.toDegrees(rollRad.toDouble())}°,aoa=${Math.toDegrees(canopyPoint.cpaoa.toDouble())}°")
     }
 
     /**

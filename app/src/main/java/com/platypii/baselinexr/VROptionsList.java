@@ -22,6 +22,40 @@ public class VROptionsList {
             new LatLngAlt(41.191222, 7.99, 3440.0)
     );
 
+    public static final VROptions LIVEON = new VROptions(
+            "LiveON",
+            null,
+            "branded",
+            // ogden over hangars:
+//           new LatLngAlt(41.191222, -112.010510,4197.728),
+            // copy destination from target landing zone
+            new LatLngAlt(41.205, -112.0,4197.728),
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            true,
+            true,
+            true,
+            new LatLngAlt(41.191222, 7.99, 3440.0)
+    );
+
+    public static final VROptions LIVEOS = new VROptions(
+            "LiveOS",
+            null,
+            "branded",
+            // ogden over hangars:
+//           new LatLngAlt(41.191222, -112.010510,4197.728),
+            // copy destination from target landing zone
+            new LatLngAlt(41.187, -112.0,4197.728),
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            true,
+            true,
+            true,
+            new LatLngAlt(41.191222, 7.99, 3440.0)
+    );
+
     public static final VROptions LIVE_POTM = new VROptions(
             "Livep",
             null,
