@@ -245,9 +245,39 @@ public class VROptionsList {
             new LatLngAlt(46.57835, 7.984, 2670.5)
     );
 
+    public static final VROptions OGDEN_AIRPLANE = new VROptions(
+            "Ogden Airplane",
+            "airplane.csv",
+            "eiger",
+            new LatLngAlt(41.187, -112.0,4197.728
+            ),
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            true,
+            false,
+            true,
+            new LatLngAlt(46.57835, 7.984, 2670.5)
+    );
+
     public static final VROptions OGDEN_SKYDIVE = new VROptions(
             "Ogden",
             "ogden.csv",
+            "eiger",
+            new LatLngAlt(41.2148900,-111.9970277,4197.728
+            ), //
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            true,
+            false,
+            true,
+            new LatLngAlt(46.57835, 7.984, 2670.5)
+    );
+
+    public static final VROptions OGDEN_SKYDIVE_FULL = new VROptions(
+            "Ogden Full",
+            "ogdenfull.csv",
             "eiger",
             new LatLngAlt(41.2148900,-111.9970277,4197.728
             ), //

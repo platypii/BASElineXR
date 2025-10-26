@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layer_item_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_margin="1dp"
+    android:padding="3dp"
+    android:background="#1E1E1E">
+
+    <!-- Layer Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="2dp"
+        android:background="#2A2A2A"
+        android:padding="2dp">
+
+        <TextView
+            android:id="@+id/layer_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Layer 1"
+            android:textColor="#ffffff"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/layer_active_indicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="●"
+            android:textColor="#4CAF50"
+            android:textSize="12sp"
+            android:layout_marginEnd="4dp"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/layer_select_button"
+            android:layout_width="40dp"
+            android:layout_height="20dp"
+            android:background="@drawable/button_bg"
+            android:text="SEL"
+            android:textColor="#ffffff"
+            android:textSize="8sp" />
+
+    </LinearLayout>
+
+    <!-- Altitude Range -->
+    <TextView
+        android:id="@+id/altitude_range"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="2000-3000ft"
+        android:textColor="#E0E0E0"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:background="#2F2F2F"
+        android:padding="3dp"
+        android:layout_marginBottom="1dp" />
+
+    <!-- Data Boundary Range -->
+    <TextView
+        android:id="@+id/data_boundary_range"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Data: 1800-3200ft"
+        android:textColor="#FFD700"
+        android:textSize="10sp"
+        android:textStyle="italic"
+        android:background="#3A3A00"
+        android:padding="2dp"
+        android:layout_marginBottom="2dp"
+        android:gravity="center" />
+
+    <!-- Altitude Adjustment Buttons -->
+    <LinearLayout
+        android:id="@+id/altitude_adjustment_buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="2dp"
+        android:visibility="gone">
+
+        <!-- Lower Boundary Adjustment -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Lower:"
+                android:textColor="#CCCCCC"
+                android:textSize="7sp"
+                android:layout_marginEnd="2dp" />
+
+            <Button
+                android:id="@+id/lower_boundary_minus_button"
+                android:layout_width="20dp"
+                android:layout_height="18dp"
+                android:background="@drawable/button_bg"
+                android:text="-"
+                android:textColor="#ffffff"
+                android:textSize="8sp"
+                android:layout_margin="1dp" />
+
+            <Button
+                android:id="@+id/lower_boundary_plus_button"
+                android:layout_width="20dp"
+                android:layout_height="18dp"
+                android:background="@drawable/button_bg"
+                android:text="+"
+                android:textColor="#ffffff"
+                android:textSize="8sp"
+                android:layout_margin="1dp" />
+
+        </LinearLayout>
+
+        <!-- Upper Boundary Adjustment -->
+        <LinearLayout
+            android:id="@+id/upper_boundary_controls"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Upper:"
+                android:textColor="#CCCCCC"
+                android:textSize="7sp"
+                android:layout_marginEnd="2dp" />
+
+            <Button
+                android:id="@+id/upper_boundary_minus_button"
+                android:layout_width="20dp"
+                android:layout_height="18dp"
+                android:background="@drawable/button_bg"
+                android:text="-"
+                android:textColor="#ffffff"
+                android:textSize="8sp"
+                android:layout_margin="1dp" />
+
+            <Button
+                android:id="@+id/upper_boundary_plus_button"
+                android:layout_width="20dp"
+                android:layout_height="18dp"
+                android:background="@drawable/button_bg"
+                android:text="+"
+                android:textColor="#ffffff"
+                android:textSize="8sp"
+                android:layout_margin="1dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Wind Data -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#252525"
+        android:padding="4dp"
+        android:layout_marginTop="1dp">
+
+        <!-- Saved Wind Data (only show the type that was saved) -->
+        <TextView
+            android:id="@+id/saved_wind_data"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="GPS: 15 MPH @ 270°"
+            android:textColor="#66BB6A"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:background="#0D1F0D"
+            android:padding="3dp"
+            android:gravity="center" />
+
+    </LinearLayout>
+
+    <!-- Layer Controls -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="2dp"
+        android:visibility="gone"
+        android:id="@+id/layer_controls">
+
+        <Button
+            android:id="@+id/split_layer_button"
+            android:layout_width="0dp"
+            android:layout_height="25dp"
+            android:layout_weight="1"
+            android:layout_margin="1dp"
+            android:background="@drawable/button_bg"
+            android:text="Split"
+            android:textColor="#ffffff"
+            android:textSize="8sp" />
+
+        <Button
+            android:id="@+id/delete_layer_button"
+            android:layout_width="0dp"
+            android:layout_height="25dp"
+            android:layout_weight="1"
+            android:layout_margin="1dp"
+            android:background="@drawable/button_bg"
+            android:text="Del"
+            android:textColor="#ffffff"
+            android:textSize="8sp" />
+
+    </LinearLayout>
+
+    <!-- Save Buttons (only for active top layer) -->
+    <LinearLayout
+        android:id="@+id/layer_save_buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="2dp"
+        android:visibility="gone">
+
+        <Button
+            android:id="@+id/save_gps_layer_button"
+            android:layout_width="0dp"
+            android:layout_height="25dp"
+            android:layout_weight="1"
+            android:layout_margin="1dp"
+            android:background="@drawable/button_bg"
+            android:text="Save GPS"
+            android:textColor="#ffffff"
+            android:textSize="8sp" />
+
+        <Button
+            android:id="@+id/save_sustained_layer_button"
+            android:layout_width="0dp"
+            android:layout_height="25dp"
+            android:layout_weight="1"
+            android:layout_margin="1dp"
+            android:background="@drawable/button_bg"
+            android:text="Save Sus"
+            android:textColor="#ffffff"
+            android:textSize="8sp" />
+
+    </LinearLayout>
+
+</LinearLayout>

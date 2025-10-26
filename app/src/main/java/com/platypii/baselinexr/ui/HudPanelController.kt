@@ -3,92 +3,119 @@ package com.platypii.baselinexr.ui
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
-import com.platypii.baselinexr.Adjustments
 import com.platypii.baselinexr.BaselineActivity
 import com.platypii.baselinexr.R
-import com.platypii.baselinexr.VROptions
+import com.platypii.baselinexr.ui.wind.WindEstimationController
+import com.platypii.baselinexr.wind.WindDataPoint
 
+/**
+ * Main controller for the HUD panel UI
+ */
 class HudPanelController(private val activity: BaselineActivity) {
-    
+
+    private var isWindEstimationMode = false
+    private val windEstimationController = WindEstimationController(activity)
+    private val headingController = HeadingController(activity)
+
     fun setupPanel(rootView: View?) {
         val exitButton = rootView?.findViewById<Button>(R.id.exit_button)
-        exitButton?.setOnClickListener({
+        exitButton?.setOnClickListener {
             activity.finish()
-        })
+        }
+
+        // Initialize controllers
+        windEstimationController.initialize(rootView)
+        headingController.setupControls(rootView)
 
         // Add click listener to hudPanel to toggle extraControls visibility
         val hudPanel = rootView?.findViewById<android.widget.LinearLayout>(R.id.hudPanel)
         val extraControls = rootView?.findViewById<android.widget.GridLayout>(R.id.extraControls)
-        hudPanel?.setOnClickListener({
-            extraControls?.let { controls ->
-                if (controls.visibility == View.VISIBLE) {
-                    controls.visibility = View.GONE
-                    activity.hudSystem?.setExtraControlsVisible(false)
-                } else {
-                    controls.visibility = View.VISIBLE
-                    activity.hudSystem?.setExtraControlsVisible(true)
+        val windEstimationControls = rootView?.findViewById<android.widget.LinearLayout>(R.id.windEstimationControls)
+
+        hudPanel?.setOnClickListener {
+            if (isWindEstimationMode) {
+                // Hide wind estimation and show heading controls
+                windEstimationControls?.visibility = View.GONE
+                extraControls?.visibility = View.VISIBLE
+                isWindEstimationMode = false
+                windEstimationController.stopCollection()
+                activity.hudSystem?.setExtraControlsVisible(true)
+            } else {
+                extraControls?.let { controls ->
+                    if (controls.visibility == View.VISIBLE) {
+                        controls.visibility = View.GONE
+                        activity.hudSystem?.setExtraControlsVisible(false)
+                    } else {
+                        controls.visibility = View.VISIBLE
+                        activity.hudSystem?.setExtraControlsVisible(true)
+                    }
                 }
             }
-        })
+        }
 
-        val yawPlusButton = rootView?.findViewById<Button>(R.id.yaw_plus_button)
-        yawPlusButton?.setOnClickListener({
-            // Increment yaw adjustment by 5 degrees (convert to radians)
-            Adjustments.yawAdjustment -= Math.toRadians(5.0).toFloat()
-            Adjustments.saveYawAdjustment(activity)
-        })
-
-        val yawMinusButton = rootView?.findViewById<Button>(R.id.yaw_minus_button)
-        yawMinusButton?.setOnClickListener({
-            // Decrement yaw adjustment by 5 degrees (convert to radians)
-            Adjustments.yawAdjustment += Math.toRadians(5.0).toFloat()
-            Adjustments.saveYawAdjustment(activity)
-        })
-
-        val fwdButton = rootView?.findViewById<Button>(R.id.fwd_button)
-        fwdButton?.setOnClickListener({
-            activity.handleOrientationButton(true)
-        })
-
-        val tailButton = rootView?.findViewById<Button>(R.id.tail_button)
-        tailButton?.setOnClickListener({
-            activity.handleOrientationButton(false)
-        })
-
-        val northButton = rootView?.findViewById<Button>(R.id.north_button)
-        northButton?.setOnClickListener({
-            Adjustments.northAdjustment += VROptions.offsetDistance
-            Adjustments.saveAdjustments(activity)
-        })
-
-        val southButton = rootView?.findViewById<Button>(R.id.south_button)
-        southButton?.setOnClickListener({
-            Adjustments.northAdjustment -= VROptions.offsetDistance
-            Adjustments.saveAdjustments(activity)
-        })
-
-        val eastButton = rootView?.findViewById<Button>(R.id.east_button)
-        eastButton?.setOnClickListener({
-            Adjustments.eastAdjustment += VROptions.offsetDistance
-            Adjustments.saveAdjustments(activity)
-        })
-
-        val westButton = rootView?.findViewById<Button>(R.id.west_button)
-        westButton?.setOnClickListener({
-            Adjustments.eastAdjustment -= VROptions.offsetDistance
-            Adjustments.saveAdjustments(activity)
-        })
-
-        val centerButton = rootView?.findViewById<Button>(R.id.center_button)
-        centerButton?.setOnClickListener({
-            Adjustments.northAdjustment = 0f
-            Adjustments.eastAdjustment = 0f
-            Adjustments.saveAdjustments(activity)
-        })
+        setupModeToggleButtons(rootView)
 
         // Set up HUD references
         val latlngLabel = rootView?.findViewById<TextView>(R.id.lat_lng)
         val speedLabel = rootView?.findViewById<TextView>(R.id.speed)
         activity.hudSystem?.setLabels(latlngLabel, speedLabel)
+    }
+
+    private fun setupModeToggleButtons(rootView: View?) {
+        // Wind estimation button (in heading controls)
+        val windEstimationButton = rootView?.findViewById<Button>(R.id.wind_estimation_button)
+        windEstimationButton?.setOnClickListener {
+            switchToWindEstimationMode(rootView)
+        }
+
+        // Mode switch button (in wind estimation controls)
+        val windModeSwitchButton = rootView?.findViewById<Button>(R.id.wind_mode_switch_button)
+        windModeSwitchButton?.setOnClickListener {
+            switchToHeadingMode(rootView)
+        }
+    }
+
+    private fun switchToWindEstimationMode(rootView: View?) {
+        try {
+            android.util.Log.d("HudPanelController", "Switching to wind estimation mode")
+
+            val extraControls = rootView?.findViewById<android.widget.GridLayout>(R.id.extraControls)
+            val windEstimationControls = rootView?.findViewById<android.widget.LinearLayout>(R.id.windEstimationControls)
+
+            extraControls?.visibility = View.GONE
+            windEstimationControls?.visibility = View.VISIBLE
+            isWindEstimationMode = true
+
+            windEstimationController.startCollection()
+
+            activity.hudSystem?.setExtraControlsVisible(false)
+
+            android.util.Log.d("HudPanelController", "Wind estimation mode activated successfully")
+        } catch (e: Exception) {
+            android.util.Log.e("HudPanelController", "Error switching to wind estimation mode: ${e.message}", e)
+        }
+    }
+
+    private fun switchToHeadingMode(rootView: View?) {
+        val extraControls = rootView?.findViewById<android.widget.GridLayout>(R.id.extraControls)
+        val windEstimationControls = rootView?.findViewById<android.widget.LinearLayout>(R.id.windEstimationControls)
+
+        windEstimationControls?.visibility = View.GONE
+        extraControls?.visibility = View.VISIBLE
+        isWindEstimationMode = false
+
+        windEstimationController.stopCollection()
+        activity.hudSystem?.setExtraControlsVisible(true)
+    }
+
+    /**
+     * Add new data point to wind layers
+     */
+    fun addDataPointToLayers(dataPoint: WindDataPoint) {
+        windEstimationController.addDataPointToLayers(dataPoint)
+    }
+
+    fun cleanup() {
+        windEstimationController.cleanup()
     }
 }

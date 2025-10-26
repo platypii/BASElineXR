@@ -19,6 +19,7 @@ import com.platypii.baselinexr.location.MotionEstimator
 import com.platypii.baselinexr.location.PolarLibrary
 import com.platypii.baselinexr.location.SimpleEstimator
 import com.platypii.baselinexr.util.HeadPoseUtil
+import com.platypii.baselinexr.wind.WindSystem
 import kotlin.math.*
 
 /**
@@ -115,7 +116,7 @@ fun computeCanopyOrientation(
     val cnormD = liftD + dragD - pdragD
 
     // Canopy position relative to pilot
-     //   .cpE * ((5.1 - .325) / 3) + (cdata[p].cplng - cdata[cur].cplng) * 111320 * Math.cos(cdata[p].cplat * Math.PI / 180), y: -cdata[p].cpD * ((5.1 - .325) / 3) + (cdata[cur].cpalt - cdata[p].cpalt), z: cdata[p].cpN * ((5.1 - .325) / 3
+    //   .cpE * ((5.1 - .325) / 3) + (cdata[p].cplng - cdata[cur].cplng) * 111320 * Math.cos(cdata[p].cplat * Math.PI / 180), y: -cdata[p].cpD * ((5.1 - .325) / 3) + (cdata[cur].cpalt - cdata[p].cpalt), z: cdata[p].cpN * ((5.1 - .325) / 3
     val lineLength = if (useRealOrientation) 3.0 else 3.0 // meters from pilot's CG to aerodynamic center
     val magf = sqrt(cnormN * cnormN + cnormE * cnormE + cnormD * cnormD)
 
@@ -171,14 +172,21 @@ class WingsuitCanopySystem : SystemBase() {
         private const val CANOPY_MODEL_HEIGHT_OFFSET = -0.3f
         private const val MIN_SPEED_THRESHOLD = 0.5 // m/s minimum speed to show models
         private const val ENLARGEMENT_FACTOR = 5f
+        private const val VECTOR_SCALE = 0.1f // Scale factor for wind/airspeed vectors
+        private const val VECTOR_OFFSET = 2.0f // Distance from models to show vectors
     }
 
     private var wingsuitEntity: Entity? = null
     private var canopyEntity: Entity? = null
+    private var windVectorEntity: Entity? = null
+    private var airspeedVectorEntity: Entity? = null
+    private var inertialspeedVectorEntity: Entity? = null
     private var initialized = false
     private var isEnlarged = false
     private var lastGpsTime: Long = 0 // Track when GPS data was last updated
     private final var isRealCanopyOrientation = true // Flag to control canopy positioning mode
+    private var enableWindVectors = true // Flag to control wind vector display - now enabled
+    private val windSystem = WindSystem.getInstance()
 
     override fun execute() {
         if (!initialized) {
@@ -209,8 +217,31 @@ class WingsuitCanopySystem : SystemBase() {
             Scale(Vector3(CANOPY_SCALE)),
             Visible(false) // Start invisible
         )
+
+        // Create vector entities for wind visualization (using arrow.glb model)
+        windVectorEntity = Entity.create(
+            Mesh("vectorb.glb".toUri()),
+            Transform(Pose(Vector3(0f), Quaternion())),
+            Scale(Vector3(VECTOR_SCALE)),
+            Visible(false) // Start invisible
+        )
+
+        airspeedVectorEntity = Entity.create(
+            Mesh("vectoro.glb".toUri()),
+            Transform(Pose(Vector3(0f), Quaternion())),
+            Scale(Vector3(VECTOR_SCALE)),
+            Visible(false) // Start invisible
+        )
+
+        inertialspeedVectorEntity = Entity.create(
+            Mesh("vectorp.glb".toUri()),
+            Transform(Pose(Vector3(0f), Quaternion())),
+            Scale(Vector3(VECTOR_SCALE)),
+            Visible(false) // Start invisible
+        )
+
         initialized = true
-        Log.i(TAG, "WingsuitCanopySystem initialized")
+        Log.i(TAG, "WingsuitCanopySystem initialized with wind vectors")
     }
 
     private fun updateModelOrientationAndVisibility() {
@@ -218,6 +249,7 @@ class WingsuitCanopySystem : SystemBase() {
         if (!VROptions.current.showWingsuitCanopy) {
             wingsuitEntity?.setComponent(Visible(false))
             canopyEntity?.setComponent(Visible(false))
+            hideVectors()
             return
         }
 
@@ -236,9 +268,10 @@ class WingsuitCanopySystem : SystemBase() {
 
         // Check if we have fresh GPS data and location is valid
         if (lastUpdate == null || !Services.location.isFresh) {
-            // Hide both models when no GPS data
+            // Hide both models and vectors when no GPS data
             wingsuitEntity?.setComponent(Visible(false))
             canopyEntity?.setComponent(Visible(false))
+            hideVectors()
             return
         }
 
@@ -250,9 +283,10 @@ class WingsuitCanopySystem : SystemBase() {
 
         // Check if moving fast enough
         if (lastUpdate.groundSpeed() < MIN_SPEED_THRESHOLD) {
-            // Hide both models when not moving
+            // Hide both models and vectors when not moving
             wingsuitEntity?.setComponent(Visible(false))
             canopyEntity?.setComponent(Visible(false))
+            hideVectors()
             return
         }
 
@@ -264,10 +298,21 @@ class WingsuitCanopySystem : SystemBase() {
             // Show canopy, hide wingsuit
             wingsuitEntity?.setComponent(Visible(false))
             updateCanopyOrientation(motionEstimator, canopyPosition, hasNewGpsData)
+            if (enableWindVectors) {
+                updateWindVectors(motionEstimator, canopyPosition, FlightMode.MODE_CANOPY)
+            }
         } else {
             // Show wingsuit, hide canopy (for all other flight modes)
             canopyEntity?.setComponent(Visible(false))
             updateWingsuitOrientation(motionEstimator, wingsuitPosition, hasNewGpsData)
+            if (enableWindVectors) {
+                val windFlightMode = when (flightMode) {
+                    FlightMode.MODE_PLANE -> FlightMode.MODE_PLANE
+                    FlightMode.MODE_FREEFALL -> FlightMode.MODE_FREEFALL
+                    else -> FlightMode.MODE_WINGSUIT
+                }
+                updateWindVectors(motionEstimator, wingsuitPosition, windFlightMode)
+            }
         }
     }
 
@@ -425,8 +470,8 @@ class WingsuitCanopySystem : SystemBase() {
 
         // Position calculation based on canopy orientation mode
         val finalPosition = position //if (isRealCanopyOrientation) {
-            // Real canopy mode: Position canopy model at its actual location using physics
-            // The model is centered on top of canopy, so we need to account for line length
+        // Real canopy mode: Position canopy model at its actual location using physics
+        // The model is centered on top of canopy, so we need to account for line length
 
 
         // Update canopy position and orientation
@@ -438,7 +483,7 @@ class WingsuitCanopySystem : SystemBase() {
             )
         )
 
-      //-  Log.d(TAG, "Canopy: , pitch=${Math.toDegrees(pitchRad.toDouble())}°, yaw=${Math.toDegrees(flightYaw.toDouble())}°, roll=${Math.toDegrees(rollRad.toDouble())}°,aoa=${Math.toDegrees(canopyPoint.cpaoa.toDouble())}°")
+        //-  Log.d(TAG, "Canopy: , pitch=${Math.toDegrees(pitchRad.toDouble())}°, yaw=${Math.toDegrees(flightYaw.toDouble())}°, roll=${Math.toDegrees(rollRad.toDouble())}°,aoa=${Math.toDegrees(canopyPoint.cpaoa.toDouble())}°")
     }
 
     /**
@@ -483,13 +528,210 @@ class WingsuitCanopySystem : SystemBase() {
         return Quaternion(x, y, z, w)
     }
 
+    /**
+     * Update wind, airspeed, and inertial speed vectors
+     */
+    private fun updateWindVectors(motionEstimator: MotionEstimator, basePosition: Vector3, flightMode: Int) {
+        val lastUpdate = motionEstimator.getLastUpdate() ?: return
+
+        // Get current wind estimate
+        val windEstimate = try {
+            windSystem.getWindAtAltitude(lastUpdate.altitude_gps, flightMode)
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to get wind estimate: ${e.message}")
+            // Create a small test wind vector for debugging
+            WindSystem.WindEstimate(
+                windE = 2.0,  // 2 m/s east wind for testing
+                windN = 1.0,  // 1 m/s north wind for testing
+                windD = 0.0,
+                magnitude = 2.2,
+                direction = 26.6,
+                confidence = 0.5,
+                source = WindSystem.WindSource.NO_WIND,
+                layerName = null,
+                altitude = lastUpdate.altitude_gps,
+                timestamp = System.currentTimeMillis()
+            )
+        }
+
+        // Get velocity components (ENU coordinates)
+        val inertialVelocity = when (motionEstimator) {
+            is KalmanFilter3D -> {
+                val predictedState = motionEstimator.getCachedPredictedState(System.currentTimeMillis())
+                predictedState.velocity
+            }
+            is SimpleEstimator -> motionEstimator.v
+            else -> com.platypii.baselinexr.util.tensor.Vector3(lastUpdate.vE, lastUpdate.climb, lastUpdate.vN)
+        }
+
+        // Convert wind estimate to ENU vector
+        val windVector = windEstimate.getWindVector()
+        val wvi = com.platypii.baselinexr.util.tensor.Vector3(
+            windVector.x,
+            windVector.y,
+            windVector.z
+        )
+
+
+
+        // Calculate airspeed (velocity relative to air mass)
+        val airspeedVector = com.platypii.baselinexr.util.tensor.Vector3(
+            inertialVelocity.x + wvi.x, // East airspeed
+            inertialVelocity.y + wvi.y, // Up airspeed
+            inertialVelocity.z + wvi.z  // North airspeed
+        )
+
+        // Position airspeed and inertial speed vectors at the same position as wingsuit
+        val vectorBasePos = basePosition
+
+        // Calculate tip of inertial velocity vector for wind vector positioning
+        val inertialMagnitude = sqrt(inertialVelocity.x * inertialVelocity.x + inertialVelocity.y * inertialVelocity.y + inertialVelocity.z * inertialVelocity.z)
+        val windVectorPos = if (inertialMagnitude > 0.1) {
+            // Position wind vector at tip of inertial velocity vector
+            // Apply yaw adjustment to positioning
+            val normalizedInertial = com.platypii.baselinexr.util.tensor.Vector3(
+                inertialVelocity.x / inertialMagnitude,
+                inertialVelocity.y / inertialMagnitude,
+                inertialVelocity.z / inertialMagnitude
+            )
+
+            // Apply yaw adjustment rotation to the normalized velocity vector
+            val yawAdj = -Adjustments.yawAdjustment
+            val cosYaw = cos(yawAdj)
+            val sinYaw = sin(yawAdj)
+
+            // Rotate the normalized inertial vector by yaw adjustment
+            val rotatedX = normalizedInertial.x * cosYaw - normalizedInertial.z * sinYaw
+            val rotatedZ = normalizedInertial.x * sinYaw + normalizedInertial.z * cosYaw
+
+            // Scale the tip position by actual velocity magnitude / 50 (smaller offset)
+            val tipDistance = (inertialMagnitude / 50.0).toFloat()
+            basePosition + Vector3(
+                (rotatedX * tipDistance).toFloat(), // Rotated North -> X (swap for VR space)
+                (normalizedInertial.y * tipDistance).toFloat(), // Up -> Y (unchanged)
+                (rotatedZ * tipDistance).toFloat()  // Rotated East -> Z (swap for VR space)
+            )
+        } else {
+            // If not moving, position wind vector at base position
+            basePosition
+        }
+
+        // Debug wind vector data
+        val windMagnitude = sqrt(windVector.x * windVector.x + windVector.y * windVector.y + windVector.z * windVector.z)
+        Log.d(TAG, "Wind vector: E=${windVector.x.toInt()}, N=${windVector.z.toInt()}, U=${windVector.y.toInt()}, mag=${windMagnitude.toInt()}")
+        Log.d(TAG, "Base position: x=${basePosition.x}, y=${basePosition.y}, z=${basePosition.z}")
+        Log.d(TAG, "Wind position: x=${windVectorPos.x}, y=${windVectorPos.y}, z=${windVectorPos.z}")
+        Log.d(TAG, "Inertial velocity: E=${inertialVelocity.x.toInt()}, U=${inertialVelocity.y.toInt()}, N=${inertialVelocity.z.toInt()}, mag=${inertialMagnitude.toInt()}")
+        Log.d(TAG, "Position offset: dx=${windVectorPos.x - basePosition.x}, dy=${windVectorPos.y - basePosition.y}, dz=${windVectorPos.z - basePosition.z}")
+
+        // Update vectors with new positioning and rotation system
+        updateVectorWithQuaternions(airspeedVectorEntity, vectorBasePos, airspeedVector, "airspeed")
+        updateVectorWithQuaternions(inertialspeedVectorEntity, vectorBasePos, inertialVelocity, "inertial")
+        updateVectorWithQuaternions(windVectorEntity, windVectorPos, wvi, "wind")
+
+        Log.d(TAG, "Wind vectors updated: ${windEstimate.getDisplayString()}")
+    }
+
+    /**
+     * Update a single vector entity using the same quaternion rotation system as wingsuit
+     */
+    private fun updateVectorWithQuaternions(entity: Entity?, position: Vector3, vector: com.platypii.baselinexr.util.tensor.Vector3, name: String) {
+        entity ?: return
+
+        val magnitude = sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z)
+
+        // Hide vector if too small - use different thresholds for different vectors
+        val minThreshold = when (name) {
+            "wind" -> 0.1 // Lower threshold for wind vector (wind can be very light)
+            else -> 0.5   // Higher threshold for velocity vectors
+        }
+
+        if (magnitude < minThreshold) {
+            entity.setComponent(Visible(false))
+            Log.d(TAG, "Vector $name hidden: mag=${magnitude.toInt()} < threshold=$minThreshold")
+            return
+        }
+
+        // Calculate pitch (angle from horizontal) - same as wingsuit
+        val horizontalSpeed = sqrt(vector.x * vector.x + vector.z * vector.z).toFloat()
+        val pitchRad = atan2(-vector.y.toFloat(), horizontalSpeed) // Negative because up is positive
+
+        // Calculate flight yaw for +Z forward coordinate system - same as wingsuit
+        val flightYaw = -atan2(vector.z.toFloat(), vector.x.toFloat())
+
+        // Create two separate rotations and combine them - same as wingsuit (without AOA)
+        // 1. Model offset rotation - same as wingsuit initial rotation
+        val modelRotation = createQuaternionFromEuler(0f, (Math.PI).toFloat(), (Math.PI).toFloat())
+
+        // 2. Flight attitude rotation - same as wingsuit (no roll for vectors)
+        val attitudeRotation = createQuaternionFromEuler( 0f, pitchRad, (-flightYaw - Math.PI/2 - Adjustments.yawAdjustment).toFloat())
+
+        // Combine rotations: first apply offset, then attitude - same as wingsuit
+        val rotation = multiplyQuaternions(modelRotation, attitudeRotation)
+
+        // Scale by total velocity / 5 as requested, with minimum scale for visibility
+        val baseScale = VECTOR_SCALE * (magnitude / 5.0).toFloat()
+        val minScale = VECTOR_SCALE * 0.5f // Minimum scale for visibility
+        val scale = maxOf(baseScale, minScale)
+
+        entity.setComponents(
+            listOf(
+                Scale(Vector3(scale)),
+                Transform(Pose(position, rotation)),
+                Visible(true)
+            )
+        )
+
+        Log.d(TAG, "Vector $name: mag=${magnitude.toInt()}, pitch=${Math.toDegrees(pitchRad.toDouble()).toInt()}°, yaw=${Math.toDegrees(flightYaw.toDouble()).toInt()}°, scale=${scale}")
+    }
+
+    /**
+     * Hide all wind vectors
+     */
+    private fun hideVectors() {
+        windVectorEntity?.setComponent(Visible(false))
+        airspeedVectorEntity?.setComponent(Visible(false))
+        inertialspeedVectorEntity?.setComponent(Visible(false))
+    }
+
     fun setEnlarged(enlarged: Boolean) {
         isEnlarged = enlarged
+    }
+
+    /**
+     * Enable or disable wind vector display
+     */
+    fun setWindVectorsEnabled(enabled: Boolean) {
+        enableWindVectors = enabled
+        if (!enabled) {
+            // Hide all wind vectors when disabled
+            hideWindVectors()
+        }
+        Log.i(TAG, "Wind vectors ${if (enabled) "enabled" else "disabled"}")
+    }
+
+    /**
+     * Check if wind vectors are currently enabled
+     */
+    fun isWindVectorsEnabled(): Boolean {
+        return enableWindVectors
+    }
+
+    /**
+     * Hide all wind vector entities
+     */
+    private fun hideWindVectors() {
+        windVectorEntity?.setComponent(Visible(false))
+        airspeedVectorEntity?.setComponent(Visible(false))
+        inertialspeedVectorEntity?.setComponent(Visible(false))
     }
 
     fun cleanup() {
         wingsuitEntity = null
         canopyEntity = null
+        windVectorEntity = null
+        airspeedVectorEntity = null
+        inertialspeedVectorEntity = null
         initialized = false
         Log.i(TAG, "WingsuitCanopySystem cleaned up")
     }

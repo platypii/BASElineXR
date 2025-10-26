@@ -82,6 +82,10 @@ class BaselineActivity : AppSystemActivity() {
         speedChartSystem = SpeedChartSystem()
         directionArrowSystem = DirectionArrowSystem()
         wingsuitCanopySystem = WingsuitCanopySystem()
+
+        // Wind vectors now enabled by default - data collection complete
+        // wingsuitCanopySystem?.setWindVectorsEnabled(false)
+
         targetPanelSystem = TargetPanel(gpsTransform)
         portalSystem = PortalSystem(gpsTransform, this)
         miniMapPanel = MiniMapPanel()
