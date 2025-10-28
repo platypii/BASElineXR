@@ -12,17 +12,22 @@ import com.platypii.baselinexr.measurements.MLocation;
 import com.platypii.baselinexr.measurements.LatLngAlt;
 import com.platypii.baselinexr.GeoUtils;
 import com.platypii.baselinexr.util.tensor.Vector3;
+import com.platypii.baselinexr.wind.WindSystem;
 
 /**
- * 12D state Kalman filter for ENU position/velocity/acceleration and wingsuit parameters.
+ * 18D state Kalman filter for ENU position/velocity/acceleration, wingsuit parameters, and wind estimates.
  *
- * State vector (size 12):
+ * State vector (size 18):
  *   [0..2]  position  (x=east, y=up, z=north)
  *   [3..5]  velocity  (vx, vy, vz)
  *   [6..8]  accel     (ax, ay, az)
  *   [9]     kl
  *   [10]    kd
  *   [11]    roll (radians)
+ *   [12..14] wind velocity (wvx=east, wvy=up, wvz=north)
+ *   [15]    klwind (lift coefficient with wind)
+ *   [16]    kdwind (drag coefficient with wind)
+ *   [17]    rollwind (roll with wind consideration)
  *
  * Measurements (size 6): [x, y, z, vx, vy, vz]
  *
@@ -34,12 +39,12 @@ import com.platypii.baselinexr.util.tensor.Vector3;
 public final class KalmanFilter3D implements MotionEstimator {
     private static final String TAG = "KalmanFilter3D";
 
-    // --- State (12) ---
-    private final double[] x = new double[12];
+    // --- State (18) ---
+    private final double[] x = new double[18];
 
     // Covariances and noise
-    private double[][] P; // 12x12
-    private double[][] Q; // 12x12
+    private double[][] P; // 18x18
+    private double[][] Q; // 18x18
     private double[][] R; // 6x6
 
     // Last timing & reference
@@ -53,6 +58,11 @@ public final class KalmanFilter3D implements MotionEstimator {
     private double kalmanKlStep = 0.0;
     private double kalmanKdStep = 0.0;
     private double kalmanRollStep = 0.0;
+    // wind parameter kalman steps
+    private Vector3 kalmanWindStep = new Vector3();
+    private double kalmanKlWindStep = 0.0;
+    private double kalmanKdWindStep = 0.0;
+    private double kalmanRollWindStep = 0.0;
 
     // Constants
     private static final double MAX_STEP = 0.1; // seconds
@@ -68,16 +78,32 @@ public final class KalmanFilter3D implements MotionEstimator {
         x[9]  = 0.01; // kl
         x[10] = 0.01; // kd
         x[11] = 0.0;  // roll
+        // Wind velocity components (initially zero)
+        x[12] = 0.0;  // wvx (east wind)
+        x[13] = 0.0;  // wvy (up wind)
+        x[14] = 0.0;  // wvz (north wind)
+        // Wind-based wingsuit parameters
+        x[15] = 0.01; // klwind
+        x[16] = 0.01; // kdwind
+        x[17] = 0.0;  // rollwind
 
         // Initial covariance
-        P = LinearAlgebra.identity(12);
+        P = LinearAlgebra.identity(18);
         for (int i = 0; i < 9; i++) P[i][i] = 1000.0;
-        P[9][9]   = 0.1;
-        P[10][10] = 0.1;
-        P[11][11] = 0.005;
+        P[9][9]   = 0.1;   // kl
+        P[10][10] = 0.1;   // kd
+        P[11][11] = 0.005; // roll
+        // Wind velocity components (higher uncertainty initially)
+        P[12][12] = 100.0; // wvx
+        P[13][13] = 100.0; // wvy
+        P[14][14] = 100.0; // wvz
+        // Wind-based wingsuit parameters
+        P[15][15] = 0.1;   // klwind
+        P[16][16] = 0.1;   // kdwind
+        P[17][17] = 0.005; // rollwind
 
         // Process noise
-        Q = LinearAlgebra.identity(12);
+        Q = LinearAlgebra.identity(18);
         // pos
         Q[0][0] = 0.04; Q[1][1] =0.04; Q[2][2] = 0.04;
         // vel
@@ -88,6 +114,12 @@ public final class KalmanFilter3D implements MotionEstimator {
         Q[9][9]   = 0.01;
         Q[10][10] = 0.01;
         Q[11][11] = 0.001;
+        // wind velocity (moderate)
+        Q[12][12] = 0.1; Q[13][13] = 0.1; Q[14][14] = 0.1;
+        // wind-based wingsuit params (slow)
+        Q[15][15] = 0.01;
+        Q[16][16] = 0.01;
+        Q[17][17] = 0.001;
 
         // Measurement noise (position+velocity)
         R = LinearAlgebra.identity(6);
@@ -98,7 +130,7 @@ public final class KalmanFilter3D implements MotionEstimator {
 
         //smooth20hz
         // Process noise
-        Q = LinearAlgebra.identity(12);
+        Q = LinearAlgebra.identity(18);
         // pos
         Q[0][0] = 1.0; Q[1][1] =1.0; Q[2][2] = 1.0;
         // vel
@@ -109,6 +141,12 @@ public final class KalmanFilter3D implements MotionEstimator {
         Q[9][9]   = 0.01;
         Q[10][10] = 0.01;
         Q[11][11] = 0.001;
+        // wind velocity (moderate)
+        Q[12][12] = 0.1; Q[13][13] = 0.1; Q[14][14] = 0.1;
+        // wind-based wingsuit params (slow)
+        Q[15][15] = 0.01;
+        Q[16][16] = 0.01;
+        Q[17][17] = 0.001;
 
         // Measurement noise (position+velocity)
         R = LinearAlgebra.identity(6);
@@ -119,7 +157,7 @@ public final class KalmanFilter3D implements MotionEstimator {
 /*
 // 5 hz settings
         // Process noise
-        Q = LinearAlgebra.identity(12);
+        Q = LinearAlgebra.identity(18);
         // pos
         Q[0][0] = 0.12; Q[1][1] =0.12; Q[2][2] = 0.12;
         // vel
@@ -130,6 +168,12 @@ public final class KalmanFilter3D implements MotionEstimator {
         Q[9][9]   = 0.01;
         Q[10][10] = 0.01;
         Q[11][11] = 0.001;
+        // wind velocity (moderate)
+        Q[12][12] = 0.1; Q[13][13] = 0.1; Q[14][14] = 0.1;
+        // wind-based wingsuit params (slow)
+        Q[15][15] = 0.01;
+        Q[16][16] = 0.01;
+        Q[17][17] = 0.001;
 
         // Measurement noise (position+velocity)
         R = LinearAlgebra.identity(6);
@@ -140,7 +184,7 @@ public final class KalmanFilter3D implements MotionEstimator {
 
 // other5 hz settings
         // Process noise
-        Q = LinearAlgebra.identity(12);
+        Q = LinearAlgebra.identity(18);
         // pos
         Q[0][0] = 0.12; Q[1][1] =0.12; Q[2][2] = 0.12;
         // vel
@@ -151,6 +195,12 @@ public final class KalmanFilter3D implements MotionEstimator {
         Q[9][9]   = 0.01;
         Q[10][10] = 0.01;
         Q[11][11] = 0.001;
+        // wind velocity (moderate)
+        Q[12][12] = 0.1; Q[13][13] = 0.1; Q[14][14] = 0.1;
+        // wind-based wingsuit params (slow)
+        Q[15][15] = 0.01;
+        Q[16][16] = 0.01;
+        Q[17][17] = 0.001;
 
         // Measurement noise (position+velocity)
         R = LinearAlgebra.identity(6);
@@ -172,6 +222,9 @@ public final class KalmanFilter3D implements MotionEstimator {
             x[3] = gps.vE; x[4] = gps.climb; x[5] = gps.vN;
             x[6] = 0; x[7] = 0; x[8] = 0;
             x[9] = 0.01; x[10] = 0.01; x[11] = 0.0;
+            // Initialize wind estimates to zero
+            x[12] = 0.0; x[13] = 0.0; x[14] = 0.0;
+            x[15] = 0.01; x[16] = 0.01; x[17] = 0.0;
             lastGps = gps;
             return;
         }
@@ -194,8 +247,8 @@ public final class KalmanFilter3D implements MotionEstimator {
 
 
         // --- Measurement update (position + velocity) ---
-        // H: 6x12 maps [p,v] to measurement
-        final double[][] H = LinearAlgebra.zeros(6, 12);
+        // H: 6x18 maps [p,v] to measurement
+        final double[][] H = LinearAlgebra.zeros(6, 18);
         H[0][0] = 1; H[1][1] = 1; H[2][2] = 1;   // position
         H[3][3] = 1; H[4][4] = 1; H[5][5] = 1;   // velocity
 
@@ -223,7 +276,7 @@ public final class KalmanFilter3D implements MotionEstimator {
 
         // x = x + K y
         final double[] Ky = LinearAlgebra.mul(K, y);
-        for (int i = 0; i < 12; i++) x[i] += Ky[i];
+        for (int i = 0; i < 18; i++) x[i] += Ky[i];
 
         // save kalman steps for smoothing
         kalmanStep.x = Ky[0];       // position step
@@ -235,20 +288,30 @@ public final class KalmanFilter3D implements MotionEstimator {
         kalmanAccelStep.x = Ky[6];  // acceleration step
         kalmanAccelStep.y = Ky[7];
         kalmanAccelStep.z = Ky[8];
-
+        // Save wind velocity steps
+        kalmanWindStep.x = Ky[12];  // wind velocity step
+        kalmanWindStep.y = Ky[13];
+        kalmanWindStep.z = Ky[14];
 
         // For plotting: WSE accel from measured velocity
         //aWSE = calculateWingsuitAcceleration(new Vector3(vx, vy, vz), new WSEParams(x[9], x[10], x[11]));
 
         // P = (I - K H) P
         final double[][] KH   = LinearAlgebra.mul(K, H);
-        final double[][] I_KH = LinearAlgebra.sub(LinearAlgebra.identity(12), KH);
+        final double[][] I_KH = LinearAlgebra.sub(LinearAlgebra.identity(18), KH);
         P = LinearAlgebra.mul(I_KH, P);
 
         // Save old wingsuit parameters before update
         final double oldKl = x[9];
         final double oldKd = x[10];
         final double oldRoll = x[11];
+        // Save old wind parameters before update
+        final double oldWvx = x[12];
+        final double oldWvy = x[13];
+        final double oldWvz = x[14];
+        final double oldKlWind = x[15];
+        final double oldKdWind = x[16];
+        final double oldRollWind = x[17];
 
         // Update wingsuit parameters from current Kalman v,a (in ENU)
         updateWingsuitParameters();
@@ -257,6 +320,10 @@ public final class KalmanFilter3D implements MotionEstimator {
         kalmanKlStep = x[9] - oldKl;       // wingsuit parameter steps
         kalmanKdStep = x[10] - oldKd;
         kalmanRollStep = x[11] - oldRoll;
+        // Calculate wind parameter steps
+        kalmanKlWindStep = x[15] - oldKlWind;     // wind-based wingsuit parameter steps
+        kalmanKdWindStep = x[16] - oldKdWind;
+        kalmanRollWindStep = x[17] - oldRollWind;
 
         // Bookkeeping
         lastGps = gps;
@@ -288,9 +355,9 @@ public final class KalmanFilter3D implements MotionEstimator {
         final double[][] FP   = LinearAlgebra.mul(F, P);
         final double[][] FPFT = LinearAlgebra.mul(FP, LinearAlgebra.transpose(F));
         // Scale Q by deltaTime for proper discrete-time process noise
-        final double[][] Q_scaled = new double[12][12];
-        for (int i = 0; i < 12; i++) {
-            for (int j = 0; j < 12; j++) {
+        final double[][] Q_scaled = new double[18][18];
+        for (int i = 0; i < 18; i++) {
+            for (int j = 0; j < 18; j++) {
                 Q_scaled[i][j] = this.Q[i][j] * deltaTime;
             }
         }
@@ -356,6 +423,15 @@ public final class KalmanFilter3D implements MotionEstimator {
         s[9] = s[9] - (kalmanKlStep * alpha);    // kl
         s[10] = s[10] - (kalmanKdStep * alpha);  // kd
         s[11] = s[11] - (kalmanRollStep * alpha); // roll
+        // Smooth wind velocity
+        Vector3 ws = kalmanWindStep.mul(alpha);
+        s[12] = s[12] - ws.x;  // wvx
+        s[13] = s[13] - ws.y;  // wvy
+        s[14] = s[14] - ws.z;  // wvz
+        // Smooth wind-based wingsuit parameters
+        s[15] = s[15] - (kalmanKlWindStep * alpha);    // klwind
+        s[16] = s[16] - (kalmanKdWindStep * alpha);    // kdwind
+        s[17] = s[17] - (kalmanRollWindStep * alpha);  // rollwind
 
         // Cache the full predicted state for other systems to use
         cachedPredictedState = toState(s);
@@ -407,7 +483,7 @@ public final class KalmanFilter3D implements MotionEstimator {
         x[0] = nx; x[1] = ny; x[2] = nz;
         x[3] = nvx; x[4] = nvy; x[5] = nvz;
         x[6] = aWse.x; x[7] = aWse.y; x[8] = aWse.z;
-        // x[9], x[10], x[11] unchanged in prediction
+        // x[9..17] unchanged in prediction (wingsuit params, wind velocity, wind params)
     }
 
     /** Pure function variant of integrateStep for predictAt() */
@@ -434,7 +510,7 @@ public final class KalmanFilter3D implements MotionEstimator {
         out[0] = nx; out[1] = ny; out[2] = nz;
         out[3] = nvx; out[4] = nvy; out[5] = nvz;
         out[6] = aWse.x; out[7] = aWse.y; out[8] = aWse.z;
-        // params unchanged
+        // wingsuit params, wind velocity, and wind params unchanged (indices 9-17)
         //Log.i(TAG,"integrateState " + out[9] + "," + out[10] + "," + out[11]);
 
         return out;
@@ -450,8 +526,8 @@ public final class KalmanFilter3D implements MotionEstimator {
             accelerationVec.y = prevAy;
             accelerationVec.z = prevAz;
         }
-        int fm =Services.flightComputer.flightMode;
-        //Log.d(TAG, "flight mode: "+Services.flightComputer.flightMode);
+        int fm = Services.flightComputer != null ? Services.flightComputer.flightMode : FlightMode.MODE_WINGSUIT;
+        //Log.d(TAG, "flight mode: "+fm);
         // Apply ground mode (set acceleration to zero if on the ground and enabled)
         if(groundModeEnabled && (fm == FlightMode.MODE_GROUND)){
             accelerationVec.x = 0.0;
@@ -466,10 +542,60 @@ public final class KalmanFilter3D implements MotionEstimator {
         final double speed = Math.sqrt(vKal.x * vKal.x + vKal.y * vKal.y + vKal.z * vKal.z);
         if (speed < 1.0) return;
 
+        // Update standard wingsuit parameters (no wind consideration)
         final WSEParams updated = calculateWingsuitParameters(vKal, aKal, new WSEParams(x[9], x[10], x[11]));
         x[9] = updated.kl();
         x[10] = updated.kd();
         x[11] = updated.roll();
+
+        // Get current wind estimate and update wind velocity in state
+        try {
+            if (lastGps != null) {
+                final int currentFlightMode = Services.flightComputer != null ?
+                        Services.flightComputer.flightMode : FlightMode.MODE_WINGSUIT;
+
+                final WindSystem windSystem = WindSystem.Companion.getInstance();
+                if (windSystem != null) {
+                    final WindSystem.WindEstimate windEstimate = windSystem.getWindAtAltitude(lastGps.altitude_gps, currentFlightMode);
+                    if (windEstimate != null) {
+                        final Vector3 windVector = windEstimate.getWindVector();
+
+                        // Update wind velocity in state (ENU coordinates)
+                        x[12] = windVector.x; // wvx (east component)
+                        x[13] = windVector.y; // wvy (up component)
+                        x[14] = windVector.z; // wvz (north component)
+
+                        // Calculate airspeed (velocity relative to air mass)
+                        final Vector3 airspeedVector = new Vector3(
+                                vKal.x + windVector.x, // East airspeed
+                                vKal.y + windVector.y, // Up airspeed
+                                vKal.z + windVector.z  // North airspeed
+                        );
+
+                        // Calculate wind-adjusted wingsuit parameters using airspeed
+                        final double airspeed = Math.sqrt(airspeedVector.x * airspeedVector.x +
+                                airspeedVector.y * airspeedVector.y +
+                                airspeedVector.z * airspeedVector.z);
+
+                        if (airspeed > 1.0) {
+                            final WSEParams windUpdated = calculateWingsuitParameters(airspeedVector, aKal,
+                                    new WSEParams(x[15], x[16], x[17]));
+                            x[15] = windUpdated.kl(); // klwind
+                            x[16] = windUpdated.kd(); // kdwind
+                            x[17] = windUpdated.roll(); // rollwind
+                        }
+
+                        //if (Log.isLoggable(TAG, Log.DEBUG)) {
+                         //   Log.d(TAG, String.format("Wind: [%.1f,%.1f,%.1f] m/s, Airspeed: %.1f m/s, klwind=%.3f, kdwind=%.3f",
+                        //            windVector.x, windVector.y, windVector.z, airspeed, x[15], x[16]));
+                        //}
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to update wind parameters: " + e.getMessage());
+            // Keep existing wind parameters if wind system fails
+        }
     }
 
     /** ENU relative to the first fix (origin). */
@@ -490,12 +616,14 @@ public final class KalmanFilter3D implements MotionEstimator {
     /** Convert any state vector into an immutable snapshot. */
     private KFState toState(double[] s) {
         return new KFState(
-                new Vector3(s[0], s[1], s[2]),
-                new Vector3(s[3], s[4], s[5]),
-                new Vector3(s[6], s[7], s[8]),
-                new Vector3(s[6], s[7], s[8]),
-                new Vector3(s[6], s[7], s[8]),
-                s[9], s[10], s[11]
+                new Vector3(s[0], s[1], s[2]),     // position
+                new Vector3(s[3], s[4], s[5]),     // velocity
+                new Vector3(s[6], s[7], s[8]),     // acceleration
+                new Vector3(s[6], s[7], s[8]),     // aMeasured (same as acceleration)
+                new Vector3(s[6], s[7], s[8]),     // aWSE (same as acceleration)
+                s[9], s[10], s[11],                // kl, kd, roll
+                new Vector3(s[12], s[13], s[14]),  // wind velocity
+                s[15], s[16], s[17]                // klwind, kdwind, rollwind
         );
     }
 
@@ -508,7 +636,11 @@ public final class KalmanFilter3D implements MotionEstimator {
             Vector3 aWSE,
             double kl,
             double kd,
-            double roll
+            double roll,
+            Vector3 windVelocity,    // Wind velocity components (ENU)
+            double klwind,           // Lift coefficient with wind
+            double kdwind,           // Drag coefficient with wind
+            double rollwind          // Roll with wind consideration
     ) {}
 
     public double ld() {

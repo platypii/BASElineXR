@@ -149,6 +149,9 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
                 // Draw current sustained speeds (if available)
                 drawCurrentSustainedSpeeds(plot);
 
+                // Draw current wind-adjusted sustained speeds (if available)
+                drawCurrentWindAdjustedSustainedSpeeds(plot);
+
                 // Draw high-speed history using 90Hz predicted state data
                 drawHighSpeedHistory(plot, currentTime);
 
@@ -317,6 +320,33 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
     }
 
     /**
+     * Draw current wind-adjusted sustained speeds using cached predicted state from 90Hz updates with wind-based kl/kd
+     */
+    private void drawCurrentWindAdjustedSustainedSpeeds(@NonNull Plot plot) {
+        if (Services.location != null && Services.location.motionEstimator instanceof KalmanFilter3D) {
+            final KalmanFilter3D kf3d = (KalmanFilter3D) Services.location.motionEstimator;
+
+            // Use cached predicted state from last predictDelta() call with 90Hz interpolated wind parameters
+            final KalmanFilter3D.KFState state = kf3d.getCachedPredictedState(System.currentTimeMillis());
+
+            if (isReal(state.klwind()) && isReal(state.kdwind())) {
+                // Calculate wind-adjusted sustained speeds using 90Hz interpolated wind-based wingsuit parameters
+                final double klkd_squared = state.klwind() * state.klwind() + state.kdwind() * state.kdwind();
+                final double klkd_power = Math.pow(klkd_squared, 0.75);
+
+                final double vxs_wind = state.klwind() / klkd_power;
+                final double vys_wind = -state.kdwind() / klkd_power;
+
+                // Draw current wind-adjusted sustained speeds with a distinct style
+                plot.paint.setStyle(Paint.Style.FILL);
+                final int color = 0xff00b3ff; // #00b3ff blue Solid yellow-green for wind-adjusted point
+                plot.paint.setColor(color);
+                plot.drawPoint(AXIS_SPEED, vxs_wind, vys_wind, 8f); // Slightly smaller than regular sustained speeds
+            }
+        }
+    }
+
+    /**
      * Draw accelBall (speeds + c * acceleration) as a large white dot using cached predicted state from 90Hz GpsToWorldTransform updates
      */
     private void drawAccelBall(@NonNull Plot plot) {
@@ -334,20 +364,15 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
             final double vax = Math.sqrt((vx+ax)*(vx+ax) + (vz+az)*(vz+az));
             final double vay = state.acceleration().y+state.velocity().y ;
 
-            final double vy = state.velocity().y;
-            final double ay = state.acceleration().y;
-
             if (isReal(vax) && isReal(vay) ) {
                 // Calculate accelBall position: speeds + c * acceleration
                 // final double c = 1.2; // Acceleration scaling constant
-                final double accelBallX = vax ;
-                final double accelBallY = vay ;
 
                 // Draw large white dot
                 plot.paint.setStyle(Paint.Style.FILL);
                 final int color = 0xffffffff; // White
                 plot.paint.setColor(color);
-                plot.drawPoint(AXIS_SPEED, accelBallX, accelBallY, 15f); // Large radius
+                plot.drawPoint(AXIS_SPEED, vax, vay, 15f); // Large radius
             }
         }
     }

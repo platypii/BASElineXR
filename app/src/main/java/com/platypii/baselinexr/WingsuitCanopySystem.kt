@@ -57,9 +57,9 @@ fun computeCanopyOrientation(
     val GRAVITY = 9.80665 // m/s²
 
     // Get velocity components from predicted state (ENU coordinates)
-    val vN = predictedState.velocity.z  // North velocity
-    val vE = predictedState.velocity.x  // East velocity
-    val vD = -predictedState.velocity.y // Down velocity (negative of up velocity)
+    val vN = predictedState.velocity.z + predictedState.windVelocity.z  // North velocity
+    val vE = predictedState.velocity.x + predictedState.windVelocity.x // East velocity
+    val vD = -predictedState.velocity.y - predictedState.windVelocity.y// Down velocity (negative of up velocity)
     // Get velocity components from predicted state (ENU coordinates)
     val aN = predictedState.acceleration().z  // North velocity
     val aE = predictedState.acceleration().x  // East velocity
@@ -159,7 +159,7 @@ fun computeCanopyOrientation(
         vcpD = vcpD,
         vcpN = vcpN,
         cpaoa = cpaoa,
-        roll = predictedState.roll // Use roll from predicted state
+        roll = predictedState.rollwind // Use roll from predicted state
     )
 }
 class WingsuitCanopySystem : SystemBase() {
@@ -184,7 +184,7 @@ class WingsuitCanopySystem : SystemBase() {
     private var initialized = false
     private var isEnlarged = false
     private var lastGpsTime: Long = 0 // Track when GPS data was last updated
-    private final var isRealCanopyOrientation = true // Flag to control canopy positioning mode
+    private final var isRealCanopyOrientation = false // Flag to control canopy positioning mode
     private var enableWindVectors = true // Flag to control wind vector display - now enabled
     private val windSystem = WindSystem.getInstance()
 
@@ -324,7 +324,7 @@ class WingsuitCanopySystem : SystemBase() {
             is KalmanFilter3D -> {
                 // Get cached predicted state from last predictDelta() call with 90Hz interpolated roll
                 val predictedState = motionEstimator.getCachedPredictedState(System.currentTimeMillis())
-                Pair(predictedState.velocity, predictedState.roll.toFloat())
+                Pair(predictedState.velocity.plus(predictedState.windVelocity), predictedState.rollwind.toFloat())
             }
             is SimpleEstimator -> {
                 Pair(motionEstimator.v, 0f)
@@ -536,7 +536,7 @@ class WingsuitCanopySystem : SystemBase() {
 
         // Get current wind estimate
         val windEstimate = try {
-            windSystem.getWindAtAltitude(lastUpdate.altitude_gps, flightMode)
+            windSystem?.getWindAtAltitude(lastUpdate.altitude_gps, flightMode) ?: throw Exception("WindSystem is null")
         } catch (e: Exception) {
             Log.w(TAG, "Failed to get wind estimate: ${e.message}")
             // Create a small test wind vector for debugging
@@ -604,12 +604,12 @@ class WingsuitCanopySystem : SystemBase() {
             val rotatedX = normalizedInertial.x * cosYaw - normalizedInertial.z * sinYaw
             val rotatedZ = normalizedInertial.x * sinYaw + normalizedInertial.z * cosYaw
 
-            // Scale the tip position by actual velocity magnitude / 50 (smaller offset)
-            val tipDistance = (inertialMagnitude / 50.0).toFloat()
+            // Scale the tip position by actual velocity magnitude / 50
+            val tipDistance = (inertialMagnitude * (VECTOR_SCALE / 5.0)).toFloat()
             basePosition + Vector3(
-                (rotatedX * tipDistance).toFloat(), // Rotated North -> X (swap for VR space)
-                (normalizedInertial.y * tipDistance).toFloat(), // Up -> Y (unchanged)
-                (rotatedZ * tipDistance).toFloat()  // Rotated East -> Z (swap for VR space)
+                (rotatedX * tipDistance).toFloat(),
+                (normalizedInertial.y * tipDistance).toFloat(),
+                (rotatedZ * tipDistance).toFloat()
             )
         } else {
             // If not moving, position wind vector at base position

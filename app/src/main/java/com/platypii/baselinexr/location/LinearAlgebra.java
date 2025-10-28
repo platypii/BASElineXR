@@ -143,9 +143,10 @@ public final class LinearAlgebra {
 
     /**
      * Jacobian for the standard integrator (linearized p,v; a persists).
+     * Updated for 18D state including wind parameters.
      */
     public static double[][] calculateJacobian(double dt) {
-        final double[][] F = identity(12);
+        final double[][] F = identity(18);
         // dp/dv
         F[0][3] = dt;
         F[1][4] = dt;
@@ -154,7 +155,7 @@ public final class LinearAlgebra {
         F[3][6] = dt;
         F[4][7] = dt;
         F[5][8] = dt;
-        // a, params persist (identity already)
+        // a, wingsuit params, wind velocity, wind params persist (identity already)
         return F;
     }
 }
