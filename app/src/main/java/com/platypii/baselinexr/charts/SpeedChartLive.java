@@ -422,7 +422,7 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
                 // Get AOA for color (use index to map to AOA array)
                 int aoa = 0;
                 if (i < polar.aoas.length) {
-                    aoa = polar.aoas[i];
+                    aoa = (int) Math.round(polar.aoas[i]);
                 }
 
                 // Color based on AOA - gradient from blue (low AOA) to red (high AOA)

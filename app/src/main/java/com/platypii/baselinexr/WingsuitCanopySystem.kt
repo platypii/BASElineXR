@@ -19,7 +19,7 @@ import com.platypii.baselinexr.location.MotionEstimator
 import com.platypii.baselinexr.location.PolarLibrary
 import com.platypii.baselinexr.location.SimpleEstimator
 import com.platypii.baselinexr.util.HeadPoseUtil
-import com.platypii.baselinexr.wind.WindSystem
+
 import kotlin.math.*
 
 /**
@@ -186,7 +186,6 @@ class WingsuitCanopySystem : SystemBase() {
     private var lastGpsTime: Long = 0 // Track when GPS data was last updated
     private final var isRealCanopyOrientation = false // Flag to control canopy positioning mode
     private var enableWindVectors = true // Flag to control wind vector display - now enabled
-    private val windSystem = WindSystem.getInstance()
 
     override fun execute() {
         if (!initialized) {
@@ -534,45 +533,35 @@ class WingsuitCanopySystem : SystemBase() {
     private fun updateWindVectors(motionEstimator: MotionEstimator, basePosition: Vector3, flightMode: Int) {
         val lastUpdate = motionEstimator.getLastUpdate() ?: return
 
-        // Get current wind estimate
-        val windEstimate = try {
-            windSystem?.getWindAtAltitude(lastUpdate.altitude_gps, flightMode) ?: throw Exception("WindSystem is null")
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to get wind estimate: ${e.message}")
-            // Create a small test wind vector for debugging
-            WindSystem.WindEstimate(
-                windE = 2.0,  // 2 m/s east wind for testing
-                windN = 1.0,  // 1 m/s north wind for testing
-                windD = 0.0,
-                magnitude = 2.2,
-                direction = 26.6,
-                confidence = 0.5,
-                source = WindSystem.WindSource.NO_WIND,
-                layerName = null,
-                altitude = lastUpdate.altitude_gps,
-                timestamp = System.currentTimeMillis()
-            )
-        }
-
-        // Get velocity components (ENU coordinates)
-        val inertialVelocity = when (motionEstimator) {
+        // Get velocity components and wind velocity from predicted state (ENU coordinates)
+        val (inertialVelocity, windVelocity) = when (motionEstimator) {
             is KalmanFilter3D -> {
-                val predictedState = motionEstimator.getCachedPredictedState(System.currentTimeMillis())
-                predictedState.velocity
+                val currentTime = System.currentTimeMillis()
+                val predictedState = motionEstimator.getCachedPredictedState(currentTime)
+                Log.d(TAG, "KalmanFilter3D state: wind=[${predictedState.windVelocity.x.toInt()},${predictedState.windVelocity.y.toInt()},${predictedState.windVelocity.z.toInt()}] at time=${currentTime}")
+                Pair(predictedState.velocity, predictedState.windVelocity)
             }
-            is SimpleEstimator -> motionEstimator.v
-            else -> com.platypii.baselinexr.util.tensor.Vector3(lastUpdate.vE, lastUpdate.climb, lastUpdate.vN)
+            is SimpleEstimator -> {
+                // Simple estimator doesn't have wind velocity, use zero wind
+                val zeroWind = com.platypii.baselinexr.util.tensor.Vector3(0.0, 0.0, 0.0)
+                Log.d(TAG, "SimpleEstimator: using zero wind")
+                Pair(motionEstimator.v, zeroWind)
+            }
+            else -> {
+                // Fallback estimator doesn't have wind velocity, use zero wind
+                val velocity = com.platypii.baselinexr.util.tensor.Vector3(lastUpdate.vE, lastUpdate.climb, lastUpdate.vN)
+                val zeroWind = com.platypii.baselinexr.util.tensor.Vector3(0.0, 0.0, 0.0)
+                Log.d(TAG, "Fallback estimator: using zero wind")
+                Pair(velocity, zeroWind)
+            }
         }
 
-        // Convert wind estimate to ENU vector
-        val windVector = windEstimate.getWindVector()
-        val wvi = com.platypii.baselinexr.util.tensor.Vector3(
-            windVector.x,
-            windVector.y,
-            windVector.z
-        )
+        // Use wind velocity directly from predicted state (already in ENU coordinates)
+        val wvi = windVelocity
 
-
+        // Debug: Log wind velocity from predicted state
+        val windMag = sqrt(wvi.x * wvi.x + wvi.y * wvi.y + wvi.z * wvi.z)
+        Log.d(TAG, "WingsuitCanopySystem wind: E=${wvi.x.toInt()}, N=${wvi.z.toInt()}, U=${wvi.y.toInt()}, mag=${windMag.toInt()}")
 
         // Calculate airspeed (velocity relative to air mass)
         val airspeedVector = com.platypii.baselinexr.util.tensor.Vector3(
@@ -617,8 +606,8 @@ class WingsuitCanopySystem : SystemBase() {
         }
 
         // Debug wind vector data
-        val windMagnitude = sqrt(windVector.x * windVector.x + windVector.y * windVector.y + windVector.z * windVector.z)
-        Log.d(TAG, "Wind vector: E=${windVector.x.toInt()}, N=${windVector.z.toInt()}, U=${windVector.y.toInt()}, mag=${windMagnitude.toInt()}")
+        val windMagnitude = sqrt(wvi.x * wvi.x + wvi.y * wvi.y + wvi.z * wvi.z)
+        Log.d(TAG, "Wind vector: E=${wvi.x.toInt()}, N=${wvi.z.toInt()}, U=${wvi.y.toInt()}, mag=${windMagnitude.toInt()}")
         Log.d(TAG, "Base position: x=${basePosition.x}, y=${basePosition.y}, z=${basePosition.z}")
         Log.d(TAG, "Wind position: x=${windVectorPos.x}, y=${windVectorPos.y}, z=${windVectorPos.z}")
         Log.d(TAG, "Inertial velocity: E=${inertialVelocity.x.toInt()}, U=${inertialVelocity.y.toInt()}, N=${inertialVelocity.z.toInt()}, mag=${inertialMagnitude.toInt()}")
@@ -629,7 +618,7 @@ class WingsuitCanopySystem : SystemBase() {
         updateVectorWithQuaternions(inertialspeedVectorEntity, vectorBasePos, inertialVelocity, "inertial")
         updateVectorWithQuaternions(windVectorEntity, windVectorPos, wvi, "wind")
 
-        Log.d(TAG, "Wind vectors updated: ${windEstimate.getDisplayString()}")
+        Log.d(TAG, "Wind vectors updated from predicted state: E=${wvi.x.toInt()}, N=${wvi.z.toInt()}, U=${wvi.y.toInt()}")
     }
 
     /**
@@ -669,10 +658,8 @@ class WingsuitCanopySystem : SystemBase() {
         // Combine rotations: first apply offset, then attitude - same as wingsuit
         val rotation = multiplyQuaternions(modelRotation, attitudeRotation)
 
-        // Scale by total velocity / 5 as requested, with minimum scale for visibility
-        val baseScale = VECTOR_SCALE * (magnitude / 5.0).toFloat()
-        val minScale = VECTOR_SCALE * 0.5f // Minimum scale for visibility
-        val scale = maxOf(baseScale, minScale)
+        // Scale by total velocity / 5 as requested, no minimum scale to match geometry
+        val scale = VECTOR_SCALE * (magnitude / 5.0).toFloat()
 
         entity.setComponents(
             listOf(
