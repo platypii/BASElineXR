@@ -504,18 +504,20 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
         final float cy = plot.getY(0);
 
         // Draw horizontal and vertical speed lines
-        plot.paint.setStrokeWidth(options.density);
+        plot.paint.setStrokeWidth(options.density * 2.0f);
         plot.paint.setColor(0xff666666);
         plot.canvas.drawLine(cx, (int) sy, sx, (int) sy, plot.paint); // Horizontal
         plot.canvas.drawLine((int) sx, cy, (int) sx, sy, plot.paint); // Vertical
 
         // Draw total speed circle
         plot.paint.setStyle(Paint.Style.STROKE);
+        plot.paint.setStrokeWidth(options.density * 2.5f); // Thicker circle
         plot.paint.setColor(0xff444444);
         final float r = Math.abs(plot.getX(v) - cx);
         plot.canvas.drawCircle(cx, cy, r, plot.paint);
 
         // Draw glide line
+        plot.paint.setStrokeWidth(options.density * 2.5f); // Thicker circle
         plot.paint.setColor(0xff999999);
         plot.paint.setStrokeCap(Paint.Cap.ROUND);
         plot.canvas.drawLine(cx, cy, sx, sy, plot.paint);

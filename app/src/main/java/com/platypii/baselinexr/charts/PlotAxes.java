@@ -32,7 +32,7 @@ class PlotAxes {
      * Called when rendering the plot to draw the plot axis lines and labels.
      */
     void drawGridlines() {
-        plot.paint.setStrokeWidth(plot.options.density);
+        plot.paint.setStrokeWidth(plot.options.density*2);
         plot.text.setTextSize(plot.options.font_size);
         final Bounds realBounds = getRealBounds();
         drawXlines(realBounds);

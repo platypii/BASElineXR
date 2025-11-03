@@ -299,9 +299,9 @@ public final class KalmanFilter3D implements MotionEstimator {
         kalmanAccelStep.y = Ky[7];
         kalmanAccelStep.z = Ky[8];
         // Wind velocity steps should NOT come from GPS measurements - set to zero
-        kalmanWindStep.x = 0.0;  // GPS measurement shouldn't affect wind
-        kalmanWindStep.y = 0.0;
-        kalmanWindStep.z = 0.0;
+        //kalmanWindStep.x = 0.0;  // GPS measurement shouldn't affect wind
+        //kalmanWindStep.y = 0.0;
+        //kalmanWindStep.z = 0.0;
 
         // For plotting: WSE accel from measured velocity
         //aWSE = calculateWingsuitAcceleration(new Vector3(vx, vy, vz), new WSEParams(x[9], x[10], x[11]));
@@ -326,13 +326,12 @@ public final class KalmanFilter3D implements MotionEstimator {
         // Update wingsuit parameters from current Kalman v,a (in ENU)
         updateWingsuitParameters();
 
-        // Update wind estimation using the optimized wind filter
+        // Wind estimation is now handled in updateWingsuitParameters() method
         final double currentSpeed = Math.sqrt(x[3] * x[3] + x[4] * x[4] + x[5] * x[5]);
         if (Log.isLoggable(TAG, Log.DEBUG) || true) {
-            Log.d(TAG, String.format("Before wind estimation: speed=%.1f m/s, wind=[%.3f,%.3f,%.3f]", 
-                currentSpeed, x[12], x[13], x[14]));
+            Log.d(TAG, String.format("Before wind estimation: speed=%.1f m/s, wind=[%.3f,%.3f,%.3f]",
+                    currentSpeed, x[12], x[13], x[14]));
         }
-        updateWindEstimation(dt);
 
         // Calculate wingsuit parameter steps as difference between new and old values
         kalmanKlStep = x[9] - oldKl;       // wingsuit parameter steps
@@ -342,11 +341,11 @@ public final class KalmanFilter3D implements MotionEstimator {
         kalmanWindStep.x = x[12] - oldWvx;  // wind velocity step (east)
         kalmanWindStep.y = x[13] - oldWvy;  // wind velocity step (up)
         kalmanWindStep.z = x[14] - oldWvz;  // wind velocity step (north)
-        
+
         // Debug: Log wind step calculation
         if (Log.isLoggable(TAG, Log.DEBUG) || true) {
             Log.d(TAG, String.format("Wind step: old=[%.3f,%.3f,%.3f] new=[%.3f,%.3f,%.3f] step=[%.3f,%.3f,%.3f]",
-                oldWvx, oldWvy, oldWvz, x[12], x[13], x[14], kalmanWindStep.x, kalmanWindStep.y, kalmanWindStep.z));
+                    oldWvx, oldWvy, oldWvz, x[12], x[13], x[14], kalmanWindStep.x, kalmanWindStep.y, kalmanWindStep.z));
         }
         // Calculate wind parameter steps
         kalmanKlWindStep = x[15] - oldKlWind;     // wind-based wingsuit parameter steps
@@ -396,7 +395,7 @@ public final class KalmanFilter3D implements MotionEstimator {
     private KFState cachedPredictedState = null;
     private long cachedPredictionTime = 0;
 
-    /** Predict the state (without mutating this filter) at a given wallclock time in ms. */
+    /** Predict the state delta from last update (without mutating this filter) at a given wallclock time in ms. */
     public Vector3 predictDelta(long currentTimeMillis) {
         if (lastGps == null) return new Vector3();
 
@@ -408,7 +407,7 @@ public final class KalmanFilter3D implements MotionEstimator {
         if (dt <= 0) {
             cachedPredictedState = toState(x);
             cachedPredictionTime = currentTimeMillis;
-            return new Vector3(x[0], x[1], x[2]);
+            return new Vector3(0, 0, 0);
         }
 
         // Clone state and step forward in small increments
@@ -428,7 +427,7 @@ public final class KalmanFilter3D implements MotionEstimator {
 
         // Apply Kalman gain smoothing to position, velocity, and acceleration
         //Log.d(TAG, "refreshrate: " + Services.location.refreshRate.refreshRate);
-        double alpha = 1-(dt * 20);//Services.location.refreshRate.refreshRate); // Services.location.refreshRate.refreshRate; // todo, use gps update rate
+        double alpha = 1-(dt * Services.location.refreshRate.refreshRate); // Services.location.refreshRate.refreshRate; // todo, use gps update rate
         if (alpha < 0) alpha = 0;
         if (alpha > 1) alpha = 1;
 
@@ -474,7 +473,7 @@ public final class KalmanFilter3D implements MotionEstimator {
         if (cachedPredictedState != null && Math.abs(currentTimeMillis - cachedPredictionTime) <= 20) {
             if (Log.isLoggable(TAG, Log.VERBOSE)) {
                 Log.v(TAG, String.format("Using cached predicted state, wind=[%.3f,%.3f,%.3f]",
-                    cachedPredictedState.windVelocity().x, cachedPredictedState.windVelocity().y, cachedPredictedState.windVelocity().z));
+                        cachedPredictedState.windVelocity().x, cachedPredictedState.windVelocity().y, cachedPredictedState.windVelocity().z));
             }
             return cachedPredictedState;
         }
@@ -482,7 +481,7 @@ public final class KalmanFilter3D implements MotionEstimator {
         final KFState fallbackState = toState(x);
         if (Log.isLoggable(TAG, Log.DEBUG) || true) {
             Log.d(TAG, String.format("Cache stale (age=%dms), using fallback state, wind=[%.3f,%.3f,%.3f]",
-                Math.abs(currentTimeMillis - cachedPredictionTime), fallbackState.windVelocity().x, fallbackState.windVelocity().y, fallbackState.windVelocity().z));
+                    Math.abs(currentTimeMillis - cachedPredictionTime), fallbackState.windVelocity().x, fallbackState.windVelocity().y, fallbackState.windVelocity().z));
         }
         return fallbackState;
     }
@@ -520,6 +519,7 @@ public final class KalmanFilter3D implements MotionEstimator {
         x[0] = nx; x[1] = ny; x[2] = nz;
         x[3] = nvx; x[4] = nvy; x[5] = nvz;
         x[6] = aWse.x; x[7] = aWse.y; x[8] = aWse.z;
+        //  x[6] = ax; x[7] = ay; x[8] = az;
         // x[9..17] unchanged in prediction (wingsuit params, wind velocity, wind params)
     }
 
@@ -547,6 +547,7 @@ public final class KalmanFilter3D implements MotionEstimator {
         out[0] = nx; out[1] = ny; out[2] = nz;
         out[3] = nvx; out[4] = nvy; out[5] = nvz;
         out[6] = aWse.x; out[7] = aWse.y; out[8] = aWse.z;
+        // out[6] = ax; out[7] = ay; out[8] = az;
         // wingsuit params, wind velocity, and wind params unchanged (indices 9-17)
         //Log.i(TAG,"integrateState " + out[9] + "," + out[10] + "," + out[11]);
 
@@ -585,17 +586,27 @@ public final class KalmanFilter3D implements MotionEstimator {
         x[10] = updated.kd();
         x[11] = updated.roll();
 
-        // Use wind velocity from the WindKalmanFilter (already set in x[12-14] by updateWindEstimation)
-        // Do NOT use WindSystem here as it would overwrite the optimized wind estimates
+        // Use wind velocity from WindSystem altitude-based wind data
         try {
             if (lastGps != null) {
-                final Vector3 windVector = new Vector3(x[12], x[13], x[14]); // Use wind from WindKalmanFilter
+                // Get current flight mode
+                int flightMode = Services.flightComputer != null ? Services.flightComputer.flightMode : FlightMode.MODE_WINGSUIT;
+
+                // Get wind estimate from WindSystem at current altitude
+                final double currentAltitude = lastGps.altitude_gps;
+                final WindSystem.WindEstimate windEstimate = WindSystem.Companion.getInstance().getWindAtAltitude(currentAltitude, flightMode);
+
+                // Update wind state variables with the wind estimate
+                final Vector3 windVector = windEstimate.getWindVector(); // Already in ENU format
+                x[12] = windVector.x; // wvx (east wind)
+                x[13] = windVector.y; // wvy (up wind)
+                x[14] = windVector.z; // wvz (north wind)
 
                 // Calculate airspeed (velocity relative to air mass)
                 final Vector3 airspeedVector = new Vector3(
-                        vKal.x + windVector.x, // East airspeed
-                        vKal.y + windVector.y, // Up airspeed
-                        vKal.z + windVector.z  // North airspeed
+                        vKal.x + windVector.x, // East airspeed (subtract wind)
+                        vKal.y + windVector.y, // Up airspeed (subtract wind)
+                        vKal.z + windVector.z  // North airspeed (subtract wind)
                 );
 
                 // Calculate wind-adjusted wingsuit parameters using airspeed
@@ -611,18 +622,18 @@ public final class KalmanFilter3D implements MotionEstimator {
                     x[17] = windUpdated.roll(); // rollwind
                 }
 
-                //if (Log.isLoggable(TAG, Log.DEBUG)) {
-                //    Log.d(TAG, String.format("Wind: [%.1f,%.1f,%.1f] m/s, Airspeed: %.1f m/s, klwind=%.3f, kdwind=%.3f",
-                //            windVector.x, windVector.y, windVector.z, airspeed, x[15], x[16]));
-                //}
+                if (Log.isLoggable(TAG, Log.DEBUG) || true) {
+                    Log.d(TAG, String.format("WindSystem: alt=%.0fm, wind=[%.1f,%.1f,%.1f] m/s, airspeed=%.1f m/s, klwind=%.3f, kdwind=%.3f (%s)",
+                            currentAltitude, windVector.x, windVector.y, windVector.z, airspeed, x[15], x[16], windEstimate.getSource().getDisplayName()));
+                }
             }
         } catch (Exception e) {
-            Log.w(TAG, "Failed to update wind parameters: " + e.getMessage());
-            // Keep existing wind parameters if wind system fails
+            Log.w(TAG, "Failed to update wind parameters from WindSystem: " + e.getMessage());
+            // Keep existing wind parameters if WindSystem fails
         }
     }
 
-    /** 
+    /**
      * Update wind estimation using direct optimization results
      * Uses the optimal wind velocity directly from optimizeWindVelocity()
      */
@@ -631,43 +642,43 @@ public final class KalmanFilter3D implements MotionEstimator {
         final Vector3 velocity = new Vector3(x[3], x[4], x[5]);
         final Vector3 acceleration = new Vector3(x[6], x[7], x[8]);
         final double currentRoll = x[11];
-        
+
         // Debug: Log that wind estimation is being called
         if (Log.isLoggable(TAG, Log.DEBUG) || true) {
             final double velMag = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y + velocity.z * velocity.z);
             Log.d(TAG, String.format("updateWindEstimation called: vel=[%.1f,%.1f,%.1f] (%.1f m/s), accel=[%.1f,%.1f,%.1f], roll=%.1f°",
-                velocity.x, velocity.y, velocity.z, velMag, acceleration.x, acceleration.y, acceleration.z, Math.toDegrees(currentRoll)));
+                    velocity.x, velocity.y, velocity.z, velMag, acceleration.x, acceleration.y, acceleration.z, Math.toDegrees(currentRoll)));
         }
-        
+
         // Find optimal wind velocity that minimizes acceleration residual
         final WindKalmanFilter.WindOptimizationResult optimalWind = windFilter.optimizeWindVelocity(velocity, acceleration, currentRoll);
-        
+
         // Debug: Log wind values before updating state
         if (Log.isLoggable(TAG, Log.DEBUG) || true) {
             Log.d(TAG, String.format("Wind state update: old=[%.3f,%.3f,%.3f] -> optimal=[%.3f,%.3f,%.3f]",
-                x[12], x[13], x[14], optimalWind.windVelocity.x, optimalWind.windVelocity.y, optimalWind.windVelocity.z));
+                    x[12], x[13], x[14], optimalWind.windVelocity.x, optimalWind.windVelocity.y, optimalWind.windVelocity.z));
         }
-        
+
         // Update the main filter's wind state directly with optimal wind values
         x[12] = optimalWind.windVelocity.x; // wvx (east wind)
         x[13] = optimalWind.windVelocity.y; // wvy (up wind)
         x[14] = optimalWind.windVelocity.z; // wvz (north wind)
-        
+
         // Convert cl, cd coefficients to kl, kd for display compatibility
         // Using atmospheric density with 10°C offset (same as WindKalmanFilter)
         final double rho = AtmosphericModel.calculateDensity((float) lastGps.altitude_gps, 10f);
         final double k = 0.5 * rho * polar.s / polar.m;
         final double GRAVITY = 9.81;
-        
+
         // Update wind-adjusted wingsuit parameters (x[15-17]) using optimal results
         x[15] = optimalWind.bestCoeff.cl * k / GRAVITY; // klwind
         x[16] = optimalWind.bestCoeff.cd * k / GRAVITY; // kdwind
         x[17] = optimalWind.bestRoll; // rollwind (use actual roll from wind optimization)
-        
+
         if (Log.isLoggable(TAG, Log.DEBUG) || true) { // Force logging for debugging
             final double windSpeed = Math.sqrt(optimalWind.windVelocity.x * optimalWind.windVelocity.x + optimalWind.windVelocity.y * optimalWind.windVelocity.y + optimalWind.windVelocity.z * optimalWind.windVelocity.z);
             Log.d(TAG, String.format("WindOptimal: wind=[%.3f,%.3f,%.3f] m/s (%.3f m/s), AoA: %.1f°, klwind=%.4f, kdwind=%.4f, residual: %.3f",
-                optimalWind.windVelocity.x, optimalWind.windVelocity.y, optimalWind.windVelocity.z, windSpeed, optimalWind.bestAoA, x[15], x[16], optimalWind.minResidual));
+                    optimalWind.windVelocity.x, optimalWind.windVelocity.y, optimalWind.windVelocity.z, windSpeed, optimalWind.bestAoA, x[15], x[16], optimalWind.minResidual));
         }
     }
 
@@ -725,45 +736,45 @@ public final class KalmanFilter3D implements MotionEstimator {
     }
 
     // Wind estimation getter methods (based on TypeScript kalman.ts integration)
-    
+
     /** Get the current wind estimate from the optimized wind filter */
     public Vector3 getWindEstimate() {
         return new Vector3(x[12], x[13], x[14]);
     }
-    
+
     /** Get the wind-adjusted aerodynamic parameters (kl, kd) */
     public Vector3 getWindAdjustedParameters() {
         return new Vector3(x[15], x[16], x[17]); // klwind, kdwind, rollwind
     }
-    
+
     // Wind filter control methods
-    
+
     /** Set wind filter process noise (how quickly wind changes) */
     public void setWindProcessNoise(double noise) {
         windFilter.setProcessNoise(noise);
     }
-    
+
     /** Set wind filter measurement noise (trust in wind estimates) */
     public void setWindMeasurementNoise(double noise) {
         windFilter.setMeasurementNoise(noise);
     }
-    
+
     /** Get current wind filter process noise */
     public double getWindProcessNoise() {
         return windFilter.getProcessNoise();
     }
-    
+
     /** Get current wind filter measurement noise */
     public double getWindMeasurementNoise() {
         return windFilter.getMeasurementNoise();
     }
-    
+
     /** Set custom polar for wind estimation */
     public void setPolar(PolarLibrary.WingsuitPolar polar) {
         this.polar = polar;
         windFilter.setPolar(polar);
     }
-    
+
     /** Reset wind estimation to initial state */
     public void resetWindEstimation() {
         windFilter.reset();

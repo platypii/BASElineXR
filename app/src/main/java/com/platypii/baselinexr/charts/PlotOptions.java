@@ -19,10 +19,10 @@ public class PlotOptions {
 
     // Drawing options
     public final float density;
-    final int background_color = 0xff000000;
+    final int background_color = 0x80333333; // Transparent grey (50% opacity)
     final int axis_color = 0xffdd0000;
-    public final int grid_color = 0xff555555;
-    final int grid_text_color = 0xff666666;
+    public final int grid_color = 0xffaaaaaa; // Lighter grey for better visibility
+    final int grid_text_color = 0xffcccccc; // Lighter text for better visibility
     final float font_size;
 
     // Axis options
@@ -31,7 +31,7 @@ public class PlotOptions {
     // Constructor requires density
     PlotOptions(float density, float fontscale) {
         this.density = density;
-        font_size = 16 * density * fontscale;
+        font_size = 18 * density * fontscale;
     }
 
     // Axis options

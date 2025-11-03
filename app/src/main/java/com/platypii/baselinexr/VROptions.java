@@ -13,7 +13,7 @@ public class VROptions {
     //public static LatLngAlt dropzone = new LatLngAlt(47.2375, -123.1458, 84);
 
     // Current active configuration
-    public static VROptions current = VROptionsList.SQUAW_CANOPY;
+    public static VROptions current = VROptionsList.EIGER_SKYDIVE_LAKE;
     public enum ShaderType {
         DEFAULT_SHADER,
         LOD_SHADER

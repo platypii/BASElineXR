@@ -34,8 +34,9 @@ interface BasePlot {
     default void drawPlot(@NonNull Plot plot) {
         plot.updateBounds(this);
 
-        // Background
-        plot.canvas.drawColor(plot.options.background_color);
+        // Background - clear canvas first for transparency, then draw background
+        plot.canvas.drawColor(0x00000000, android.graphics.PorterDuff.Mode.CLEAR);
+        //plot.canvas.drawColor(plot.options.background_color);
 
         // Draw grid lines
         plot.axes.drawGridlines();

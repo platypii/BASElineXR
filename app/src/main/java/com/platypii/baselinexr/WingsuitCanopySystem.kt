@@ -184,7 +184,7 @@ class WingsuitCanopySystem : SystemBase() {
     private var initialized = false
     private var isEnlarged = false
     private var lastGpsTime: Long = 0 // Track when GPS data was last updated
-    private final var isRealCanopyOrientation = false // Flag to control canopy positioning mode
+    private final var isRealCanopyOrientation = true // Flag to control canopy positioning mode
     private var enableWindVectors = true // Flag to control wind vector display - now enabled
 
     override fun execute() {

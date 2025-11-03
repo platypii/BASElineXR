@@ -127,7 +127,7 @@ public class VROptionsList {
             true,
             true,
             true,
-            null
+            new LatLngAlt(47.25203, 7.984, 2670.5)
     );
 
     public static final VROptions KPOW_SKYDIVE_LANDING = new VROptions(

@@ -29,12 +29,15 @@ public abstract class PlotSurface extends SurfaceView implements SurfaceHolder.C
     private final Plot plot = new Plot(options);
 
     // The drawing thread will sleep for refreshRateMillis
-    private static final long refreshRateMillis = 33; // Approx 30fps
+    private static final long refreshRateMillis = 11; // Approx 30fps
 
     public PlotSurface(Context context, AttributeSet attrs) {
         super(context, attrs);
         final SurfaceHolder holder = getHolder();
         holder.addCallback(this);
+        // Set up transparency for the SurfaceView
+        setZOrderOnTop(true);
+        holder.setFormat(android.graphics.PixelFormat.TRANSLUCENT);
         // Initialize bounds
         plot.initBounds(1);
     }

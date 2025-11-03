@@ -111,8 +111,8 @@ class FlightStatsSystem : SystemBase() {
             val predictedState = kf3d.getCachedPredictedState(System.currentTimeMillis())
 
             // Get predicted position delta and add to GPS baseline
-            val positionDelta = kf3d.predictDelta(System.currentTimeMillis())
-            val predictedAltitude = loc.altitude_gps + positionDelta.y
+            val positionDelta = kf3d.state.position().y  - predictedState.position().y
+            val predictedAltitude = loc.altitude_gps + positionDelta
 
             // Calculate ground speed from predicted velocity components
             val groundSpeed = sqrt(
