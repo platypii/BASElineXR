@@ -1,0 +1,6 @@
+# altitude_m, windspeed_mps, wind_direction_deg, wind_inclination_deg
+1000, 3.0, 270, 0
+1750, 4.5, 260, 2
+2500, 6.0, 250, 5
+3250, 7.5, 240, 8
+4000, 9.0, 230, 10

@@ -109,7 +109,8 @@ class PortalSystem(
             portalLocation.lng,
             portalLocation.alt,
             currentTime,
-            motionEstimator
+            motionEstimator,
+            false
         )
 
         // Apply yaw adjustment and portal orientation to align with world coordinate system

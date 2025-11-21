@@ -12,6 +12,23 @@ import com.platypii.baselinexr.util.tensor.Vector3
  * available wind estimate based on altitude and flight mode.
  */
 class WindSystem {
+    // Wind input mode
+    enum class WindMode { ESTIMATION, NO_WIND, SAVED }
+    private var windMode: WindMode = WindMode.ESTIMATION
+
+    // Saved wind system (CSV/interpolated)
+    private var savedWindSystem: SavedWindSystem? = null
+
+    fun setWindMode(mode: WindMode) {
+        windMode = mode
+        clearCache()
+        Log.d(TAG, "Wind mode set to $mode")
+    }
+
+    fun setSavedWindSystem(system: SavedWindSystem) {
+        savedWindSystem = system
+        Log.d(TAG, "SavedWindSystem set")
+    }
     companion object {
         private const val TAG = "WindSystem"
 
@@ -29,6 +46,9 @@ class WindSystem {
     // Wind estimation sources
     private var windLayerManager: WindLayerManager? = null
     private var windEstimationSystem: WindEstimationSystem? = null
+
+    // Wind system enabled/disabled state
+    private var isEnabled: Boolean = true
 
     // Current wind estimate cache
     private var cachedWindEstimate: WindEstimate? = null
@@ -118,6 +138,60 @@ class WindSystem {
      * Get wind estimate for the specified altitude and flight mode
      */
     fun getWindAtAltitude(altitude: Double, flightMode: Int = FlightMode.MODE_WINGSUIT): WindEstimate {
+        // If wind system is disabled or mode is NO_WIND, return zero wind
+        if (!isEnabled || windMode == WindMode.NO_WIND) {
+            return WindEstimate(
+                windE = 0.0,
+                windN = 0.0,
+                windD = 0.0,
+                magnitude = 0.0,
+                direction = 0.0,
+                confidence = 0.0,
+                source = WindSource.NO_WIND,
+                layerName = null,
+                altitude = altitude,
+                timestamp = System.currentTimeMillis()
+            )
+        }
+
+        // Saved wind mode
+        if (windMode == WindMode.SAVED) {
+            savedWindSystem?.let { saved ->
+                val kf = saved.getWindAtAltitude(altitude)
+                if (kf != null) {
+                    val rad = Math.toRadians(kf.direction)
+                    val windE = kf.windspeed * Math.sin(rad)
+                    val windN = kf.windspeed * Math.cos(rad)
+                    val windD = kf.windspeed * Math.sin(Math.toRadians(kf.inclination))
+                    return WindEstimate(
+                        windE = windE,
+                        windN = windN,
+                        windD = windD,
+                        magnitude = kf.windspeed,
+                        direction = kf.direction,
+                        confidence = 1.0,
+                        source = WindSource.INTERPOLATED,
+                        layerName = "SavedWindCSV",
+                        altitude = altitude,
+                        timestamp = System.currentTimeMillis()
+                    )
+                }
+            }
+            // Fallback: no CSV data
+            return WindEstimate(
+                windE = 0.0,
+                windN = 0.0,
+                windD = 0.0,
+                magnitude = 0.0,
+                direction = 0.0,
+                confidence = 0.0,
+                source = WindSource.NO_WIND,
+                layerName = null,
+                altitude = altitude,
+                timestamp = System.currentTimeMillis()
+            )
+        }
+
         // Check cache validity
         val currentTime = System.currentTimeMillis()
         if (cachedWindEstimate != null &&
@@ -339,6 +413,24 @@ class WindSystem {
             return manager.getLayers().isNotEmpty()
         }
         return false
+    }
+
+    /**
+     * Enable or disable wind system output
+     */
+    fun setEnabled(enabled: Boolean) {
+        if (isEnabled != enabled) {
+            isEnabled = enabled
+            clearCache() // Clear cache when state changes
+            Log.d(TAG, "Wind system ${if (enabled) "enabled" else "disabled"}")
+        }
+    }
+
+    /**
+     * Check if wind system is enabled
+     */
+    fun isEnabled(): Boolean {
+        return isEnabled
     }
 
     /**

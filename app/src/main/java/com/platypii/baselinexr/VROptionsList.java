@@ -19,7 +19,10 @@ public class VROptionsList {
             true,
             true,
             true,
-            new LatLngAlt(41.191222, 7.99, 3440.0)
+            new LatLngAlt(41.191222, 7.99, 3440.0),
+            null,
+            null,
+            null
     );
 
     public static final VROptions LIVEON = new VROptions(
@@ -36,7 +39,10 @@ public class VROptionsList {
             true,
             true,
             true,
-            new LatLngAlt(41.191222, 7.99, 3440.0)
+            new LatLngAlt(41.191222, 7.99, 3440.0),
+            null,
+            null,
+            null
     );
 
     public static final VROptions LIVEOS = new VROptions(
@@ -53,7 +59,10 @@ public class VROptionsList {
             true,
             true,
             true,
-            new LatLngAlt(41.191222, 7.99, 3440.0)
+            new LatLngAlt(41.191222, 7.99, 3440.0),
+            null,
+            null,
+            null
     );
 
     public static final VROptions LIVE_POTM = new VROptions(
@@ -70,7 +79,10 @@ public class VROptionsList {
             true,
             true,
             true,
-            new LatLngAlt(46.5785, 7.99, 3040.0)
+            new LatLngAlt(46.5785, 7.99, 3040.0),
+            null,
+            null,
+            null
     );
 
     public static final VROptions LIVE_EAST = new VROptions(
@@ -85,6 +97,9 @@ public class VROptionsList {
             true,
             true,
             false,
+            null,
+            null,
+            null,
             null
     );
 
@@ -99,6 +114,9 @@ public class VROptionsList {
             true,
             true,
             true,
+            null,
+            null,
+            null,
             null
     );
 
@@ -113,7 +131,10 @@ public class VROptionsList {
             true,
             true,
             true,
-            new LatLngAlt(46.5785, 7.99, 3050.0)
+            new LatLngAlt(46.5785, 7.99, 3050.0),
+            null,
+            null,
+            null
     );
 
     public static final VROptions EIGER_SKYDIVE_LAKE = new VROptions(
@@ -127,7 +148,10 @@ public class VROptionsList {
             true,
             true,
             true,
-            new LatLngAlt(47.25203, 7.984, 2670.5)
+            new LatLngAlt(47.25203, 7.984, 2670.5),
+            null,
+            null,
+            null
     );
 
     public static final VROptions KPOW_SKYDIVE_LANDING = new VROptions(
@@ -141,6 +165,9 @@ public class VROptionsList {
             true,
             true,
             true,
+            null,
+            null,
+            null,
             null
     );
 
@@ -155,6 +182,9 @@ public class VROptionsList {
             false,
             true,
             false,
+            null,
+            null,
+            null,
             null
     );
 
@@ -169,6 +199,9 @@ public class VROptionsList {
             true,
             false,
             true,
+            null,
+            null,
+            null,
             null
     );
 
@@ -183,6 +216,9 @@ public class VROptionsList {
             true,
             false,
             true,
+            null,
+            null,
+            null,
             null
     );
 
@@ -197,7 +233,10 @@ public class VROptionsList {
             true,
             true,
             true,
-            new LatLngAlt(46.57835, 7.984, 2670.5)
+            new LatLngAlt(46.57835, 7.984, 2670.5),
+            null,
+            null,
+            null
     );
 
     public static final VROptions SQUAW = new VROptions(
@@ -212,7 +251,61 @@ public class VROptionsList {
             true,
             false,
             true,
-            new LatLngAlt(46.57835, 7.984, 2670.5)
+            new LatLngAlt(46.57835, 7.984, 2670.5),
+            null,
+            null,
+            null
+    );
+
+    public static final VROptions SQUAW_WITH_SENSORS = new VROptions(
+            "Squaw+Sensors",
+            null, // mockTrack overridden by mockSensor
+            "eiger",
+            new LatLngAlt(40.2709309,-111.620655,2146.342),
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            true,
+            false,
+            true,
+            new LatLngAlt(46.57835, 7.984, 2670.5),
+            "squaw072925", // mockSensor folder (updated path)
+            null, // mockTrackStartSec (start from beginning)
+            null  // mockTrackEndSec (play until end)
+    );
+
+    public static final VROptions SQUAW_SENSORS_CLIP = new VROptions(
+            "Squaw Clip",
+            null,
+            "eiger",
+            new LatLngAlt(40.2709309,-111.620655,2146.342),
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            true,
+            false,
+            true,
+            new LatLngAlt(46.57835, 7.984, 2670.5),
+            "squaw072925", // mockSensor folder (updated path)
+            855, // mockTrackStartSec (start at 10 seconds)
+            962  // mockTrackEndSec (end at 60 seconds)
+    );
+
+    public static final VROptions CHINA_SENSORS_CLIP = new VROptions(
+            "CHINA Clip",
+            null,
+            "eiger",
+            new LatLngAlt(40.2709309,-111.620655,2146.342),
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            true,
+            false,
+            true,
+            new LatLngAlt(46.57835, 7.984, 2670.5),
+            "china050125",
+            1824,
+            2100
     );
 
     public static final VROptions TOOELE_SKYDIVE = new VROptions(
@@ -227,7 +320,10 @@ public class VROptionsList {
             true,
             false,
             true,
-            new LatLngAlt(46.57835, 7.984, 2670.5)
+            new LatLngAlt(46.57835, 7.984, 2670.5),
+            null,
+            null,
+            null
     );
 
     public static final VROptions SQUAW_CANOPY = new VROptions(
@@ -242,7 +338,10 @@ public class VROptionsList {
             true,
             false,
             true,
-            new LatLngAlt(46.57835, 7.984, 2670.5)
+            new LatLngAlt(46.57835, 7.984, 2670.5),
+            null,
+            null,
+            null
     );
 
     public static final VROptions OGDEN_AIRPLANE = new VROptions(
@@ -257,7 +356,10 @@ public class VROptionsList {
             true,
             false,
             true,
-            new LatLngAlt(46.57835, 7.984, 2670.5)
+            new LatLngAlt(46.57835, 7.984, 2670.5),
+            null,
+            null,
+            null
     );
 
     public static final VROptions OGDEN_SKYDIVE = new VROptions(
@@ -272,7 +374,10 @@ public class VROptionsList {
             true,
             false,
             true,
-            new LatLngAlt(46.57835, 7.984, 2670.5)
+            new LatLngAlt(46.57835, 7.984, 2670.5),
+            null,
+            null,
+            null
     );
 
     public static final VROptions OGDEN_SKYDIVE_FULL = new VROptions(
@@ -287,7 +392,10 @@ public class VROptionsList {
             true,
             false,
             true,
-            new LatLngAlt(46.57835, 7.984, 2670.5)
+            new LatLngAlt(46.57835, 7.984, 2670.5),
+            null,
+            null,
+            null
     );
 
     public static final VROptions CHINA = new VROptions(
@@ -302,7 +410,10 @@ public class VROptionsList {
             true,
             false,
             true,
-            new LatLngAlt(46.57835, 7.984, 2670.5)
+            new LatLngAlt(46.57835, 7.984, 2670.5),
+            null,
+            null,
+            null
     );
 
     public static final MiniMapOptions MM_KPOW = new MiniMapOptions(

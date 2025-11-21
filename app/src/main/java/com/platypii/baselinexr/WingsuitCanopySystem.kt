@@ -181,11 +181,13 @@ class WingsuitCanopySystem : SystemBase() {
     private var windVectorEntity: Entity? = null
     private var airspeedVectorEntity: Entity? = null
     private var inertialspeedVectorEntity: Entity? = null
+    private var magneticVectorEntity: Entity? = null // New: magnetic field vector
     private var initialized = false
     private var isEnlarged = false
     private var lastGpsTime: Long = 0 // Track when GPS data was last updated
     private final var isRealCanopyOrientation = true // Flag to control canopy positioning mode
     private var enableWindVectors = true // Flag to control wind vector display - now enabled
+    private var enableMagneticVector = true // Flag to control magnetic field vector display
 
     override fun execute() {
         if (!initialized) {
@@ -239,8 +241,16 @@ class WingsuitCanopySystem : SystemBase() {
             Visible(false) // Start invisible
         )
 
+        // Create magnetic field vector entity (using vectorb.glb - will appear cyan/green)
+        magneticVectorEntity = Entity.create(
+            Mesh("vectorb.glb".toUri()), // Reuse blue vector for magnetic field (appears cyan)
+            Transform(Pose(Vector3(0f), Quaternion())),
+            Scale(Vector3(VECTOR_SCALE)),
+            Visible(false) // Start invisible
+        )
+
         initialized = true
-        Log.i(TAG, "WingsuitCanopySystem initialized with wind vectors")
+        Log.i(TAG, "WingsuitCanopySystem initialized with wind vectors and magnetic field vector")
     }
 
     private fun updateModelOrientationAndVisibility() {
@@ -249,6 +259,15 @@ class WingsuitCanopySystem : SystemBase() {
             wingsuitEntity?.setComponent(Visible(false))
             canopyEntity?.setComponent(Visible(false))
             hideVectors()
+            // But still show magnetic vector if we have sensor data
+            if (enableMagneticVector) {
+                val motionEstimator = Services.location.motionEstimator
+                val lastUpdate = motionEstimator.getLastUpdate()
+                val headPose = HeadPoseUtil.getHeadPose(systemManager)
+                if (lastUpdate != null && headPose != null && headPose != Pose()) {
+                    updateMagneticVector(lastUpdate.millis, headPose.t + Vector3(0f, MODEL_HEIGHT_OFFSET, 0f))
+                }
+            }
             return
         }
 
@@ -271,6 +290,10 @@ class WingsuitCanopySystem : SystemBase() {
             wingsuitEntity?.setComponent(Visible(false))
             canopyEntity?.setComponent(Visible(false))
             hideVectors()
+            // But still show magnetic vector if we have sensor data
+            if (enableMagneticVector && lastUpdate != null) {
+                updateMagneticVector(lastUpdate.millis, headPose.t + Vector3(0f, MODEL_HEIGHT_OFFSET, 0f))
+            }
             return
         }
 
@@ -286,6 +309,10 @@ class WingsuitCanopySystem : SystemBase() {
             wingsuitEntity?.setComponent(Visible(false))
             canopyEntity?.setComponent(Visible(false))
             hideVectors()
+            // But still show magnetic vector if we have sensor data
+            if (enableMagneticVector) {
+                updateMagneticVector(lastUpdate.millis, headPose.t + Vector3(0f, MODEL_HEIGHT_OFFSET, 0f))
+            }
             return
         }
 
@@ -300,6 +327,9 @@ class WingsuitCanopySystem : SystemBase() {
             if (enableWindVectors) {
                 updateWindVectors(motionEstimator, canopyPosition, FlightMode.MODE_CANOPY)
             }
+            if (enableMagneticVector) {
+                updateMagneticVector(lastUpdate.millis, canopyPosition)
+            }
         } else {
             // Show wingsuit, hide canopy (for all other flight modes)
             canopyEntity?.setComponent(Visible(false))
@@ -311,6 +341,9 @@ class WingsuitCanopySystem : SystemBase() {
                     else -> FlightMode.MODE_WINGSUIT
                 }
                 updateWindVectors(motionEstimator, wingsuitPosition, windFlightMode)
+            }
+            if (enableMagneticVector) {
+                updateMagneticVector(lastUpdate.millis, wingsuitPosition)
             }
         }
     }
@@ -388,7 +421,7 @@ class WingsuitCanopySystem : SystemBase() {
             )
         )
 
-        Log.d(TAG, "Wingsuit: vE=${velocity.x.toInt()}, vN=${velocity.z.toInt()}, climb=${velocity.y.toInt()}, pitch=${Math.toDegrees(pitchRad.toDouble()).toInt()}°, heading=${Math.toDegrees(flightYaw.toDouble()).toInt()}°, roll=${Math.toDegrees(rollRad.toDouble()).toInt()}°, AOA=${aoaDeg.toInt()}° | Model forward=+Z, left=+X")
+        // ...removed per-frame debug logging...
     }
 
     private fun updateCanopyOrientation(motionEstimator: MotionEstimator, position: Vector3, hasNewGpsData: Boolean) {
@@ -538,20 +571,20 @@ class WingsuitCanopySystem : SystemBase() {
             is KalmanFilter3D -> {
                 val currentTime = System.currentTimeMillis()
                 val predictedState = motionEstimator.getCachedPredictedState(currentTime)
-                Log.d(TAG, "KalmanFilter3D state: wind=[${predictedState.windVelocity.x.toInt()},${predictedState.windVelocity.y.toInt()},${predictedState.windVelocity.z.toInt()}] at time=${currentTime}")
+                // ...removed per-frame debug logging...
                 Pair(predictedState.velocity, predictedState.windVelocity)
             }
             is SimpleEstimator -> {
                 // Simple estimator doesn't have wind velocity, use zero wind
                 val zeroWind = com.platypii.baselinexr.util.tensor.Vector3(0.0, 0.0, 0.0)
-                Log.d(TAG, "SimpleEstimator: using zero wind")
+                // ...removed per-frame debug logging...
                 Pair(motionEstimator.v, zeroWind)
             }
             else -> {
                 // Fallback estimator doesn't have wind velocity, use zero wind
                 val velocity = com.platypii.baselinexr.util.tensor.Vector3(lastUpdate.vE, lastUpdate.climb, lastUpdate.vN)
                 val zeroWind = com.platypii.baselinexr.util.tensor.Vector3(0.0, 0.0, 0.0)
-                Log.d(TAG, "Fallback estimator: using zero wind")
+                // ...removed per-frame debug logging...
                 Pair(velocity, zeroWind)
             }
         }
@@ -561,7 +594,7 @@ class WingsuitCanopySystem : SystemBase() {
 
         // Debug: Log wind velocity from predicted state
         val windMag = sqrt(wvi.x * wvi.x + wvi.y * wvi.y + wvi.z * wvi.z)
-        Log.d(TAG, "WingsuitCanopySystem wind: E=${wvi.x.toInt()}, N=${wvi.z.toInt()}, U=${wvi.y.toInt()}, mag=${windMag.toInt()}")
+        // ...removed per-frame debug logging...
 
         // Calculate airspeed (velocity relative to air mass)
         val airspeedVector = com.platypii.baselinexr.util.tensor.Vector3(
@@ -607,39 +640,41 @@ class WingsuitCanopySystem : SystemBase() {
 
         // Debug wind vector data
         val windMagnitude = sqrt(wvi.x * wvi.x + wvi.y * wvi.y + wvi.z * wvi.z)
-        Log.d(TAG, "Wind vector: E=${wvi.x.toInt()}, N=${wvi.z.toInt()}, U=${wvi.y.toInt()}, mag=${windMagnitude.toInt()}")
-        Log.d(TAG, "Base position: x=${basePosition.x}, y=${basePosition.y}, z=${basePosition.z}")
-        Log.d(TAG, "Wind position: x=${windVectorPos.x}, y=${windVectorPos.y}, z=${windVectorPos.z}")
-        Log.d(TAG, "Inertial velocity: E=${inertialVelocity.x.toInt()}, U=${inertialVelocity.y.toInt()}, N=${inertialVelocity.z.toInt()}, mag=${inertialMagnitude.toInt()}")
-        Log.d(TAG, "Position offset: dx=${windVectorPos.x - basePosition.x}, dy=${windVectorPos.y - basePosition.y}, dz=${windVectorPos.z - basePosition.z}")
+        // ...removed per-frame debug logging...
 
         // Update vectors with new positioning and rotation system
         updateVectorWithQuaternions(airspeedVectorEntity, vectorBasePos, airspeedVector, "airspeed")
         updateVectorWithQuaternions(inertialspeedVectorEntity, vectorBasePos, inertialVelocity, "inertial")
         updateVectorWithQuaternions(windVectorEntity, windVectorPos, wvi, "wind")
 
-        Log.d(TAG, "Wind vectors updated from predicted state: E=${wvi.x.toInt()}, N=${wvi.z.toInt()}, U=${wvi.y.toInt()}")
+        // ...removed per-frame debug logging...
     }
 
     /**
      * Update a single vector entity using the same quaternion rotation system as wingsuit
      */
-    private fun updateVectorWithQuaternions(entity: Entity?, position: Vector3, vector: com.platypii.baselinexr.util.tensor.Vector3, name: String) {
-        entity ?: return
+    private fun updateVectorWithQuaternions(entity: Entity?, position: Vector3, vector: com.platypii.baselinexr.util.tensor.Vector3, name: String, scaleMultiplier: Float = 1.0f) {
+        entity ?: run {
+            // ...removed per-frame debug logging...
+            return
+        }
 
         val magnitude = sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z)
 
         // Hide vector if too small - use different thresholds for different vectors
         val minThreshold = when (name) {
             "wind" -> 0.1 // Lower threshold for wind vector (wind can be very light)
+            "Magnetic" -> 0.1 // Lower threshold for magnetic field (typically 0.3-0.6 gauss)
             else -> 0.5   // Higher threshold for velocity vectors
         }
 
         if (magnitude < minThreshold) {
             entity.setComponent(Visible(false))
-            Log.d(TAG, "Vector $name hidden: mag=${magnitude.toInt()} < threshold=$minThreshold")
+            // ...removed per-frame debug logging...
             return
         }
+
+        // ...removed per-frame debug logging...
 
         // Calculate pitch (angle from horizontal) - same as wingsuit
         val horizontalSpeed = sqrt(vector.x * vector.x + vector.z * vector.z).toFloat()
@@ -659,7 +694,8 @@ class WingsuitCanopySystem : SystemBase() {
         val rotation = multiplyQuaternions(modelRotation, attitudeRotation)
 
         // Scale by total velocity / 5 as requested, no minimum scale to match geometry
-        val scale = VECTOR_SCALE * (magnitude / 5.0).toFloat()
+        // Apply scaleMultiplier for vectors that need custom scaling (e.g., magnetic field)
+        val scale = VECTOR_SCALE * (magnitude / 5.0).toFloat() * scaleMultiplier
 
         entity.setComponents(
             listOf(
@@ -669,17 +705,114 @@ class WingsuitCanopySystem : SystemBase() {
             )
         )
 
-        Log.d(TAG, "Vector $name: mag=${magnitude.toInt()}, pitch=${Math.toDegrees(pitchRad.toDouble()).toInt()}°, yaw=${Math.toDegrees(flightYaw.toDouble()).toInt()}°, scale=${scale}")
+        // ...removed per-frame debug logging...
     }
 
     /**
-     * Hide all wind vectors
+     * Hide all wind vectors (but not magnetic vector)
      */
     private fun hideVectors() {
         windVectorEntity?.setComponent(Visible(false))
         airspeedVectorEntity?.setComponent(Visible(false))
         inertialspeedVectorEntity?.setComponent(Visible(false))
+        // Don't hide magnetic vector here - it's controlled independently
     }
+
+    /**
+     * Update magnetic field vector from sensor data
+     * Shows the compass/magnetometer reading as a 3D vector
+     */
+    private fun updateMagneticVector(gpsMillis: Long, basePosition: Vector3) {
+        val magneticEntity = this.magneticVectorEntity ?: run {
+            // ...removed per-frame debug logging...
+            return
+        }
+
+        // Check if sensor provider is available and started
+        val sensorProvider = Services.location.sensorProvider
+        if (sensorProvider == null) {
+            Log.w(TAG, "MAGVEC: Sensor provider is null!")
+            magneticEntity.setComponent(Visible(false))
+            return
+        }
+
+        // Get sensor data synchronized to GPS time
+        val sensorData = sensorProvider.getSensorAtTime(gpsMillis)
+
+        if (sensorData == null) {
+            Log.w(TAG, "MAGVEC: No sensor data available for GPS time $gpsMillis - sensor provider may not be started or data not loaded")
+            magneticEntity.setComponent(Visible(false))
+            return
+        }
+
+        // ...removed per-frame debug logging...
+
+        // Sensor data from parser always has valid MAG values (parser only creates entries when MAG data exists)
+        // ...removed per-frame debug logging...
+
+        // Get magnetic field vector in sensor's local frame (gauss)
+        // FlySight magnetometer internal frame: X=East, Y=North, Z=Down
+        // Mounted sensor orientation: Forward=-Z, Up=+Y, Right=+X
+        // Transform from sensor internal → mounted → ENU world coordinates
+        val magVectorLocal = com.platypii.baselinexr.util.tensor.Vector3(
+            sensorData.magX.toDouble(),   // Right (X) = East
+            -sensorData.magZ.toDouble(),  // Up (Y) = -Down
+            -sensorData.magY.toDouble()   // Forward (Z) = -North
+        )
+
+        // Get headset pose to transform sensor data from local to world coordinates
+        val headPose = HeadPoseUtil.getHeadPose(systemManager)
+        if (headPose == null) {
+            Log.w(TAG, "MAGVEC: No headset pose available")
+            magneticEntity.setComponent(Visible(false))
+            return
+        }
+
+        // Rotate magnetic vector from sensor's local frame to world frame using headset rotation
+        val headRotation = headPose.q
+        val magVectorWorld = rotateVectorByQuaternion(magVectorLocal, headRotation)
+
+        val magMagnitude = sqrt(magVectorWorld.x * magVectorWorld.x + magVectorWorld.y * magVectorWorld.y + magVectorWorld.z * magVectorWorld.z)
+        // ...removed per-frame debug logging...
+
+        // Scale vector for visualization (magnetic field is ~0.5 gauss, needs larger scale)
+        val scaleMultiplier = 10f // Scale magnetic vector 10x larger for visibility
+
+        // Position magnetic vector offset from model
+        val vectorPosition = basePosition + Vector3(-VECTOR_OFFSET, 0f, 0f) // Offset to left
+        // ...removed per-frame debug logging...
+
+        // Update vector using quaternion rotation with custom scale multiplier
+        // ...removed per-frame debug logging...
+        updateVectorWithQuaternions(magneticEntity, vectorPosition, magVectorWorld, "Magnetic", scaleMultiplier)
+
+        // ...removed per-frame debug logging...
+    }
+
+    /**
+     * Rotate a vector by a quaternion
+     * Transforms vector from one coordinate frame to another using quaternion rotation
+     */
+    private fun rotateVectorByQuaternion(vector: com.platypii.baselinexr.util.tensor.Vector3, q: Quaternion): com.platypii.baselinexr.util.tensor.Vector3 {
+        // Convert vector to quaternion with w=0
+        val vecQuat = Quaternion(vector.x.toFloat(), vector.y.toFloat(), vector.z.toFloat(), 0f)
+
+        // Calculate quaternion conjugate (inverse rotation)
+        val qConj = Quaternion(-q.x, -q.y, -q.z, q.w)
+
+        // Apply rotation: q * v * q^-1
+        val temp = multiplyQuaternions(q, vecQuat)
+        val result = multiplyQuaternions(temp, qConj)
+
+        return com.platypii.baselinexr.util.tensor.Vector3(
+            result.x.toDouble(),
+            result.y.toDouble(),
+            result.z.toDouble()
+        )
+    }
+
+    // Helper extension function for Float formatting
+    private fun Float.format(decimals: Int): String = "%.${decimals}f".format(this)
 
     fun setEnlarged(enlarged: Boolean) {
         isEnlarged = enlarged
@@ -713,12 +846,31 @@ class WingsuitCanopySystem : SystemBase() {
         inertialspeedVectorEntity?.setComponent(Visible(false))
     }
 
+    /**
+     * Enable or disable magnetic field vector display
+     */
+    fun setMagneticVectorEnabled(enabled: Boolean) {
+        enableMagneticVector = enabled
+        if (!enabled) {
+            magneticVectorEntity?.setComponent(Visible(false))
+        }
+        Log.i(TAG, "Magnetic vector ${if (enabled) "enabled" else "disabled"}")
+    }
+
+    /**
+     * Check if magnetic vector is currently enabled
+     */
+    fun isMagneticVectorEnabled(): Boolean {
+        return enableMagneticVector
+    }
+
     fun cleanup() {
         wingsuitEntity = null
         canopyEntity = null
         windVectorEntity = null
         airspeedVectorEntity = null
         inertialspeedVectorEntity = null
+        magneticVectorEntity = null
         initialized = false
         Log.i(TAG, "WingsuitCanopySystem cleaned up")
     }

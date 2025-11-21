@@ -12,7 +12,7 @@ public class GpsToWorldTransform {
 
     public MLocation initialOrigin;
     public MLocation lastOrigin;
-    
+
     public void setOrigin(MLocation location) {
         // Store initial origin on first call
         if (initialOrigin == null) {
@@ -32,6 +32,13 @@ public class GpsToWorldTransform {
      * @return World coordinates with position extrapolated using MotionEstimator or fallback velocity-based extrapolation
      */
     public Vector3 toWorldCoordinates(double lat, double lon, double alt, long currentTimeMillis, MotionEstimator motionEstimator) {
+        return toWorldCoordinates(lat, lon, alt, currentTimeMillis, motionEstimator, false);
+    }
+
+    /**
+     * Overload with explicit cache control.
+     */
+    public Vector3 toWorldCoordinates(double lat, double lon, double alt, long currentTimeMillis, MotionEstimator motionEstimator, boolean shouldUpdateCache) {
         // Fix race with location service:
         if (motionEstimator != null && motionEstimator.getLastUpdate() != null) {
             setOrigin(motionEstimator.getLastUpdate());
@@ -52,14 +59,17 @@ public class GpsToWorldTransform {
 
         // If motion estimator is available, use it for velocity and acceleration-based prediction
         if (motionEstimator != null && lastOrigin.millis > 0 && currentTimeMillis > lastOrigin.millis) {
-            com.platypii.baselinexr.util.tensor.Vector3 delta = motionEstimator.predictDelta(currentTimeMillis);
-
+            // Use cached predicted state if available, otherwise compute and cache
+            com.platypii.baselinexr.util.tensor.Vector3 delta;
+            if (motionEstimator instanceof com.platypii.baselinexr.location.KalmanFilter3D kf3d) {
+                delta = kf3d.predictDelta(currentTimeMillis, shouldUpdateCache);
+            } else {
+                delta = motionEstimator.predictDelta(currentTimeMillis);
+            }
             // Calculate position with predicted delta
             extrapolatedX = basePosition.getX() - (float) delta.x;
             extrapolatedY = basePosition.getY() - (float) delta.y;
             extrapolatedZ = basePosition.getZ() - (float) delta.z;
-
-//            Log.i(TAG, "extra: " + extrapolatedX + " " + extrapolatedY + " " + extrapolatedZ + " delta: " + delta);
         } else if (lastOrigin.millis > 0 && currentTimeMillis > lastOrigin.millis) {
             // Fall back to original velocity-based extrapolation if no motion estimator
             double deltaTime = (currentTimeMillis - lastOrigin.millis) / 1000.0;

@@ -122,7 +122,7 @@ class TerrainSystem(
             // Apply offsets to destination
             val offsetDest = GeoUtils.applyOffset(dest, terrainToPoiOffset, tileToTerrainOffset)
 
-            var tilePosition = gpsToWorldTransform.toWorldCoordinates(offsetDest.lat, offsetDest.lng, offsetDest.alt, currentTime, motionEstimator)
+            var tilePosition = gpsToWorldTransform.toWorldCoordinates(offsetDest.lat, offsetDest.lng, offsetDest.alt, currentTime, motionEstimator, true)
 
             // Apply room movement correction, if enabled
             if (VROptions.current.roomMovement && headPose != null) {

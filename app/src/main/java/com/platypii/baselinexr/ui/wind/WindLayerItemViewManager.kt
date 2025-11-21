@@ -232,13 +232,6 @@ class WindLayerItemViewManager(private val activity: BaselineActivity) {
         getCurrentAltitude: () -> Double,
         updateLayersList: () -> Unit
     ) {
-        val splitLayerButton = layerView.findViewById<Button>(R.id.split_layer_button)
-        splitLayerButton?.setOnClickListener {
-            val currentAltitude = getCurrentAltitude()
-            windLayerManager?.splitActiveLayer(currentAltitude)
-            updateLayersList()
-        }
-
         val deleteLayerButton = layerView.findViewById<Button>(R.id.delete_layer_button)
         deleteLayerButton?.setOnClickListener {
             windLayerManager?.deleteLayer(layer)

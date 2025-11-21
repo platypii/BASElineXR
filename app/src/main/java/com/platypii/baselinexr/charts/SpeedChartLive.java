@@ -9,12 +9,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.platypii.baselinexr.Services;
+import com.platypii.baselinexr.jarvis.FlightMode;
 import com.platypii.baselinexr.location.AtmosphericModel;
 import com.platypii.baselinexr.location.KalmanFilter3D;
 import com.platypii.baselinexr.location.LocationProvider;
 import com.platypii.baselinexr.location.PolarLibrary;
 import com.platypii.baselinexr.location.TimeOffset;
 import com.platypii.baselinexr.measurements.MLocation;
+import com.platypii.baselinexr.polars.Polars;
 import com.platypii.baselinexr.util.AdjustBounds;
 import com.platypii.baselinexr.util.Bounds;
 import com.platypii.baselinexr.util.Convert;
@@ -29,9 +31,9 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
     private static final double GRAVITY = 9.80665; // m/s²
 
     // Sustained speeds result class
-    private static class SustainedSpeeds {
-        final double vxs;
-        final double vys;
+    public static class SustainedSpeeds {
+        public final double vxs;
+        public final double vys;
 
         SustainedSpeeds(double vxs, double vys) {
             this.vxs = vxs;
@@ -108,7 +110,10 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
         ellipses.setEnabled(false); // Disable until the first data comes in
         addLayer(ellipses);
     }
-
+    // Cache last density, flight mode, and bounds for polar redraw optimization
+    float lastPolarDensity = Float.NaN;
+    int lastPolarFlightMode = -1;
+    private final Bounds lastPolarBounds = new Bounds();
     @Override
     public void drawData(@NonNull Plot plot) {
         options.padding.right = (int) (plot.options.font_size * 5);
@@ -118,10 +123,24 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
             if (loc != null && currentTime - loc.millis <= window) {
                 ellipses.setEnabled(true);
 
-                // Draw Aura5 polar first (background)
-                drawAura5Polar(plot);
+                // Efficient: Only redraw polar if density, flight mode, or bounds changed
+                float altitude = (float) loc.altitude_gps;
+                final float density = AtmosphericModel.calculateDensity(altitude, 10f);
+                int flightMode = FlightMode.getMode(loc);
+                Bounds currentBounds = plot.bounds[AXIS_SPEED];
+                boolean boundsChanged = !currentBounds.equals(lastPolarBounds);
+                boolean redrawPolar = false;
+                if (Math.abs(density - lastPolarDensity) > 0.01 || flightMode != lastPolarFlightMode || boundsChanged) {
+                    redrawPolar = true;
+                    lastPolarDensity = density;
+                    lastPolarFlightMode = flightMode;
+                    lastPolarBounds.set(currentBounds);
+                }
+                if (redrawPolar) {
+                    drawCurrentPolar(plot, loc);
+                }
 
-                // Get predicted velocity for 90Hz updates and collect high-speed data
+                // ...existing code...
                 double vx, vy;
                 if (Services.location != null && Services.location.motionEstimator instanceof KalmanFilter3D) {
                     final KalmanFilter3D kf3d = (KalmanFilter3D) Services.location.motionEstimator;
@@ -380,7 +399,7 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
     /**
      * Convert CL/CD coefficients to sustained speeds using atmospheric density
      */
-    private static SustainedSpeeds coefftoss(double cl, double cd, double s, double m, double rho) {
+    public static SustainedSpeeds coefftoss(double cl, double cd, double s, double m, double rho) {
         final double k = 0.5 * rho * s / m;
         final double kl = cl * k / GRAVITY;
         final double kd = cd * k / GRAVITY;
@@ -389,56 +408,62 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
     }
 
     /**
-     * Draw Aura5 polar on the speed chart
-     * todo optimize this
+     * Draw the current polar (wingsuit/canopy/airplane) on the speed chart.
+     * Uses the Polars class to efficiently sample and cache the polar for the current flight mode and air density.
+     *
+     * - Gets current altitude for density calculation (uses GPS altitude or defaults to 1000m)
+     * - Calculates density with 10 degree temperature offset
+     * - Determines flight mode (wingsuit, canopy, airplane)
+     * - Retrieves cached polar for this mode/density
+     * - Draws line segments connecting the sampled polar points
+     *   - Uses coefftoss() to convert CL/CD to sustained speeds
+     *   - Colors each segment based on AoA (angle of attack)
+     *   - Draws each segment as a line on the chart
      */
-    private void drawAura5Polar(@NonNull Plot plot) {
-        final PolarLibrary.WingsuitPolar polar = PolarLibrary.AURA_FIVE_POLAR;
-
+    private void drawCurrentPolar(@NonNull Plot plot, @NonNull MLocation loc) {
         // Get current altitude for density calculation (use GPS altitude or default to 1000m)
-        float altitude = 1000f; // Default altitude
-        if (locationService != null && locationService.lastLoc != null) {
-            altitude = (float) locationService.lastLoc.altitude_gps;
-        }
-
-        // Calculate density with 10 degree temperature offset
+        float altitude = (float) loc.altitude_gps;
         final float density = AtmosphericModel.calculateDensity(altitude, 10f);
 
+        // Determine flight mode (wingsuit, canopy, airplane)
+        int flightMode = FlightMode.getMode(loc);
+
+        // Get cached polar for this mode/density
+        Polars.PolarCache cache = Polars.getCachedPolar(density, flightMode);
+        if (cache == null) {
+            android.util.Log.w("SpeedChartLive", "Polars.getCachedPolar returned null (density=" + density + ", flightMode=" + flightMode + ")");
+            return;
+        }
+        if (cache.nPoints < 2) {
+            android.util.Log.w("SpeedChartLive", "PolarCache.nPoints < 2: " + cache.nPoints);
+            return;
+        }
+
         plot.paint.setStyle(Paint.Style.STROKE);
-        plot.paint.setStrokeWidth(6* options.density); // 2dp thick line
+        plot.paint.setStrokeWidth(6 * options.density); // 2dp thick line
         plot.paint.setStrokeCap(Paint.Cap.ROUND);
 
-        SustainedSpeeds prevSpeeds = null;
+        // Draw line segments connecting the sampled polar points
+        for (int i = 1; i < cache.nPoints; i++) {
+            // Use coefftoss to get sustained speeds for each sampled point
+            SustainedSpeeds ss0 = coefftoss(cache.points[i - 1].cl, cache.points[i - 1].cd, cache.polar.s, cache.polar.m, density);
+            SustainedSpeeds ss1 = coefftoss(cache.points[i].cl, cache.points[i].cd, cache.polar.s, cache.polar.m, density);
 
-        // Draw line segmnts connecting the polar points
-        for (int i = 0; i < polar.stallPoint.size(); i++) {
-            PolarLibrary.PolarPoint point = polar.stallPoint.get(i);
-
-            // Convert to sustained speeds
-            SustainedSpeeds speeds = coefftoss(point.cl, point.cd, polar.s, polar.m, density);
+            // Log the coordinates for debugging
+           // if (i == 1 || i == cache.nPoints - 1) {
+           //     android.util.Log.d("SpeedChartLive", "Polar segment " + (i-1) + "->" + i + ": (" + ss0.vxs + ", " + ss0.vys + ") to (" + ss1.vxs + ", " + ss1.vys + ")");
+           // }
 
             // Draw line segment from previous point to current point
-            if (prevSpeeds != null) {
-                // Get AOA for color (use index to map to AOA array)
-                int aoa = 0;
-                if (i < polar.aoas.length) {
-                    aoa = (int) Math.round(polar.aoas[i]);
-                }
+            // Color based on AoA - gradient from blue (low AOA) to red (high AOA)
+            int color = cache.colors[i];
+            plot.paint.setColor(color);
 
-                // Color based on AOA - gradient from blue (low AOA) to red (high AOA)
-                int color = getAOAColor(aoa);
-                plot.paint.setColor(color);
-
-                // Draw line segment
-                final float x1 = plot.getX(prevSpeeds.vxs);
-                final float y1 = plot.getY(-prevSpeeds.vys);
-                final float x2 = plot.getX(speeds.vxs);
-                final float y2 = plot.getY(-speeds.vys);
-
-                plot.canvas.drawLine(x1, y1, x2, y2, plot.paint);
-            }
-
-            prevSpeeds = speeds;
+            final float x1 = plot.getX(ss0.vxs);
+            final float y1 = plot.getY(-ss0.vys);
+            final float x2 = plot.getX(ss1.vxs);
+            final float y2 = plot.getY(-ss1.vys);
+            plot.canvas.drawLine(x1, y1, x2, y2, plot.paint);
         }
     }
 

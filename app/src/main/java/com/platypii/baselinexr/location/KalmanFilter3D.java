@@ -5,6 +5,8 @@ import static com.platypii.baselinexr.location.WSE.calculateWingsuitParameters;
 
 import android.util.Log;
 
+import com.platypii.baselinexr.location.WSEAnalytical;
+
 import com.platypii.baselinexr.Services;
 import com.platypii.baselinexr.jarvis.FlightComputer;
 import com.platypii.baselinexr.jarvis.FlightMode;
@@ -395,10 +397,29 @@ public final class KalmanFilter3D implements MotionEstimator {
     private KFState cachedPredictedState = null;
     private long cachedPredictionTime = 0;
 
-    /** Predict the state delta from last update (without mutating this filter) at a given wallclock time in ms. */
+    // Cached position delta for 90Hz updates
+    private Vector3 cachedDelta = null;
+    private long cachedDeltaTime = 0;
+    // Implement MotionEstimator interface method
+    @Override
     public Vector3 predictDelta(long currentTimeMillis) {
-        if (lastGps == null) return new Vector3();
+        return predictDelta(currentTimeMillis, false);
+    }
+    /** Predict the state delta from last update (without mutating this filter) at a given wallclock time in ms. */
+    public Vector3 predictDelta(long currentTimeMillis, boolean shouldUpdateCache) {
 
+
+        if (lastGps == null) {
+            cachedPredictedState = toState(x);
+            cachedPredictionTime = currentTimeMillis;
+            cachedDelta = new Vector3(0, 0, 0);
+            cachedDeltaTime = currentTimeMillis;
+            return cachedDelta;
+        }
+        // If not updating cache, always return the last cached delta (may be stale)
+        if (!shouldUpdateCache && cachedDelta != null) {
+            return cachedDelta;
+        }
         // Correct for phone/gps time skew
         final double adjustedCurrentTime = TimeOffset.phoneToGpsTime(currentTimeMillis);
         double dt = (adjustedCurrentTime - lastGps.millis) * 1e-3;
@@ -407,7 +428,9 @@ public final class KalmanFilter3D implements MotionEstimator {
         if (dt <= 0) {
             cachedPredictedState = toState(x);
             cachedPredictionTime = currentTimeMillis;
-            return new Vector3(0, 0, 0);
+            cachedDelta = new Vector3(0, 0, 0);
+            cachedDeltaTime = currentTimeMillis;
+            return cachedDelta;
         }
 
         // Clone state and step forward in small increments
@@ -419,15 +442,18 @@ public final class KalmanFilter3D implements MotionEstimator {
             remaining -= step;
         }
 
+        Vector3 delta;
         if(!stepSmoothing) {
+            delta = new Vector3(s[0]-x[0], s[1]-x[1], s[2]-x[2]);
             cachedPredictedState = toState(s);
             cachedPredictionTime = currentTimeMillis;
-            return new Vector3(s[0]-x[0], s[1]-x[1], s[2]-x[2]);
+            cachedDelta = delta;
+            cachedDeltaTime = currentTimeMillis;
+            return delta;
         }
 
         // Apply Kalman gain smoothing to position, velocity, and acceleration
-        //Log.d(TAG, "refreshrate: " + Services.location.refreshRate.refreshRate);
-        double alpha = 1-(dt * Services.location.refreshRate.refreshRate); // Services.location.refreshRate.refreshRate; // todo, use gps update rate
+        double alpha = 1-(dt * Services.location.refreshRate.refreshRate);
         if (alpha < 0) alpha = 0;
         if (alpha > 1) alpha = 1;
 
@@ -460,30 +486,29 @@ public final class KalmanFilter3D implements MotionEstimator {
         s[16] = s[16] - (kalmanKdWindStep * alpha);    // kdwind
         s[17] = s[17] - (kalmanRollWindStep * alpha);  // rollwind
 
-        // Cache the full predicted state for other systems to use
+        // Compute and cache
+        delta = new Vector3(s[0]-x[0], s[1]-x[1], s[2]-x[2]);
         cachedPredictedState = toState(s);
         cachedPredictionTime = currentTimeMillis;
-
-        return new Vector3(s[0]-x[0], s[1]-x[1], s[2]-x[2]);
+        cachedDelta = delta;
+        cachedDeltaTime = currentTimeMillis;
+        return delta;
     }
 
-    /** Get the cached predicted state from the last predictDelta() call */
+    /**
+     * Get the predicted state for the given time, caching the result for efficiency.
+     * If the requested time is different from the last cached prediction, recompute and cache it.
+     * Always returns the up-to-date predicted state for the requested time.
+     */
+    /**
+     * Always returns the last cached predicted state (may be stale).
+     */
     public KFState getCachedPredictedState(long currentTimeMillis) {
-        // Return cached state if it's recent (within 20ms for 90Hz updates)
-        if (cachedPredictedState != null && Math.abs(currentTimeMillis - cachedPredictionTime) <= 20) {
-            if (Log.isLoggable(TAG, Log.VERBOSE)) {
-                Log.v(TAG, String.format("Using cached predicted state, wind=[%.3f,%.3f,%.3f]",
-                        cachedPredictedState.windVelocity().x, cachedPredictedState.windVelocity().y, cachedPredictedState.windVelocity().z));
-            }
+        if(cachedPredictedState != null ) {//&& cachedPredictionTime == currentTimeMillis) {
             return cachedPredictedState;
         }
-        // Fallback to current state if cache is stale
-        final KFState fallbackState = toState(x);
-        if (Log.isLoggable(TAG, Log.DEBUG) || true) {
-            Log.d(TAG, String.format("Cache stale (age=%dms), using fallback state, wind=[%.3f,%.3f,%.3f]",
-                    Math.abs(currentTimeMillis - cachedPredictionTime), fallbackState.windVelocity().x, fallbackState.windVelocity().y, fallbackState.windVelocity().z));
-        }
-        return fallbackState;
+        //cachedPredictedState = predictDelta(currentTimeMillis)
+        return getState();
     }
 
     /** Current state snapshot. */
@@ -621,11 +646,60 @@ public final class KalmanFilter3D implements MotionEstimator {
                     x[16] = windUpdated.kd(); // kdwind
                     x[17] = windUpdated.roll(); // rollwind
                 }
-
-                if (Log.isLoggable(TAG, Log.DEBUG) || true) {
-                    Log.d(TAG, String.format("WindSystem: alt=%.0fm, wind=[%.1f,%.1f,%.1f] m/s, airspeed=%.1f m/s, klwind=%.3f, kdwind=%.3f (%s)",
-                            currentAltitude, windVector.x, windVector.y, windVector.z, airspeed, x[15], x[16], windEstimate.getSource().getDisplayName()));
-                }
+//
+//                // Test inverse WSE calculation to compare wind estimates using WindKalmanFilter
+//                if (airspeed > 1.0) {
+//                    // Set the current polar in the wind filter before optimization
+//                    windFilter.setPolar(polar);
+//
+//                    // Use WSE horizontal calculation instead of WindKalmanFilter for performance
+//                    final WSE.AirspeedResult windUpdated = WSE.calculateHorizontalAirspeedFromKLKD(
+//                            vKal, // velocity
+//                            aKal, // acceleration
+//                            new WSEParams(x[15], x[16], x[17]) // WSE parameters (kl, kd, rollwind)
+//                    );
+//
+//                    // Convert airspeed result to wind vector (wind = airspeed - ground_velocity)
+//                    final Vector3 windFromWSE = new Vector3(
+//                            windUpdated.airspeed.x - vKal.x, // wind_east = airspeed_east - ground_velocity_east
+//                            windUpdated.airspeed.y - vKal.y, // wind_up = airspeed_up - ground_velocity_up
+//                            windUpdated.airspeed.z - vKal.z  // wind_north = airspeed_north - ground_velocity_north
+//                    );
+//                    x[12] = windFromWSE.x; // wvx (east wind)
+//                    x[13] = windFromWSE.y; // wvy (up wind)
+//                    x[14] = windFromWSE.z; // wvz (north wind)
+//                    x[15] = windUpdated.wseParams.kl(); // klwind
+//                    x[16] = windUpdated.wseParams.kd(); // kdwind
+//                    x[17] = windUpdated.wseParams.roll(); // rollwind
+//                    final Vector3 calcAirspeedVec = windFromWSE; // The WSE method returns airspeed directly
+//                    final double calcAirspeedMag = Math.sqrt(calcAirspeedVec.x * calcAirspeedVec.x +
+//                            calcAirspeedVec.y * calcAirspeedVec.y +
+//                            calcAirspeedVec.z * calcAirspeedVec.z);
+//
+//                    // Check if wind vectors differ significantly and log error
+//                    final double windDiffX = Math.abs(windVector.x - windFromWSE.x);
+//                    final double windDiffY = Math.abs(windVector.y - windFromWSE.y);
+//                    final double windDiffZ = Math.abs(windVector.z - windFromWSE.z);
+//                    final double windDiffMagnitude = Math.sqrt(windDiffX * windDiffX + windDiffY * windDiffY + windDiffZ * windDiffZ);
+//
+//                    if (windDiffMagnitude > 1.0) { // Threshold for significant difference (1 m/s)
+//                        Log.e(TAG, "WSE calculateHorizontalAirspeedFromKLKD ERROR!");
+//                        Log.e(TAG, String.format("Wind difference: actual=[%.1f,%.1f,%.1f], calc=[%.1f,%.1f,%.1f], diff_mag=%.1f m/s",
+//                                windVector.x, windVector.y, windVector.z,
+//                                windFromWSE.x, windFromWSE.y, windFromWSE.z, windDiffMagnitude));
+//                    }
+//
+//                    Log.d(TAG, String.format("WSE Horizontal Test: actual_airspeed=%.1f, calc_airspeed=%.1f, " +
+//                                    "actual_wind=[%.1f,%.1f,%.1f], calc_wind=[%.1f,%.1f,%.1f], diff=%.1f",
+//                            airspeed, calcAirspeedMag,
+//                            windVector.x, windVector.y, windVector.z,
+//                            windFromWSE.x, windFromWSE.y, windFromWSE.z, windDiffMagnitude));
+//                }
+//
+//                if (Log.isLoggable(TAG, Log.DEBUG) || true) {
+//                    Log.d(TAG, String.format("WindSystem: alt=%.0fm, wind=[%.1f,%.1f,%.1f] m/s, airspeed=%.1f m/s, klwind=%.3f, kdwind=%.3f (%s)",
+//                            currentAltitude, windVector.x, windVector.y, windVector.z, airspeed, x[15], x[16], windEstimate.getSource().getDisplayName()));
+//                }
             }
         } catch (Exception e) {
             Log.w(TAG, "Failed to update wind parameters from WindSystem: " + e.getMessage());

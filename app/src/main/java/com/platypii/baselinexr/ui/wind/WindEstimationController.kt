@@ -154,22 +154,6 @@ class WindEstimationController(private val activity: BaselineActivity) {
         saveSustainedButton?.setOnClickListener {
             saveLayer("Sustained")
         }
-
-        val newLayerButton = rootView?.findViewById<Button>(R.id.new_layer_button)
-        newLayerButton?.setOnClickListener {
-            // Create new layer at current altitude
-            val currentAltitude = getCurrentAltitude()
-            windLayerManager?.splitActiveLayer(currentAltitude)
-            updateLayersList()
-        }
-
-        val splitLayerButton = rootView?.findViewById<Button>(R.id.split_layer_button)
-        splitLayerButton?.setOnClickListener {
-            // Split active layer at current altitude
-            val currentAltitude = getCurrentAltitude()
-            windLayerManager?.splitActiveLayer(currentAltitude)
-            updateLayersList()
-        }
     }
 
     private fun setupDataBoundaryControls(rootView: View?) {

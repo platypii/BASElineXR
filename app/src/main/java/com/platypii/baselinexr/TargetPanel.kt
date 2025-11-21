@@ -60,7 +60,7 @@ class TargetPanel(private val gpsTransform: GpsToWorldTransform) : SystemBase() 
         val currentTime = System.currentTimeMillis()
         val dest = VROptions.dropzone
         val targetWorldPos = gpsTransform.toWorldCoordinates(
-            dest.lat, dest.lng, dest.alt, currentTime, Services.location.motionEstimator
+            dest.lat, dest.lng, dest.alt, currentTime, Services.location.motionEstimator, false
         )
         
         // Calculate direction from camera to target

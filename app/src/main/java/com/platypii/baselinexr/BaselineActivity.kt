@@ -76,6 +76,10 @@ class BaselineActivity : AppSystemActivity() {
         // Initialize panel controllers
         hudPanelController = HudPanelController(this)
 
+        // Initialize SavedWindSystem and register with WindSystem singleton
+        val savedWindSystem = com.platypii.baselinexr.wind.SavedWindSystem(this)
+        com.platypii.baselinexr.wind.WindSystem.getInstance().setSavedWindSystem(savedWindSystem)
+
         // Create systems
         hudSystem = HudSystem()
         flightStatsSystem = FlightStatsSystem()

@@ -78,16 +78,6 @@ public class WindLayer {
         return !(maxAltitude < other.minAltitude || minAltitude > other.maxAltitude);
     }
     
-    // DEPRECATED: Layer splitting is now handled by WindLayerManager
-    // /**
-    //  * Split this layer at the given altitude, returning the upper portion
-    //  */
-    // public WindLayer splitAt(double splitAltitude, String newLayerName) {
-    //     // Functionality moved to WindLayerManager.splitActiveLayer()
-    // }
-    
-
-    
     public void updateTimeInterval(long newStartTime, long newEndTime) {
         this.startTime = newStartTime;
         this.endTime = newEndTime;

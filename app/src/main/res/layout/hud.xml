@@ -181,17 +181,70 @@
         android:padding="4dp"
         android:visibility="gone">
 
-        <!-- Mode Switch Button -->
-        <Button
-            android:id="@+id/wind_mode_switch_button"
-            android:layout_width="200dp"
-            android:layout_height="40dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="4dp"
-            android:background="@drawable/button_bg"
-            android:text="Heading Controls Menu"
-            android:textColor="#ffffff"
-            android:textSize="12sp" />
+        <!-- Top Control Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="4dp">
+
+            <!-- Mode Switch Button -->
+            <Button
+                android:id="@+id/wind_mode_switch_button"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:layout_margin="2dp"
+                android:background="@drawable/button_bg"
+                android:text="Heading Controls Menu"
+                android:textColor="#ffffff"
+                android:textSize="12sp" />
+
+            <!-- Wind System Enable/Disable Toggle -->
+            <Button
+                android:id="@+id/wind_system_toggle_button"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:layout_margin="2dp"
+                android:background="@drawable/button_bg"
+                android:text="Wind: ON"
+                android:textColor="#ffffff"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+        <!-- Wind Input Source Radio Group -->
+        <RadioGroup
+            android:id="@+id/wind_input_source_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="4dp">
+            <RadioButton
+                android:id="@+id/wind_input_estimation"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Wind Estimation"
+                android:textColor="#ffffff"
+                android:buttonTint="#ffffff"
+                android:checked="true" />
+            <RadioButton
+                android:id="@+id/wind_input_nowind"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No Wind"
+                android:textColor="#ffffff"
+                android:buttonTint="#ffffff" />
+            <RadioButton
+                android:id="@+id/wind_input_saved"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Saved Wind"
+                android:textColor="#ffffff"
+                android:buttonTint="#ffffff" />
+        </RadioGroup>
 
         <!-- Wind Estimation Display -->
         <LinearLayout

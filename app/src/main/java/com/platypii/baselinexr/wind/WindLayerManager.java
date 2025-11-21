@@ -64,10 +64,6 @@ public class WindLayerManager {
             layers.add(defaultLayer);
             activeLayer = defaultLayer;
             topLayer = defaultLayer;
-            
-            Log.d(TAG, "Created default layer: " + minAlt + "-" + maxAlt + "m, layers count now: " + layers.size());
-            Log.d(TAG, "Active layer: " + (activeLayer != null ? activeLayer.name : "null"));
-            Log.d(TAG, "Top layer: " + (topLayer != null ? topLayer.name : "null"));
         }
     }
     
@@ -89,12 +85,10 @@ public class WindLayerManager {
         if (point.altitude > datasetMaxAltitude) {
             datasetMaxAltitude = point.altitude;
             altitudeUpdated = true;
-            Log.d(TAG, "Dataset max altitude updated to: " + datasetMaxAltitude + "m");
         }
         if (point.altitude < datasetMinAltitude) {
             datasetMinAltitude = point.altitude;
             altitudeUpdated = true;
-            Log.d(TAG, "Dataset min altitude updated to: " + datasetMinAltitude + "m");
         }
         
         // Update top layer altitude range to encompass all new data
@@ -106,43 +100,23 @@ public class WindLayerManager {
             
             // Check upper boundary expansion - only if not manually controlled
             if (point.altitude > topLayer.dataMaxAltitude && !topLayer.hasManualDataBoundaries) {
-                Log.d(TAG, String.format("Expanding upper data boundary for %s from %.1f to %.1f", 
-                    topLayer.name, topLayer.dataMaxAltitude, point.altitude));
                 topLayer.dataMaxAltitude = point.altitude;
                 boundaryUpdated = true;
-            } else if (point.altitude > topLayer.dataMaxAltitude) {
-                Log.d(TAG, String.format("Skipping upper boundary expansion for %s - manually controlled (hasManualDataBoundaries=%b)", 
-                    topLayer.name, topLayer.hasManualDataBoundaries));
             }
             
             // Check lower boundary expansion - only if not manually controlled
             if (point.altitude < topLayer.dataMinAltitude && !topLayer.hasManualLowerDataBoundary) {
-                Log.d(TAG, String.format("Expanding lower data boundary for %s from %.1f to %.1f", 
-                    topLayer.name, topLayer.dataMinAltitude, point.altitude));
                 topLayer.dataMinAltitude = point.altitude;
                 boundaryUpdated = true;
-            } else if (point.altitude < topLayer.dataMinAltitude) {
-                Log.d(TAG, String.format("Skipping lower boundary expansion for %s - manually controlled (hasManualLowerDataBoundary=%b)", 
-                    topLayer.name, topLayer.hasManualLowerDataBoundary));
             }
             
             // If boundaries were updated, recalculate wind estimations and notify listeners
             if (boundaryUpdated) {
-                Log.d(TAG, String.format("Data boundaries updated for %s, recalculating wind estimations", topLayer.name));
                 recalculateWindEstimations(topLayer);
                 // Only notify if this is the active layer or if no active layer is set
                 if (topLayer == activeLayer || activeLayer == null) {
-                    Log.d(TAG, String.format("Notifying boundary change for active top layer: %s", topLayer.name));
                     notifyBoundaryChanged(topLayer);
-                } else {
-                    Log.d(TAG, String.format("Skipping boundary change notification for non-active top layer: %s (active: %s)", 
-                        topLayer.name, activeLayer != null ? activeLayer.name : "null"));
                 }
-            }
-            
-            if (altitudeUpdated) {
-                Log.d(TAG, "Top layer altitude range: " + topLayer.minAltitude + "-" + topLayer.maxAltitude + "m");
-                Log.d(TAG, "Top layer data boundaries: " + topLayer.dataMinAltitude + "-" + topLayer.dataMaxAltitude + "m");
             }
         }
     }
@@ -159,11 +133,7 @@ public class WindLayerManager {
         // Always work with the top layer, regardless of which layer is currently active for viewing
         WindLayer layerToSave = topLayer;
         
-        // Debug logging for save attempt
-        Log.d(TAG, String.format("Attempting to save top layer '%s' at altitude %.0fm", layerToSave.name, currentAltitude));
-        Log.d(TAG, String.format("Top layer range: %.0f-%.0fm, isTopLayer: %b", 
-            layerToSave.minAltitude, layerToSave.maxAltitude, layerToSave.isTopLayer));
-        Log.d(TAG, String.format("Current active layer for viewing: %s", activeLayer != null ? activeLayer.name : "null"));
+
         
         // Check if split is valid - allow split at the current max altitude
         if (currentAltitude <= layerToSave.minAltitude) {
@@ -350,37 +320,6 @@ public class WindLayerManager {
     }
     
     /**
-     * Split active layer at current altitude
-     */
-    public WindLayer splitActiveLayer(double splitAltitude) {
-        if (activeLayer == null) {
-            Log.w(TAG, "No active layer to split");
-            return null;
-        }
-        
-        if (splitAltitude <= activeLayer.minAltitude || splitAltitude >= activeLayer.maxAltitude) {
-            Log.w(TAG, "Cannot split layer: split altitude must be within layer range");
-            return null;
-        }
-        
-        // Create new upper layer
-        WindLayer upperLayer = new WindLayer("Split Layer", splitAltitude, activeLayer.maxAltitude, activeLayer.startTime);
-        upperLayer.setLayerManager(this);  // Set reference to access central dataset
-        upperLayer.isActive = activeLayer.isActive;
-        upperLayer.isTopLayer = activeLayer.isTopLayer;
-        
-        // Update existing layer to be the lower portion
-        activeLayer.maxAltitude = splitAltitude;
-        activeLayer.isTopLayer = false;  // Lower layer is no longer top
-        
-        layers.add(upperLayer);
-        sortLayersByAltitude();
-        
-        Log.d(TAG, "Split layer at " + splitAltitude + "m");
-        return upperLayer;
-    }
-    
-    /**
      * Check if any layer overlaps (should not happen in well-managed system)
      */
     public boolean hasOverlaps() {
@@ -416,13 +355,7 @@ public class WindLayerManager {
             }
         }
         
-        // Detailed boundary validation
-        Log.d(TAG, "Layer boundary validation:");
-        for (WindLayer layer : layers) {
-            Log.d(TAG, String.format("  %s: %.1f-%.1fm (data: %.1f-%.1fm)", 
-                layer.name, layer.minAltitude, layer.maxAltitude,
-                layer.dataMinAltitude, layer.dataMaxAltitude));
-        }
+
     }
     
     /**
@@ -438,67 +371,15 @@ public class WindLayerManager {
             
             // Adjacent layers should have touching boundaries
             if (Math.abs(upper.minAltitude - lower.maxAltitude) > 0.1) {
-                Log.w(TAG, String.format("Fixing boundary gap between %s and %s: %.1f vs %.1f", 
-                    upper.name, lower.name, upper.minAltitude, lower.maxAltitude));
                 // Set the boundary to the average to close the gap
                 double midPoint = (upper.minAltitude + lower.maxAltitude) / 2.0;
                 upper.minAltitude = midPoint;
                 lower.maxAltitude = midPoint;
-                Log.d(TAG, String.format("Fixed boundaries at midpoint: %.1f", midPoint));
             }
         }
     }
     
-    /**
-     * Test layer boundary adjustment system
-     */
-    public void testBoundaryAdjustments() {
-        Log.d(TAG, "=== Testing Layer Boundary Adjustments ===");
-        
-        if (layers.size() < 2) {
-            Log.w(TAG, "Need at least 2 layers to test boundary adjustments");
-            return;
-        }
-        
-        // Get a non-top layer for testing
-        WindLayer testLayer = null;
-        for (WindLayer layer : layers) {
-            if (!layer.isTopLayer && layers.indexOf(layer) > 0) {
-                testLayer = layer;
-                break;
-            }
-        }
-        
-        if (testLayer == null) {
-            Log.w(TAG, "No suitable layer found for boundary testing");
-            return;
-        }
-        
-        Log.d(TAG, "Testing with layer: " + testLayer.name);
-        Log.d(TAG, "Initial boundary: " + testLayer.minAltitude + "-" + testLayer.maxAltitude);
-        
-        // Test small adjustment
-        double originalMin = testLayer.minAltitude;
-        double originalMax = testLayer.maxAltitude;
-        
-        // Find adjacent layers
-        WindLayer lowerLayer = null;
-        WindLayer upperLayer = null;
-        for (WindLayer layer : layers) {
-            if (layer.maxAltitude == testLayer.minAltitude && layer != testLayer) {
-                lowerLayer = layer;
-            }
-            if (layer.minAltitude == testLayer.maxAltitude && layer != testLayer) {
-                upperLayer = layer;
-            }
-        }
-        
-        Log.d(TAG, String.format("Adjacent layers - Lower: %s, Upper: %s", 
-            lowerLayer != null ? lowerLayer.name : "none",
-            upperLayer != null ? upperLayer.name : "none"));
-            
-        validateLayers();
-    }
+
     
     /**
      * Get current dataset altitude range
@@ -558,10 +439,7 @@ public class WindLayerManager {
                             gpsCircleFit.rSquared,
                             gpsCircleFit.pointCount
                         );
-                        Log.d(TAG, "Calculated GPS wind estimation for " + savedLayer.name + ": " + 
-                              String.format("%.1f mph @ %.0f°", 
-                                  savedLayer.gpsWindEstimation.windMagnitude * 2.23694, 
-                                  savedLayer.gpsWindEstimation.windDirection));
+
                     }
                 } catch (Exception e) {
                     Log.w(TAG, "Failed to calculate GPS wind estimation for " + savedLayer.name + ": " + e.getMessage());
@@ -579,10 +457,7 @@ public class WindLayerManager {
                             sustainedCircleFit.rSquared,
                             sustainedCircleFit.pointCount
                         );
-                        Log.d(TAG, "Calculated sustained wind estimation for " + savedLayer.name + ": " + 
-                              String.format("%.1f mph @ %.0f°", 
-                                  savedLayer.sustainedWindEstimation.windMagnitude * 2.23694, 
-                                  savedLayer.sustainedWindEstimation.windDirection));
+
                     }
                 } catch (Exception e) {
                     Log.w(TAG, "Failed to calculate sustained wind estimation for " + savedLayer.name + ": " + e.getMessage());
@@ -666,7 +541,7 @@ public class WindLayerManager {
      * Force boundary change notification regardless of active layer
      */
     public void forceBoundaryChangeNotification(WindLayer layer) {
-        Log.d(TAG, String.format("Forcing boundary change notification for layer: %s", layer.name));
+
         notifyBoundaryChanged(layer);
     }
     
@@ -699,10 +574,7 @@ public class WindLayerManager {
                         gpsCircleFit.rSquared,
                         gpsCircleFit.pointCount
                     );
-                    Log.d(TAG, "Recalculated GPS wind estimation for " + layer.name + ": " + 
-                          String.format("%.1f mph @ %.0f°", 
-                              layer.gpsWindEstimation.windMagnitude * 2.23694, 
-                              layer.gpsWindEstimation.windDirection));
+
                 } else {
                     layer.gpsWindEstimation = null;
                 }
@@ -721,10 +593,7 @@ public class WindLayerManager {
                         sustainedCircleFit.rSquared,
                         sustainedCircleFit.pointCount
                     );
-                    Log.d(TAG, "Recalculated sustained wind estimation for " + layer.name + ": " + 
-                          String.format("%.1f mph @ %.0f°", 
-                              layer.sustainedWindEstimation.windMagnitude * 2.23694, 
-                              layer.sustainedWindEstimation.windDirection));
+
                 } else {
                     layer.sustainedWindEstimation = null;
                 }

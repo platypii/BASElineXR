@@ -1,3 +1,4 @@
+
 package com.platypii.baselinexr.ui
 
 import android.view.View
@@ -7,7 +8,12 @@ import com.platypii.baselinexr.BaselineActivity
 import com.platypii.baselinexr.R
 import com.platypii.baselinexr.ui.wind.WindEstimationController
 import com.platypii.baselinexr.wind.WindDataPoint
+import com.platypii.baselinexr.wind.WindSystem
 
+
+// Wind input source selection
+private enum class WindInputSource { ESTIMATION, NO_WIND, SAVED }
+private var windInputSource: WindInputSource = WindInputSource.ESTIMATION
 /**
  * Main controller for the HUD panel UI
  */
@@ -55,6 +61,23 @@ class HudPanelController(private val activity: BaselineActivity) {
 
         setupModeToggleButtons(rootView)
 
+        // Wind input source radio group
+        val windInputGroup = rootView?.findViewById<android.widget.RadioGroup>(R.id.wind_input_source_group)
+        val windEstimationRadio = rootView?.findViewById<android.widget.RadioButton>(R.id.wind_input_estimation)
+        val windNoWindRadio = rootView?.findViewById<android.widget.RadioButton>(R.id.wind_input_nowind)
+        val windSavedRadio = rootView?.findViewById<android.widget.RadioButton>(R.id.wind_input_saved)
+
+        windInputGroup?.setOnCheckedChangeListener { _, checkedId ->
+            when (checkedId) {
+                R.id.wind_input_estimation -> setWindInputSource(WindInputSource.ESTIMATION)
+                R.id.wind_input_nowind -> setWindInputSource(WindInputSource.NO_WIND)
+                R.id.wind_input_saved -> setWindInputSource(WindInputSource.SAVED)
+            }
+        }
+        // Set initial state
+        windEstimationRadio?.isChecked = true
+        setWindInputSource(WindInputSource.ESTIMATION)
+
         // Set up HUD references
         val latlngLabel = rootView?.findViewById<TextView>(R.id.lat_lng)
         val speedLabel = rootView?.findViewById<TextView>(R.id.speed)
@@ -73,6 +96,12 @@ class HudPanelController(private val activity: BaselineActivity) {
         windModeSwitchButton?.setOnClickListener {
             switchToHeadingMode(rootView)
         }
+
+        // Wind system toggle button (in wind estimation controls)
+        val windSystemToggleButton = rootView?.findViewById<Button>(R.id.wind_system_toggle_button)
+        windSystemToggleButton?.setOnClickListener {
+            toggleWindSystemEnabled(windSystemToggleButton)
+        }
     }
 
     private fun switchToWindEstimationMode(rootView: View?) {
@@ -85,6 +114,10 @@ class HudPanelController(private val activity: BaselineActivity) {
             extraControls?.visibility = View.GONE
             windEstimationControls?.visibility = View.VISIBLE
             isWindEstimationMode = true
+
+            // Update wind system toggle button to show current state
+            val windSystemToggleButton = rootView?.findViewById<Button>(R.id.wind_system_toggle_button)
+            updateWindSystemToggleButton(windSystemToggleButton)
 
             windEstimationController.startCollection()
 
@@ -115,7 +148,51 @@ class HudPanelController(private val activity: BaselineActivity) {
         windEstimationController.addDataPointToLayers(dataPoint)
     }
 
+    private fun updateWindSystemToggleButton(button: Button?) {
+        if (button != null) {
+            val windSystem = WindSystem.getInstance()
+            val isEnabled = windSystem.isEnabled()
+
+            if (isEnabled) {
+                button.text = "Wind: ON"
+                button.setTextColor(android.graphics.Color.WHITE)
+            } else {
+                button.text = "Wind: OFF"
+                button.setTextColor(android.graphics.Color.RED)
+            }
+        }
+    }
+
+    private fun toggleWindSystemEnabled(button: Button) {
+        try {
+            val windSystem = WindSystem.getInstance()
+            val currentlyEnabled = windSystem.isEnabled()
+            val newEnabled = !currentlyEnabled
+
+            windSystem.setEnabled(newEnabled)
+
+            // Update button appearance
+            updateWindSystemToggleButton(button)
+
+            android.util.Log.d("HudPanelController", "Wind system toggled to: ${if (newEnabled) "enabled" else "disabled"}")
+        } catch (e: Exception) {
+            android.util.Log.e("HudPanelController", "Error toggling wind system: ${e.message}", e)
+        }
+    }
+
     fun cleanup() {
         windEstimationController.cleanup()
+    }
+    /**
+     * Set wind input source and update WindSystem mode
+     */
+    private fun setWindInputSource(source: WindInputSource) {
+        windInputSource = source
+        val windSystem = com.platypii.baselinexr.wind.WindSystem.getInstance()
+        when (source) {
+            WindInputSource.ESTIMATION -> windSystem.setWindMode(com.platypii.baselinexr.wind.WindSystem.WindMode.ESTIMATION)
+            WindInputSource.NO_WIND -> windSystem.setWindMode(com.platypii.baselinexr.wind.WindSystem.WindMode.NO_WIND)
+            WindInputSource.SAVED -> windSystem.setWindMode(com.platypii.baselinexr.wind.WindSystem.WindMode.SAVED)
+        }
     }
 }

@@ -13,7 +13,7 @@ public class VROptions {
     //public static LatLngAlt dropzone = new LatLngAlt(47.2375, -123.1458, 84);
 
     // Current active configuration
-    public static VROptions current = VROptionsList.EIGER_SKYDIVE_LAKE;
+    public static VROptions current = VROptionsList.SQUAW_SENSORS_CLIP;
     public enum ShaderType {
         DEFAULT_SHADER,
         LOD_SHADER
@@ -23,6 +23,12 @@ public class VROptions {
     public final String name;
     // Replay pre-recorded GPS track. null = live gps data from flysight
     public final String mockTrack;
+    // Folder containing SENSOR.CSV and TRACK.CSV files. If non-null, overrides mockTrack
+    public final String mockSensor;
+    // Start time in seconds for track replay (null = start from beginning)
+    public final Integer mockTrackStartSec;
+    // End time in seconds for track replay (null = play until end)
+    public final Integer mockTrackEndSec;
     // 3D terrain model, options: eiger, kpow, branded (with BASElineXR logo on summit)
     public final String sourceModel;
     // Place the source point-of-interest (summit) at the destination location
@@ -43,9 +49,13 @@ public class VROptions {
     public final ShaderType shader;
 
     public VROptions(String name, String mockTrack, String sourceModel, LatLngAlt destination, ShaderType shader,
-                     boolean roomMovement, boolean showDirectionArrow, boolean showWingsuitCanopy, boolean showTarget, boolean showSpeedChart, LatLngAlt portalLocation) {
+                     boolean roomMovement, boolean showDirectionArrow, boolean showWingsuitCanopy, boolean showTarget, boolean showSpeedChart, LatLngAlt portalLocation,
+                     String mockSensor, Integer mockTrackStartSec, Integer mockTrackEndSec) {
         this.name = name;
         this.mockTrack = mockTrack;
+        this.mockSensor = mockSensor;
+        this.mockTrackStartSec = mockTrackStartSec;
+        this.mockTrackEndSec = mockTrackEndSec;
         this.sourceModel = sourceModel;
         this.destination = destination;
         this.roomMovement = roomMovement;
@@ -55,6 +65,12 @@ public class VROptions {
         this.showSpeedChart = showSpeedChart;
         this.portalLocation = portalLocation;
         this.shader = shader;
+    }
+
+    // Backward compatibility constructor (no sensor data)
+    public VROptions(String name, String mockTrack, String sourceModel, LatLngAlt destination, ShaderType shader,
+                     boolean roomMovement, boolean showDirectionArrow, boolean showWingsuitCanopy, boolean showTarget, boolean showSpeedChart, LatLngAlt portalLocation) {
+        this(name, mockTrack, sourceModel, destination, shader, roomMovement, showDirectionArrow, showWingsuitCanopy, showTarget, showSpeedChart, portalLocation, null, null, null);
     }
 
     public static MiniMapOptions minimap = VROptionsList.MM_OGDEN;

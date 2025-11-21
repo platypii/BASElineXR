@@ -228,6 +228,10 @@ public class WindVelocityChart extends View {
         drawLabels(canvas);
     }
 
+    /**
+     * Draw title at the top of the chart
+     */
+
     private void drawTitle(Canvas canvas) {
         Paint titlePaint = getTitlePaint();
         float centerX = getWidth() / 2f;
@@ -364,6 +368,9 @@ public class WindVelocityChart extends View {
         }
     }
 
+    /**
+     * Draw aircraft velocity vectors (groundspeed and airspeed)
+     */
     private void drawAircraftVectors(Canvas canvas) {
         if (dataPoints == null || dataPoints.isEmpty()) return;
         

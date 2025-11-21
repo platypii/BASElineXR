@@ -198,7 +198,8 @@ class SpaceSystem(
                 trenchLocation.lng,
                 trenchLocation.alt + TRENCH_HEIGHT_OFFSET,
                 currentTime,
-                motionEstimator
+                motionEstimator,
+                false
             )
 
             // Apply terrain rotation (same as terrain system) 
