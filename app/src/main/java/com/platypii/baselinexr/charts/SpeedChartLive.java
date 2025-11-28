@@ -10,6 +10,7 @@ import androidx.annotation.Nullable;
 
 import com.platypii.baselinexr.Services;
 import com.platypii.baselinexr.jarvis.FlightMode;
+import com.platypii.baselinexr.jarvis.EnhancedFlightMode;
 import com.platypii.baselinexr.location.AtmosphericModel;
 import com.platypii.baselinexr.location.KalmanFilter3D;
 import com.platypii.baselinexr.location.LocationProvider;
@@ -126,7 +127,8 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
                 // Efficient: Only redraw polar if density, flight mode, or bounds changed
                 float altitude = (float) loc.altitude_gps;
                 final float density = AtmosphericModel.calculateDensity(altitude, 10f);
-                int flightMode = FlightMode.getMode(loc);
+                int enhancedMode = Services.flightComputer.getEnhancedMode();
+                int flightMode = EnhancedFlightMode.toBasicMode(enhancedMode);
                 Bounds currentBounds = plot.bounds[AXIS_SPEED];
                 boolean boundsChanged = !currentBounds.equals(lastPolarBounds);
                 boolean redrawPolar = false;
@@ -426,10 +428,11 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
         final float density = AtmosphericModel.calculateDensity(altitude, 10f);
 
         // Determine flight mode (wingsuit, canopy, airplane)
-        int flightMode = FlightMode.getMode(loc);
+        int enhancedMode = Services.flightComputer.getEnhancedMode();
+        int flightMode = EnhancedFlightMode.toBasicMode(enhancedMode);
 
         // Get cached polar for this mode/density
-        Polars.PolarCache cache = Polars.getCachedPolar(density, flightMode);
+        Polars.PolarCache cache = Polars.instance.getCachedPolar(density, flightMode);
         if (cache == null) {
             android.util.Log.w("SpeedChartLive", "Polars.getCachedPolar returned null (density=" + density + ", flightMode=" + flightMode + ")");
             return;
@@ -446,13 +449,13 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
         // Draw line segments connecting the sampled polar points
         for (int i = 1; i < cache.nPoints; i++) {
             // Use coefftoss to get sustained speeds for each sampled point
-            SustainedSpeeds ss0 = coefftoss(cache.points[i - 1].cl, cache.points[i - 1].cd, cache.polar.s, cache.polar.m, density);
-            SustainedSpeeds ss1 = coefftoss(cache.points[i].cl, cache.points[i].cd, cache.polar.s, cache.polar.m, density);
+            SustainedSpeeds ss0 = coefftoss(cache.points[i - 1].cl, cache.points[i - 1].cd, cache.effectiveArea, cache.effectiveMass, density);
+            SustainedSpeeds ss1 = coefftoss(cache.points[i].cl, cache.points[i].cd, cache.effectiveArea, cache.effectiveMass, density);
 
             // Log the coordinates for debugging
-           // if (i == 1 || i == cache.nPoints - 1) {
-           //     android.util.Log.d("SpeedChartLive", "Polar segment " + (i-1) + "->" + i + ": (" + ss0.vxs + ", " + ss0.vys + ") to (" + ss1.vxs + ", " + ss1.vys + ")");
-           // }
+            // if (i == 1 || i == cache.nPoints - 1) {
+            //     android.util.Log.d("SpeedChartLive", "Polar segment " + (i-1) + "->" + i + ": (" + ss0.vxs + ", " + ss0.vys + ") to (" + ss1.vxs + ", " + ss1.vys + ")");
+            // }
 
             // Draw line segment from previous point to current point
             // Color based on AoA - gradient from blue (low AOA) to red (high AOA)

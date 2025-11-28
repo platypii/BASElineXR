@@ -3,15 +3,21 @@
     android:layout_height="wrap_content"
     android:clipToOutline="true"
     android:gravity="left"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:clickable="false"
+    android:focusable="false">
 
     <LinearLayout
         android:id="@+id/hudPanel"
         android:layout_width="match_parent"
         android:layout_height="80dp"
+        android:layout_marginEnd="170dp"
         android:background="#000000"
         android:padding="4dp"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:clickable="true"
+        android:focusable="true"
+        android:focusableInTouchMode="true">
 
         <TextView
             android:layout_width="match_parent"
@@ -46,575 +52,54 @@
 
     </LinearLayout>
 
-    <Button
-        android:id="@+id/exit_button"
-        android:layout_width="80dp"
+    <!-- Button container background to fill the right side -->
+    <LinearLayout
+        android:layout_width="170dp"
         android:layout_height="80dp"
         android:layout_gravity="top|end"
-        android:background="@drawable/button_bg"
-        android:text="Exit"
-        android:textColor="#ffffff"
-        android:textSize="16sp" />
-
-    <GridLayout
-        android:id="@+id/extraControls"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="80dp"
-        android:columnCount="3"
-        android:rowCount="4"
-        android:visibility="gone">
+        android:background="#000000"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:clickable="false"
+        android:focusable="false">
 
         <Button
-            android:id="@+id/wind_estimation_button"
-            android:layout_width="100dp"
+            android:id="@+id/heading_button"
+            android:layout_width="80dp"
             android:layout_height="80dp"
             android:layout_margin="2dp"
-            android:layout_columnSpan="3"
             android:background="@drawable/button_bg"
-            android:text="Wind Estimation"
+            android:text="Heading"
             android:textColor="#ffffff"
-            android:textSize="16sp" />
+            android:textSize="16sp"
+            android:visibility="gone"
+            android:clickable="true"
+            android:focusable="true" />
 
         <Button
-            android:id="@+id/tail_button"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:id="@+id/exit_button"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
             android:layout_margin="2dp"
             android:background="@drawable/button_bg"
-            android:text="Tail"
+            android:text="Exit"
             android:textColor="#ffffff"
-            android:textSize="22sp" />
+            android:textSize="16sp"
+            android:clickable="true"
+            android:focusable="true" />
 
-        <Button
-            android:id="@+id/north_button"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_margin="2dp"
-            android:background="@drawable/button_bg"
-            android:text="N"
-            android:textColor="#ffffff"
-            android:textSize="22sp" />
+    </LinearLayout>
 
-        <Button
-            android:id="@+id/fwd_button"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_margin="2dp"
-            android:background="@drawable/button_bg"
-            android:text="Nose"
-            android:textColor="#ffffff"
-            android:textSize="22sp" />
-
-        <Button
-            android:id="@+id/west_button"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_margin="2dp"
-            android:background="@drawable/button_bg"
-            android:text="W"
-            android:textColor="#ffffff"
-            android:textSize="22sp" />
-
-        <Button
-            android:id="@+id/center_button"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_margin="2dp"
-            android:background="@drawable/button_bg"
-            android:text="Center"
-            android:textColor="#ffffff"
-            android:textSize="22sp" />
-
-        <Button
-            android:id="@+id/east_button"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_margin="2dp"
-            android:background="@drawable/button_bg"
-            android:text="E"
-            android:textColor="#ffffff"
-            android:textSize="22sp" />
-
-        <Button
-            android:id="@+id/yaw_minus_button"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_margin="2dp"
-            android:background="@drawable/button_bg"
-            android:text="-5°"
-            android:textColor="#ffffff"
-            android:textSize="22sp" />
-
-        <Button
-            android:id="@+id/south_button"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_margin="2dp"
-            android:background="@drawable/button_bg"
-            android:text="S"
-            android:textColor="#ffffff"
-            android:textSize="22sp" />
-
-        <Button
-            android:id="@+id/yaw_plus_button"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_margin="2dp"
-            android:background="@drawable/button_bg"
-            android:text="+5°"
-            android:textColor="#ffffff"
-            android:textSize="22sp" />
-
-    </GridLayout>
-
-    <!-- Wind Estimation Controls -->
-    <LinearLayout
-        android:id="@+id/windEstimationControls"
+    <!-- Dynamic Menu Container -->
+    <FrameLayout
+        android:id="@+id/menuContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="85dp"
         android:layout_marginStart="5dp"
         android:layout_marginEnd="5dp"
-        android:orientation="vertical"
-        android:padding="4dp"
-        android:visibility="gone">
-
-        <!-- Top Control Buttons -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="4dp">
-
-            <!-- Mode Switch Button -->
-            <Button
-                android:id="@+id/wind_mode_switch_button"
-                android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:layout_weight="1"
-                android:layout_margin="2dp"
-                android:background="@drawable/button_bg"
-                android:text="Heading Controls Menu"
-                android:textColor="#ffffff"
-                android:textSize="12sp" />
-
-            <!-- Wind System Enable/Disable Toggle -->
-            <Button
-                android:id="@+id/wind_system_toggle_button"
-                android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:layout_weight="1"
-                android:layout_margin="2dp"
-                android:background="@drawable/button_bg"
-                android:text="Wind: ON"
-                android:textColor="#ffffff"
-                android:textSize="12sp" />
-
-        </LinearLayout>
-
-        <!-- Wind Input Source Radio Group -->
-        <RadioGroup
-            android:id="@+id/wind_input_source_group"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="4dp">
-            <RadioButton
-                android:id="@+id/wind_input_estimation"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Wind Estimation"
-                android:textColor="#ffffff"
-                android:buttonTint="#ffffff"
-                android:checked="true" />
-            <RadioButton
-                android:id="@+id/wind_input_nowind"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="No Wind"
-                android:textColor="#ffffff"
-                android:buttonTint="#ffffff" />
-            <RadioButton
-                android:id="@+id/wind_input_saved"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Saved Wind"
-                android:textColor="#ffffff"
-                android:buttonTint="#ffffff" />
-        </RadioGroup>
-
-        <!-- Wind Estimation Display -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="4dp">
-
-            <!-- Velocity Chart (vE vs vN) -->
-            <FrameLayout
-                android:id="@+id/wind_velocity_chart_container"
-                android:layout_width="0dp"
-                android:layout_height="180dp"
-                android:layout_weight="2"
-                android:layout_margin="2dp"
-                android:background="#222222" />
-
-            <!-- Data Boundary Adjustment Buttons -->
-            <LinearLayout
-                android:layout_width="60dp"
-                android:layout_height="180dp"
-                android:orientation="vertical"
-                android:layout_margin="2dp"
-                android:background="#333333"
-                android:gravity="center">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Data Bounds"
-                    android:textColor="#ffffff"
-                    android:textSize="8sp"
-                    android:textStyle="bold"
-                    android:gravity="center"
-                    android:padding="2dp"
-                    android:background="#444444"
-                    android:layout_marginBottom="4dp" />
-
-                <Button
-                    android:id="@+id/upper_data_boundary_plus_button"
-                    android:layout_width="50dp"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:layout_margin="2dp"
-                    android:background="@drawable/button_bg"
-                    android:text="U+"
-                    android:textColor="#ffffff"
-                    android:textSize="10sp" />
-
-                <Button
-                    android:id="@+id/upper_data_boundary_minus_button"
-                    android:layout_width="50dp"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:layout_margin="2dp"
-                    android:background="@drawable/button_bg"
-                    android:text="U-"
-                    android:textColor="#ffffff"
-                    android:textSize="10sp" />
-
-                <Button
-                    android:id="@+id/lower_data_boundary_plus_button"
-                    android:layout_width="50dp"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:layout_margin="2dp"
-                    android:background="@drawable/button_bg"
-                    android:text="L+"
-                    android:textColor="#ffffff"
-                    android:textSize="10sp" />
-
-                <Button
-                    android:id="@+id/lower_data_boundary_minus_button"
-                    android:layout_width="50dp"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:layout_margin="2dp"
-                    android:background="@drawable/button_bg"
-                    android:text="L-"
-                    android:textColor="#ffffff"
-                    android:textSize="10sp" />
-
-            </LinearLayout>
-
-            <!-- Wind Layers List -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="180dp"
-                android:layout_weight="1"
-                android:layout_margin="2dp"
-                android:orientation="vertical"
-                android:background="#222222">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Wind Layers"
-                    android:textColor="#ffffff"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:gravity="center"
-                    android:padding="4dp"
-                    android:background="#333333" />
-
-                <ScrollView
-                    android:id="@+id/wind_layers_scroll"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:background="#222222">
-
-                    <LinearLayout
-                        android:id="@+id/wind_layers_list"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="2dp" />
-
-                </ScrollView>
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-        <!-- Wind Data Display -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="4dp"
-            android:background="#333333"
-            android:padding="4dp">
-
-            <TextView
-                android:id="@+id/gps_wind_text"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="GPS Wind: -- mph @ --° (R²=--)"
-                android:textColor="#ffffff"
-                android:textSize="11sp"
-                android:padding="2dp"
-                android:background="#444444"
-                android:layout_marginEnd="1dp" />
-
-            <TextView
-                android:id="@+id/sustained_wind_text"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Sustained Wind: -- mph @ --° (R²=--)"
-                android:textColor="#ffffff"
-                android:textSize="11sp"
-                android:padding="2dp"
-                android:background="#444444" />
-
-        </LinearLayout>
-
-        <!-- Aircraft Speed Display -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="4dp"
-            android:background="#333333"
-            android:padding="4dp">
-
-            <TextView
-                android:id="@+id/gps_aircraft_speed_text"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="GPS Aircraft Speed: -- mph"
-                android:textColor="#cccccc"
-                android:textSize="11sp"
-                android:padding="2dp"
-                android:background="#555555"
-                android:layout_marginEnd="1dp" />
-
-            <TextView
-                android:id="@+id/sustained_aircraft_speed_text"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Sustained Aircraft Speed: -- mph"
-                android:textColor="#cccccc"
-                android:textSize="11sp"
-                android:padding="2dp"
-                android:background="#555555" />
-
-        </LinearLayout>
-
-        <!-- Dataset Info Display -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="4dp"
-            android:background="#333333"
-            android:padding="4dp">
-
-            <TextView
-                android:id="@+id/dataset_altitude_range_text"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Dataset: -- - -- m"
-                android:textColor="#FFD700"
-                android:textSize="10sp"
-                android:padding="2dp"
-                android:background="#444444"
-                android:layout_marginEnd="1dp" />
-
-            <TextView
-                android:id="@+id/current_altitude_text"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Current: -- m"
-                android:textColor="#FFD700"
-                android:textSize="10sp"
-                android:padding="2dp"
-                android:background="#444444" />
-
-        </LinearLayout>
-
-        <!-- Save Buttons -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="4dp"
-            android:background="#333333"
-            android:padding="4dp">
-
-            <Button
-                android:id="@+id/save_gps_button"
-                android:layout_width="0dp"
-                android:layout_height="35dp"
-                android:layout_weight="1"
-                android:layout_margin="2dp"
-                android:background="@drawable/button_bg"
-                android:text="Save GPS"
-                android:textColor="#ffffff"
-                android:textSize="11sp" />
-
-            <Button
-                android:id="@+id/save_sustained_button"
-                android:layout_width="0dp"
-                android:layout_height="35dp"
-                android:layout_weight="1"
-                android:layout_margin="2dp"
-                android:background="@drawable/button_bg"
-                android:text="Save Sustained"
-                android:textColor="#ffffff"
-                android:textSize="11sp" />
-
-        </LinearLayout>
-
-        <!-- Time Interval Controls -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="4dp"
-            android:background="#333333"
-            android:padding="4dp">
-
-            <TextView
-                android:layout_width="60dp"
-                android:layout_height="wrap_content"
-                android:text="Start:"
-                android:textColor="#cccccc"
-                android:textSize="12sp"
-                android:gravity="center_vertical" />
-
-            <Button
-                android:id="@+id/start_minus_button"
-                android:layout_width="40dp"
-                android:layout_height="35dp"
-                android:layout_margin="1dp"
-                android:background="@drawable/button_bg"
-                android:text="-"
-                android:textColor="#ffffff"
-                android:textSize="14sp" />
-
-            <Button
-                android:id="@+id/start_plus_button"
-                android:layout_width="40dp"
-                android:layout_height="35dp"
-                android:layout_margin="1dp"
-                android:background="@drawable/button_bg"
-                android:text="+"
-                android:textColor="#ffffff"
-                android:textSize="14sp" />
-
-            <TextView
-                android:layout_width="60dp"
-                android:layout_height="wrap_content"
-                android:text="End:"
-                android:textColor="#cccccc"
-                android:textSize="12sp"
-                android:gravity="center_vertical" />
-
-            <Button
-                android:id="@+id/end_minus_button"
-                android:layout_width="40dp"
-                android:layout_height="35dp"
-                android:layout_margin="1dp"
-                android:background="@drawable/button_bg"
-                android:text="-"
-                android:textColor="#ffffff"
-                android:textSize="14sp" />
-
-            <Button
-                android:id="@+id/end_plus_button"
-                android:layout_width="40dp"
-                android:layout_height="35dp"
-                android:layout_margin="1dp"
-                android:background="@drawable/button_bg"
-                android:text="+"
-                android:textColor="#ffffff"
-                android:textSize="14sp" />
-
-            <Button
-                android:id="@+id/end_live_button"
-                android:layout_width="50dp"
-                android:layout_height="35dp"
-                android:layout_margin="1dp"
-                android:background="@drawable/button_bg"
-                android:text="Live"
-                android:textColor="#ffffff"
-                android:textSize="10sp" />
-
-        </LinearLayout>
-
-        <!-- Layer Management Controls -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:background="#333333"
-            android:padding="4dp">
-
-            <Button
-                android:id="@+id/new_layer_button"
-                android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:layout_weight="1"
-                android:layout_margin="2dp"
-                android:background="@drawable/button_bg"
-                android:text="New Layer"
-                android:textColor="#ffffff"
-                android:textSize="12sp"
-                android:visibility="gone" />
-
-            <Button
-                android:id="@+id/split_layer_button"
-                android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:layout_weight="1"
-                android:layout_margin="2dp"
-                android:background="@drawable/button_bg"
-                android:text="Split Layer"
-                android:textColor="#ffffff"
-                android:textSize="12sp"
-                android:visibility="gone" />
-
-        </LinearLayout>
-
-    </LinearLayout>
+        android:visibility="gone"
+        android:clickable="false"
+        android:focusable="false" />
 
 </FrameLayout>

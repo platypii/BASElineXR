@@ -10,6 +10,7 @@ import com.platypii.baselinexr.location.WSEAnalytical;
 import com.platypii.baselinexr.Services;
 import com.platypii.baselinexr.jarvis.FlightComputer;
 import com.platypii.baselinexr.jarvis.FlightMode;
+import com.platypii.baselinexr.jarvis.EnhancedFlightMode;
 import com.platypii.baselinexr.location.AtmosphericModel;
 import com.platypii.baselinexr.measurements.MLocation;
 import com.platypii.baselinexr.measurements.LatLngAlt;
@@ -390,7 +391,7 @@ public final class KalmanFilter3D implements MotionEstimator {
                 Q_scaled[i][j] = this.Q[i][j] * deltaTime;
             }
         }
-        P = LinearAlgebra.add(FPFT, Q_scaled);
+         P = LinearAlgebra.add(FPFT, Q_scaled);
     }
 
     // Cached predicted state for 90Hz updates
@@ -614,8 +615,9 @@ public final class KalmanFilter3D implements MotionEstimator {
         // Use wind velocity from WindSystem altitude-based wind data
         try {
             if (lastGps != null) {
-                // Get current flight mode
-                int flightMode = Services.flightComputer != null ? Services.flightComputer.flightMode : FlightMode.MODE_WINGSUIT;
+                // Get current enhanced flight mode and map to basic mode for wind system
+                int enhancedMode = Services.flightComputer != null ? Services.flightComputer.getEnhancedMode() : EnhancedFlightMode.MODE_WINGSUIT;
+                int flightMode = EnhancedFlightMode.toBasicMode(enhancedMode);
 
                 // Get wind estimate from WindSystem at current altitude
                 final double currentAltitude = lastGps.altitude_gps;

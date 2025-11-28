@@ -88,7 +88,7 @@ class WindEstimationController(private val activity: BaselineActivity) {
         setupWindEstimationCallbacks()
     }
 
-    private fun setupWindEstimationUI(rootView: View?) {
+    fun setupWindEstimationUI(rootView: View?) {
         // Initialize velocity chart
         val velocityChartContainer = rootView?.findViewById<FrameLayout>(R.id.wind_velocity_chart_container)
         velocityChartContainer?.let { container ->
@@ -110,49 +110,22 @@ class WindEstimationController(private val activity: BaselineActivity) {
         datasetAltitudeRangeText = rootView?.findViewById(R.id.dataset_altitude_range_text)
         currentAltitudeText = rootView?.findViewById(R.id.current_altitude_text)
 
-        setupTimeIntervalControls(rootView)
-        setupLayerManagementControls(rootView)
         setupDataBoundaryControls(rootView)
+        setupScrollControls(rootView)
     }
 
-    private fun setupTimeIntervalControls(rootView: View?) {
-        // Time interval controls
-        val startMinusButton = rootView?.findViewById<Button>(R.id.start_minus_button)
-        startMinusButton?.setOnClickListener {
-            windEstimationSystem?.adjustStartTime(false)
+    private fun setupScrollControls(rootView: View?) {
+        val scrollView = rootView?.findViewById<android.widget.ScrollView>(R.id.wind_layers_scroll)
+        val scrollAmount = 100 // pixels to scroll per click
+        
+        rootView?.findViewById<Button>(R.id.layers_scroll_up_button)?.setOnClickListener {
+            android.util.Log.i("BXRINPUT", "Scroll up button clicked!")
+            scrollView?.smoothScrollBy(0, -scrollAmount)
         }
-
-        val startPlusButton = rootView?.findViewById<Button>(R.id.start_plus_button)
-        startPlusButton?.setOnClickListener {
-            windEstimationSystem?.adjustStartTime(true)
-        }
-
-        val endMinusButton = rootView?.findViewById<Button>(R.id.end_minus_button)
-        endMinusButton?.setOnClickListener {
-            windEstimationSystem?.adjustEndTime(false)
-        }
-
-        val endPlusButton = rootView?.findViewById<Button>(R.id.end_plus_button)
-        endPlusButton?.setOnClickListener {
-            windEstimationSystem?.adjustEndTime(true)
-        }
-
-        val endLiveButton = rootView?.findViewById<Button>(R.id.end_live_button)
-        endLiveButton?.setOnClickListener {
-            windEstimationSystem?.setIncludeLiveData(true)
-        }
-    }
-
-    private fun setupLayerManagementControls(rootView: View?) {
-        // Layer management controls
-        val saveGpsButton = rootView?.findViewById<Button>(R.id.save_gps_button)
-        saveGpsButton?.setOnClickListener {
-            saveLayer("GPS")
-        }
-
-        val saveSustainedButton = rootView?.findViewById<Button>(R.id.save_sustained_button)
-        saveSustainedButton?.setOnClickListener {
-            saveLayer("Sustained")
+        
+        rootView?.findViewById<Button>(R.id.layers_scroll_down_button)?.setOnClickListener {
+            android.util.Log.i("BXRINPUT", "Scroll down button clicked!")
+            scrollView?.smoothScrollBy(0, scrollAmount)
         }
     }
 
@@ -160,21 +133,25 @@ class WindEstimationController(private val activity: BaselineActivity) {
         // Data boundary adjustment buttons
         val upperDataPlusButton = rootView?.findViewById<Button>(R.id.upper_data_boundary_plus_button)
         upperDataPlusButton?.setOnClickListener {
+            android.util.Log.i("BXRINPUT", "U+ button clicked!")
             adjustDataBoundary(true, 10.0) // Upper boundary +10m
         }
 
         val upperDataMinusButton = rootView?.findViewById<Button>(R.id.upper_data_boundary_minus_button)
         upperDataMinusButton?.setOnClickListener {
+            android.util.Log.i("BXRINPUT", "U- button clicked!")
             adjustDataBoundary(true, -10.0) // Upper boundary -10m
         }
 
         val lowerDataPlusButton = rootView?.findViewById<Button>(R.id.lower_data_boundary_plus_button)
         lowerDataPlusButton?.setOnClickListener {
+            android.util.Log.i("BXRINPUT", "L+ button clicked!")
             adjustDataBoundary(false, 10.0) // Lower boundary +10m
         }
 
         val lowerDataMinusButton = rootView?.findViewById<Button>(R.id.lower_data_boundary_minus_button)
         lowerDataMinusButton?.setOnClickListener {
+            android.util.Log.i("BXRINPUT", "L- button clicked!")
             adjustDataBoundary(false, -10.0) // Lower boundary -10m
         }
     }

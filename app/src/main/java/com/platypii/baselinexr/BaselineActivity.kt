@@ -10,8 +10,18 @@ import com.meta.spatial.datamodelinspector.DataModelInspectorFeature
 import com.meta.spatial.debugtools.HotReloadFeature
 import com.meta.spatial.ovrmetrics.OVRMetricsDataModel
 import com.meta.spatial.ovrmetrics.OVRMetricsFeature
+import com.meta.spatial.runtime.StereoMode
 import com.meta.spatial.toolkit.AppSystemActivity
+import com.meta.spatial.toolkit.Equirect360ShapeOptions
+import com.meta.spatial.toolkit.MediaPanelRenderOptions
+import com.meta.spatial.toolkit.MediaPanelSettings
+import com.meta.spatial.toolkit.Mesh
+import com.meta.spatial.toolkit.Panel
 import com.meta.spatial.toolkit.PanelRegistration
+import com.meta.spatial.toolkit.Visible
+import com.meta.spatial.toolkit.PixelDisplayOptions
+import com.meta.spatial.toolkit.Transform
+import com.meta.spatial.toolkit.VideoSurfacePanelRegistration
 import com.meta.spatial.vr.LocomotionSystem
 import com.meta.spatial.vr.VRFeature
 import kotlinx.coroutines.CoroutineScope
@@ -21,10 +31,10 @@ import kotlinx.coroutines.launch
 import androidx.core.net.toUri
 import com.meta.spatial.core.PerformanceLevel
 import com.meta.spatial.toolkit.PlayerBodyAttachmentSystem
-import com.meta.spatial.toolkit.Transform
 import com.platypii.baselinexr.location.LocationStatus
 import com.platypii.baselinexr.measurements.MLocation
 import com.platypii.baselinexr.ui.HudPanelController
+import com.platypii.baselinexr.video.Video360Controller
 
 class BaselineActivity : AppSystemActivity() {
 
@@ -42,7 +52,10 @@ class BaselineActivity : AppSystemActivity() {
     private var miniMapPanel: MiniMapPanel? = null
     private val gpsTransform = GpsToWorldTransform()
     private var locationSubscriber: ((MLocation) -> Unit)? = null
-    private var hudPanelController: HudPanelController? = null
+    var hudPanelController: HudPanelController? = null
+        private set
+    private var video360Controller: Video360Controller? = null
+    private var trackStartTimeMs: Long? = null  // First GPS timestamp for video sync
 
     override fun registerFeatures(): List<SpatialFeature> {
         val features =
@@ -73,8 +86,17 @@ class BaselineActivity : AppSystemActivity() {
         // Load saved adjustments
         Adjustments.loadAdjustments(this)
 
+        // Request storage permissions if needed for 360 video
+        if (VROptions.current.has360Video() && !Permissions.hasStoragePermissions(this)) {
+            Permissions.requestStoragePermissions(this)
+        }
+
         // Initialize panel controllers
         hudPanelController = HudPanelController(this)
+
+        // Initialize 360 video controller if configured
+        video360Controller = Video360Controller(this)
+        video360Controller?.initialize(VROptions.current)
 
         // Initialize SavedWindSystem and register with WindSystem singleton
         val savedWindSystem = com.platypii.baselinexr.wind.SavedWindSystem(this)
@@ -103,6 +125,9 @@ class BaselineActivity : AppSystemActivity() {
         systemManager.registerSystem(targetPanelSystem!!)
         systemManager.registerSystem(portalSystem!!)
         systemManager.registerSystem(miniMapPanel!!)
+        
+        // Debug: Log all input events to diagnose button click issues
+        systemManager.registerSystem(InputDebugSystem())
 
         // Set up centralized location updates
         setupLocationUpdates()
@@ -111,7 +136,16 @@ class BaselineActivity : AppSystemActivity() {
 
         // Enable MR mode
         systemManager.findSystem<LocomotionSystem>().enableLocomotion(false)
-        scene.enablePassthrough(true)
+
+        // Enable passthrough or 360 video based on configuration
+        if (VROptions.current.has360Video()) {
+            scene.enablePassthrough(false) // Disable passthrough when using 360 video
+            Log.i(TAG, "360 video mode enabled, passthrough disabled")
+            // Video panel entity will be created in onSceneReady()
+        } else {
+            scene.enablePassthrough(true)
+            Log.i(TAG, "Passthrough mode enabled")
+        }
 
         // Create and register terrain rendering system
         terrainSystem = TerrainSystem(gpsTransform, this)
@@ -152,6 +186,10 @@ class BaselineActivity : AppSystemActivity() {
         portalSystem?.cleanup()
         miniMapPanel?.cleanup()
 
+        // Clean up video controller
+        video360Controller?.release()
+        video360Controller = null
+
         // Clean up panel controllers to prevent memory leaks
         hudPanelController = null
 
@@ -168,10 +206,22 @@ class BaselineActivity : AppSystemActivity() {
             environmentIntensity = VROptions.ENVIRONMENT_INTENSITY
         )
         scene.updateIBLEnvironment("environment.env")
+
+        // Create 360 video panel entity if configured
+        // The VideoSurfacePanelRegistration only defines how to create the panel,
+        // but we need to create the entity with the Panel component to trigger it
+        if (VROptions.current.has360Video()) {
+            Log.d(TAG, "Creating 360 video panel entity")
+            Entity.create(
+                Panel(R.id.video_360_panel),
+                Transform(),
+                Visible(true)
+            )
+        }
     }
 
     override fun registerPanels(): List<PanelRegistration> {
-        return listOf(
+        val panels = mutableListOf<PanelRegistration>(
             PanelRegistration(R.layout.hud) {
                 config {
                     themeResourceId = R.style.PanelAppThemeTransparent
@@ -235,6 +285,32 @@ class BaselineActivity : AppSystemActivity() {
                     speedChartSystem?.setSpeedChart(speedChartLive)
                 }
             })
+
+        // Add 360 video panel if configured
+        if (VROptions.current.has360Video()) {
+            panels.add(
+                VideoSurfacePanelRegistration(
+                    R.id.video_360_panel,
+                    surfaceConsumer = { panelEntity, surface ->
+                        Log.d(TAG, "360 video surfaceConsumer called - panelEntity=$panelEntity, surface=$surface")
+                        video360Controller?.setupVideoSurface(surface)
+                    },
+                    settingsCreator = {
+                        MediaPanelSettings(
+                            shape = Equirect360ShapeOptions(radius = 500f),  // Large radius to encompass user, UI panels use compositor layers to render on top
+                            display = PixelDisplayOptions(width = 7680, height = 3840),
+                            rendering = MediaPanelRenderOptions(
+                                stereoMode = StereoMode.None,
+                                zIndex = -100  // Render as background skybox behind all UI
+                            ),
+                        )
+                    },
+                )
+            )
+            Log.d(TAG, "360 video panel registered")
+        }
+
+        return panels
     }
 
     private fun loadGLXF(): Job {
@@ -289,8 +365,27 @@ class BaselineActivity : AppSystemActivity() {
 
             // Update LocationStatus helper
             LocationStatus.updateStatus(this)
+
+            // Update 360 video sync if active
+            if (VROptions.current.has360Video()) {
+                updateVideo360Sync(loc)
+            }
         }
         Services.location.locationUpdates.subscribeMain(locationSubscriber!!)
+    }
+
+    private fun updateVideo360Sync(loc: MLocation) {
+        // Store first GPS timestamp as track start
+        if (trackStartTimeMs == null) {
+            trackStartTimeMs = loc.millis
+            Log.d(TAG, "Video sync initialized - track start time: $trackStartTimeMs")
+        }
+
+        // Calculate GPS time relative to track start (milliseconds since first fix)
+        val gpsTimeMs = loc.millis - trackStartTimeMs!!
+
+        // Update video sync directly (no GL thread needed with SDK approach)
+        video360Controller?.updateSync(gpsTimeMs)
     }
 
     companion object {

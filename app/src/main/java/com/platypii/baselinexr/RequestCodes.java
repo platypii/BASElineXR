@@ -11,5 +11,6 @@ public class RequestCodes {
     public static final int RC_BLUE_ENABLE = 3;
     public static final int RC_BLUE_CONNECT = 4;
     public static final int RC_BLUE_ALL = 5;
+    public static final int RC_STORAGE = 6;
 
 }

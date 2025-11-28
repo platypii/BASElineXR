@@ -13,6 +13,7 @@ import com.meta.spatial.toolkit.Scale
 import com.meta.spatial.toolkit.Transform
 import com.meta.spatial.toolkit.Visible
 import com.platypii.baselinexr.jarvis.FlightMode
+import com.platypii.baselinexr.jarvis.EnhancedFlightMode
 import com.platypii.baselinexr.location.AtmosphericModel
 import com.platypii.baselinexr.location.KalmanFilter3D
 import com.platypii.baselinexr.location.MotionEstimator
@@ -167,7 +168,10 @@ class WingsuitCanopySystem : SystemBase() {
     companion object {
         private const val TAG = "WingsuitCanopySystem"
         private const val WINGSUIT_SCALE = 0.05f
+        private const val AIRPLANE_SCALE = 0.05f
         private const val CANOPY_SCALE = 0.08f
+        private const val PC_SCALE = 2.0f
+        private const val SNIVEL_SCALE = 1.0f
         private const val MODEL_HEIGHT_OFFSET = -3.0f
         private const val CANOPY_MODEL_HEIGHT_OFFSET = -0.3f
         private const val MIN_SPEED_THRESHOLD = 0.5 // m/s minimum speed to show models
@@ -177,7 +181,10 @@ class WingsuitCanopySystem : SystemBase() {
     }
 
     private var wingsuitEntity: Entity? = null
+    private var airplaneEntity: Entity? = null
     private var canopyEntity: Entity? = null
+    private var pcEntity: Entity? = null // Pilot chute for deployment
+    private var snivelEntity: Entity? = null // Snivel for deployment
     private var windVectorEntity: Entity? = null
     private var airspeedVectorEntity: Entity? = null
     private var inertialspeedVectorEntity: Entity? = null
@@ -187,7 +194,7 @@ class WingsuitCanopySystem : SystemBase() {
     private var lastGpsTime: Long = 0 // Track when GPS data was last updated
     private final var isRealCanopyOrientation = true // Flag to control canopy positioning mode
     private var enableWindVectors = true // Flag to control wind vector display - now enabled
-    private var enableMagneticVector = true // Flag to control magnetic field vector display
+    private var enableMagneticVector = false // Flag to control magnetic field vector display
 
     override fun execute() {
         if (!initialized) {
@@ -211,11 +218,35 @@ class WingsuitCanopySystem : SystemBase() {
             Visible(false) // Start invisible
         )
 
+        // Create airplane entity using airplane.glb model with same rotation as wingsuit
+        airplaneEntity = Entity.create(
+            Mesh("airplane.glb".toUri()),
+            Transform(Pose(Vector3(0f), initialWingsuitRotation)),
+            Scale(Vector3(AIRPLANE_SCALE)),
+            Visible(false) // Start invisible
+        )
+
         // Create canopy entity using cp2 model with initial rotation
         canopyEntity = Entity.create(
             Mesh("cp2.gltf".toUri()),
             Transform(Pose(Vector3(0f), initialCanopyRotation)),
             Scale(Vector3(CANOPY_SCALE)),
+            Visible(false) // Start invisible
+        )
+
+        // Create pilot chute entity for deployment (use sphere as placeholder)
+        pcEntity = Entity.create(
+            Mesh("sphere.gltf".toUri()),
+            Transform(Pose(Vector3(0f), Quaternion())),
+            Scale(Vector3(PC_SCALE)),
+            Visible(false) // Start invisible
+        )
+
+        // Create snivel entity for deployment (use cp2 scaled down as placeholder)
+        snivelEntity = Entity.create(
+            Mesh("cp2.gltf".toUri()),
+            Transform(Pose(Vector3(0f), initialCanopyRotation)),
+            Scale(Vector3(SNIVEL_SCALE * 0.3f)), // Smaller than full canopy
             Visible(false) // Start invisible
         )
 
@@ -250,14 +281,13 @@ class WingsuitCanopySystem : SystemBase() {
         )
 
         initialized = true
-        Log.i(TAG, "WingsuitCanopySystem initialized with wind vectors and magnetic field vector")
+        Log.i(TAG, "WingsuitCanopySystem initialized with airplane, deployment models, wind vectors and magnetic field vector")
     }
 
     private fun updateModelOrientationAndVisibility() {
         // Check if wingsuit/canopy models are enabled
         if (!VROptions.current.showWingsuitCanopy) {
-            wingsuitEntity?.setComponent(Visible(false))
-            canopyEntity?.setComponent(Visible(false))
+            hideAllModels()
             hideVectors()
             // But still show magnetic vector if we have sensor data
             if (enableMagneticVector) {
@@ -279,16 +309,12 @@ class WingsuitCanopySystem : SystemBase() {
         if (headPose == Pose()) return
 
         // Position models below and in front of the head
-        val wingsuitPosition = headPose.t + Vector3(0f, MODEL_HEIGHT_OFFSET, 0f)
-
-        val ofst = if (isRealCanopyOrientation) -0.3f else MODEL_HEIGHT_OFFSET
-        val canopyPosition = headPose.t + Vector3(0f, ofst, 0f)
+        val modelPosition = headPose.t + Vector3(0f, MODEL_HEIGHT_OFFSET, 0f)
 
         // Check if we have fresh GPS data and location is valid
         if (lastUpdate == null || !Services.location.isFresh) {
-            // Hide both models and vectors when no GPS data
-            wingsuitEntity?.setComponent(Visible(false))
-            canopyEntity?.setComponent(Visible(false))
+            // Hide all models and vectors when no GPS data
+            hideAllModels()
             hideVectors()
             // But still show magnetic vector if we have sensor data
             if (enableMagneticVector && lastUpdate != null) {
@@ -305,9 +331,8 @@ class WingsuitCanopySystem : SystemBase() {
 
         // Check if moving fast enough
         if (lastUpdate.groundSpeed() < MIN_SPEED_THRESHOLD) {
-            // Hide both models and vectors when not moving
-            wingsuitEntity?.setComponent(Visible(false))
-            canopyEntity?.setComponent(Visible(false))
+            // Hide all models and vectors when not moving
+            hideAllModels()
             hideVectors()
             // But still show magnetic vector if we have sensor data
             if (enableMagneticVector) {
@@ -316,35 +341,265 @@ class WingsuitCanopySystem : SystemBase() {
             return
         }
 
-        // Determine which model to show based on flight mode
-        val flightMode = Services.flightComputer.flightMode
-        val isCanopyMode = flightMode == FlightMode.MODE_CANOPY
+        // Get enhanced flight mode
+        val enhancedMode = Services.flightComputer.getEnhancedMode()
 
-        if (isCanopyMode) {
-            // Show canopy, hide wingsuit
-            wingsuitEntity?.setComponent(Visible(false))
-            updateCanopyOrientation(motionEstimator, canopyPosition, hasNewGpsData)
-            if (enableWindVectors) {
-                updateWindVectors(motionEstimator, canopyPosition, FlightMode.MODE_CANOPY)
-            }
-            if (enableMagneticVector) {
-                updateMagneticVector(lastUpdate.millis, canopyPosition)
-            }
-        } else {
-            // Show wingsuit, hide canopy (for all other flight modes)
-            canopyEntity?.setComponent(Visible(false))
-            updateWingsuitOrientation(motionEstimator, wingsuitPosition, hasNewGpsData)
-            if (enableWindVectors) {
-                val windFlightMode = when (flightMode) {
-                    FlightMode.MODE_PLANE -> FlightMode.MODE_PLANE
-                    FlightMode.MODE_FREEFALL -> FlightMode.MODE_FREEFALL
-                    else -> FlightMode.MODE_WINGSUIT
+        // Update models based on enhanced flight mode
+        when (enhancedMode) {
+            EnhancedFlightMode.MODE_PLANE -> {
+                // Show airplane, hide all others
+                hideAllModels()
+                updateAirplaneOrientation(motionEstimator, modelPosition, hasNewGpsData)
+                if (enableWindVectors) {
+                    updateWindVectors(motionEstimator, modelPosition, FlightMode.MODE_PLANE)
                 }
-                updateWindVectors(motionEstimator, wingsuitPosition, windFlightMode)
             }
-            if (enableMagneticVector) {
-                updateMagneticVector(lastUpdate.millis, wingsuitPosition)
+            EnhancedFlightMode.MODE_WINGSUIT -> {
+                // Show wingsuit, hide all others
+                hideAllModels()
+                updateWingsuitOrientation(motionEstimator, modelPosition, hasNewGpsData)
+                if (enableWindVectors) {
+                    updateWindVectors(motionEstimator, modelPosition, FlightMode.MODE_WINGSUIT)
+                }
             }
+            EnhancedFlightMode.MODE_FREEFALL -> {
+                // Show wingsuit, hide all others
+                hideAllModels()
+                updateWingsuitOrientation(motionEstimator, modelPosition, hasNewGpsData)
+                if (enableWindVectors) {
+                    updateWindVectors(motionEstimator, modelPosition, FlightMode.MODE_FREEFALL)
+                }
+            }
+            EnhancedFlightMode.MODE_DEPLOY -> {
+                // Show wingsuit, pc, and snivel during deployment
+                hideAllModels()
+                updateDeploymentOrientation(motionEstimator, modelPosition, hasNewGpsData)
+                if (enableWindVectors) {
+                    updateWindVectors(motionEstimator, modelPosition, FlightMode.MODE_CANOPY)
+                }
+            }
+            EnhancedFlightMode.MODE_CANOPY -> {
+                // Show canopy, hide all others
+                hideAllModels()
+                val canopyPosition = headPose.t + Vector3(0f, if (isRealCanopyOrientation) -0.3f else MODEL_HEIGHT_OFFSET, 0f)
+                updateCanopyOrientation(motionEstimator, canopyPosition, hasNewGpsData)
+                if (enableWindVectors) {
+                    updateWindVectors(motionEstimator, canopyPosition, FlightMode.MODE_CANOPY)
+                }
+            }
+            EnhancedFlightMode.MODE_LANDING -> {
+                // Show canopy (same as canopy mode for now)
+                hideAllModels()
+                val canopyPosition = headPose.t + Vector3(0f, if (isRealCanopyOrientation) -0.3f else MODEL_HEIGHT_OFFSET, 0f)
+                updateCanopyOrientation(motionEstimator, canopyPosition, hasNewGpsData)
+                if (enableWindVectors) {
+                    updateWindVectors(motionEstimator, canopyPosition, FlightMode.MODE_CANOPY)
+                }
+            }
+            else -> {
+                // Unknown or ground mode - hide everything
+                hideAllModels()
+                hideVectors()
+            }
+        }
+
+        // Update magnetic vector if enabled
+        if (enableMagneticVector) {
+            updateMagneticVector(lastUpdate.millis, modelPosition)
+        }
+    }
+
+    /**
+     * Hide all 3D models
+     */
+    private fun hideAllModels() {
+        wingsuitEntity?.setComponent(Visible(false))
+        airplaneEntity?.setComponent(Visible(false))
+        canopyEntity?.setComponent(Visible(false))
+        pcEntity?.setComponent(Visible(false))
+        snivelEntity?.setComponent(Visible(false))
+    }
+
+    /**
+     * Update airplane orientation (uses same rotation logic as wingsuit)
+     */
+    private fun updateAirplaneOrientation(motionEstimator: MotionEstimator, position: Vector3, hasNewGpsData: Boolean) {
+        val airplaneEntity = this.airplaneEntity ?: return
+
+        // Use cached predicted state from 90Hz GpsToWorldTransform updates with interpolated parameters
+        val (velocity, rollRad) = when (motionEstimator) {
+            is KalmanFilter3D -> {
+                // Get cached predicted state from last predictDelta() call with 90Hz interpolated roll
+                val predictedState = motionEstimator.getCachedPredictedState(System.currentTimeMillis())
+                Pair(predictedState.velocity.plus(predictedState.windVelocity), predictedState.rollwind.toFloat())
+            }
+            is SimpleEstimator -> {
+                Pair(motionEstimator.v, 0f)
+            }
+            else -> {
+                // Fallback to GPS velocity if not a known estimator type
+                val lastUpdate = motionEstimator.getLastUpdate()
+                if (lastUpdate != null) {
+                    Pair(com.platypii.baselinexr.util.tensor.Vector3(lastUpdate.vE, lastUpdate.climb, lastUpdate.vN), 0f)
+                } else {
+                    return // No data available
+                }
+            }
+        }
+
+        // Calculate pitch (angle from horizontal)
+        val horizontalSpeed = sqrt(velocity.x * velocity.x + velocity.z * velocity.z).toFloat()
+        val pitchRad = atan2(-velocity.y.toFloat(), horizontalSpeed) // Negative because up is positive
+
+        // Calculate flight yaw for +Z forward coordinate system
+        // For +Z forward: yaw = atan2(vZ, vX) where vZ=North, vX=East
+        val flightYaw = -atan2(velocity.z.toFloat(), velocity.x.toFloat())
+
+        // No AOA adjustment for airplane - flies straight along velocity vector
+        // Create two separate rotations and combine them
+        // 1. Model offset
+        val modelRotation = createQuaternionFromEuler(0f, (Math.PI).toFloat(), (Math.PI).toFloat())
+
+        // 2. Flight attitude
+        val attitudeRotation = createQuaternionFromEuler(rollRad, pitchRad, (-flightYaw - Math.PI/2 - Adjustments.yawAdjustment).toFloat())
+
+        // Combine rotations
+        val rotation = multiplyQuaternions(modelRotation, attitudeRotation)
+
+        // Use enlarged scale if enabled
+        val scale = if (isEnlarged) AIRPLANE_SCALE * ENLARGEMENT_FACTOR else AIRPLANE_SCALE
+
+        // Update airplane position and orientation
+        airplaneEntity.setComponents(
+            Transform(Pose(position, rotation)),
+            Scale(Vector3(scale)),
+            Visible(true)
+        )
+    }
+
+    /**
+     * Update deployment mode orientation - shows wingsuit, PC, and snivel
+     */
+    private fun updateDeploymentOrientation(motionEstimator: MotionEstimator, position: Vector3, hasNewGpsData: Boolean) {
+        val wingsuitEntity = this.wingsuitEntity ?: return
+        val pcEntity = this.pcEntity ?: return
+        val snivelEntity = this.snivelEntity ?: return
+
+        // Update wingsuit first (PC and snivel will position relative to it)
+        val (velocity, rollRad) = when (motionEstimator) {
+            is KalmanFilter3D -> {
+                val predictedState = motionEstimator.getCachedPredictedState(System.currentTimeMillis())
+                Pair(predictedState.velocity.plus(predictedState.windVelocity), predictedState.rollwind.toFloat())
+            }
+            is SimpleEstimator -> {
+                Pair(motionEstimator.v, 0f)
+            }
+            else -> {
+                val lastUpdate = motionEstimator.getLastUpdate()
+                if (lastUpdate != null) {
+                    Pair(com.platypii.baselinexr.util.tensor.Vector3(lastUpdate.vE, lastUpdate.climb, lastUpdate.vN), 0f)
+                } else {
+                    return
+                }
+            }
+        }
+
+        // Calculate pitch and yaw
+        val horizontalSpeed = sqrt(velocity.x * velocity.x + velocity.z * velocity.z).toFloat()
+        val pitchRad = atan2(-velocity.y.toFloat(), horizontalSpeed)
+        val flightYaw = -atan2(velocity.z.toFloat(), velocity.x.toFloat())
+
+        // Calculate AOA from measured KL/KD coefficients using polar data
+        val aoaDeg = when (motionEstimator) {
+            is KalmanFilter3D -> {
+                //  val predictedState = motionEstimator.getCachedPredictedState(System.currentTimeMillis())
+                //  val kl = predictedState.kl()
+                //  val kd = predictedState.kd()
+                //  if (!kl.isNaN() && !kd.isNaN()) {
+                //    val polarAoa = PolarLibrary.klkd2aoa(kl, kd)
+                //   if (!polarAoa.isNaN()) polarAoa else 0.0
+                0.0
+            }
+            else -> 0.0
+        }
+        val aoa = aoaDeg * Math.PI / 180
+
+        // Wingsuit rotation
+        val modelRotation = createQuaternionFromEuler(0f, (Math.PI).toFloat() + aoa.toFloat(), (Math.PI).toFloat())
+        val attitudeRotation = createQuaternionFromEuler(rollRad, pitchRad, (-flightYaw - Math.PI/2 - Adjustments.yawAdjustment).toFloat())
+        val wsRotation = multiplyQuaternions(modelRotation, attitudeRotation)
+
+        // Update wingsuit
+        val wsScale = if (isEnlarged) WINGSUIT_SCALE * ENLARGEMENT_FACTOR else WINGSUIT_SCALE
+        wingsuitEntity.setComponents(
+            Transform(Pose(position, wsRotation)),
+            Scale(Vector3(wsScale)),
+            Visible(true)
+        )
+
+        // PC positioned behind wingsuit (already deployed)
+        // For now, position PC at origin - you can adjust this once basics work
+        pcEntity.setComponents(
+            Transform(Pose(position, Quaternion())),
+            Scale(Vector3(PC_SCALE)),
+            Visible(true)
+        )
+
+        // Snivel positioned same as canopy orientation during line stretch
+        // Draw snivel similar to canopy orientation
+        val canopyPoint = when (motionEstimator) {
+            is KalmanFilter3D -> {
+                val predictedState = motionEstimator.getCachedPredictedState(System.currentTimeMillis())
+                val lastUpdate = motionEstimator.getLastUpdate()
+                if (lastUpdate != null) {
+                    computeCanopyOrientation(predictedState, lastUpdate.altitude_gps, System.currentTimeMillis(), isRealCanopyOrientation)
+                } else null
+            }
+            else -> null
+        }
+
+        if (canopyPoint != null) {
+            // Scale and position snivel based on isRealCanopyOrientation flag (same as canopy)
+            val snivelScale = if (isRealCanopyOrientation) 1.0f else CANOPY_SCALE
+
+            // Position snivel: use offset only if isRealCanopyOrientation is true
+            val snivelPosition = if (isRealCanopyOrientation) {
+                // Real mode: position snivel above pilot using canopy physics offset
+                val snivelOffset = Vector3(
+                    -canopyPoint.cpE.toFloat(),
+                    -canopyPoint.cpD.toFloat(),
+                    canopyPoint.cpN.toFloat()
+                )
+                position + snivelOffset
+            } else {
+                // Simple mode: keep snivel at pilot position
+                position
+            }
+
+            // Calculate snivel orientation from canopy velocity
+            val cx = -canopyPoint.vcpE.toFloat()
+            val cy = -canopyPoint.vcpD.toFloat()
+            val cz = canopyPoint.vcpN.toFloat()
+            val canopyHorizontalSpeed = sqrt(cx * cx + cz * cz)
+            val canopyPitch = atan2(cy, canopyHorizontalSpeed)
+            val canopyHeading = -atan2(cz, cx)
+
+            // Snivel uses canopy orientation with AOA
+            val snivelModelRotation = createQuaternionFromEuler(0f, (Math.PI).toFloat(), (Math.PI).toFloat())
+            val snivelAttitudeRotation = createQuaternionFromEuler(rollRad, canopyPitch, (-canopyHeading - Math.PI/2 - Adjustments.yawAdjustment).toFloat())
+            val snivelAoaRotation = createQuaternionFromEuler(-canopyPoint.cpaoa.toFloat(), 0f, 0f)
+
+            // Combine: model -> attitude -> aoa
+            val snivelRotation = multiplyQuaternions(multiplyQuaternions(snivelModelRotation, snivelAttitudeRotation), snivelAoaRotation)
+
+            snivelEntity.setComponents(
+                Transform(Pose(snivelPosition, snivelRotation)),
+                Scale(Vector3(snivelScale)),
+                Visible(true)
+            )
+        } else {
+            // Fallback: hide snivel if we can't compute orientation
+            snivelEntity.setComponent(Visible(false))
         }
     }
 
@@ -464,7 +719,7 @@ class WingsuitCanopySystem : SystemBase() {
                 val rotation = multiplyQuaternions(modelRotation, attitudeRotation)
 
                 // Update canopy with simple physics and return
-                val scale = if (isRealCanopyOrientation) 4.0f else CANOPY_SCALE
+                val scale = if (isRealCanopyOrientation) 1.0f else CANOPY_SCALE
                 canopyEntity.setComponents(
                     listOf(
                         Scale(Vector3(scale)),
@@ -496,15 +751,12 @@ class WingsuitCanopySystem : SystemBase() {
         // Combine rotations
         val rotation = multiplyQuaternions(modelRotation, attitudeRotation)
 
-
         // Use enlarged scale if enabled
         val scale = if (isRealCanopyOrientation) 1.0f else CANOPY_SCALE
 
         // Position calculation based on canopy orientation mode
-        val finalPosition = position //if (isRealCanopyOrientation) {
-        // Real canopy mode: Position canopy model at its actual location using physics
-        // The model is centered on top of canopy, so we need to account for line length
-
+        // Note: Position offset was never implemented - canopy always at head position
+        val finalPosition = position
 
         // Update canopy position and orientation
         canopyEntity.setComponents(
@@ -728,10 +980,23 @@ class WingsuitCanopySystem : SystemBase() {
             return
         }
 
+        // Check if mock sensor data is configured
+        if (VROptions.current.mockSensor == null) {
+            // No mock sensor configured - hide magnetic vector
+            magneticEntity.setComponent(Visible(false))
+            return
+        }
+
         // Check if sensor provider is available and started
         val sensorProvider = Services.location.sensorProvider
         if (sensorProvider == null) {
             Log.w(TAG, "MAGVEC: Sensor provider is null!")
+            magneticEntity.setComponent(Visible(false))
+            return
+        }
+
+        // Check if sensor data is actually loaded
+        if (!sensorProvider.hasSensorData()) {
             magneticEntity.setComponent(Visible(false))
             return
         }
@@ -866,7 +1131,10 @@ class WingsuitCanopySystem : SystemBase() {
 
     fun cleanup() {
         wingsuitEntity = null
+        airplaneEntity = null
         canopyEntity = null
+        pcEntity = null
+        snivelEntity = null
         windVectorEntity = null
         airspeedVectorEntity = null
         inertialspeedVectorEntity = null

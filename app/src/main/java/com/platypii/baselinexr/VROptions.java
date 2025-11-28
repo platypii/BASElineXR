@@ -13,7 +13,7 @@ public class VROptions {
     //public static LatLngAlt dropzone = new LatLngAlt(47.2375, -123.1458, 84);
 
     // Current active configuration
-    public static VROptions current = VROptionsList.SQUAW_SENSORS_CLIP;
+    public static VROptions current = VROptionsList.SQUAW_360_VIDEO;
     public enum ShaderType {
         DEFAULT_SHADER,
         LOD_SHADER
@@ -29,6 +29,11 @@ public class VROptions {
     public final Integer mockTrackStartSec;
     // End time in seconds for track replay (null = play until end)
     public final Integer mockTrackEndSec;
+    // 360° video file name (e.g., "360squaw072925.mp4"). Should be in assets folder. null = use passthrough
+    public final String video360File;
+    // Time offset in milliseconds: how much to add to GPS time to get video time (video_time = gps_time + offset)
+    // Positive = video starts after GPS time, Negative = video starts before GPS time
+    public final Integer videoGpsOffsetMs;
     // 3D terrain model, options: eiger, kpow, branded (with BASElineXR logo on summit)
     public final String sourceModel;
     // Place the source point-of-interest (summit) at the destination location
@@ -38,10 +43,9 @@ public class VROptions {
     // Show direction arrow below for alignment?
     public final boolean showDirectionArrow;
     // Show target reticle on the dropzone location?
+    public final boolean showTarget;
     // Show wingsuit/canopy 3D models?
     public final boolean showWingsuitCanopy;
-
-    public final boolean showTarget;
     // Show speed chart panel?
     public final boolean showSpeedChart;
     public final LatLngAlt portalLocation;
@@ -50,12 +54,14 @@ public class VROptions {
 
     public VROptions(String name, String mockTrack, String sourceModel, LatLngAlt destination, ShaderType shader,
                      boolean roomMovement, boolean showDirectionArrow, boolean showWingsuitCanopy, boolean showTarget, boolean showSpeedChart, LatLngAlt portalLocation,
-                     String mockSensor, Integer mockTrackStartSec, Integer mockTrackEndSec) {
+                     String mockSensor, Integer mockTrackStartSec, Integer mockTrackEndSec, String video360File, Integer videoGpsOffsetMs) {
         this.name = name;
         this.mockTrack = mockTrack;
         this.mockSensor = mockSensor;
         this.mockTrackStartSec = mockTrackStartSec;
         this.mockTrackEndSec = mockTrackEndSec;
+        this.video360File = video360File;
+        this.videoGpsOffsetMs = videoGpsOffsetMs;
         this.sourceModel = sourceModel;
         this.destination = destination;
         this.roomMovement = roomMovement;
@@ -67,10 +73,17 @@ public class VROptions {
         this.shader = shader;
     }
 
-    // Backward compatibility constructor (no sensor data)
+    // Backward compatibility constructor (no sensor data or video)
     public VROptions(String name, String mockTrack, String sourceModel, LatLngAlt destination, ShaderType shader,
                      boolean roomMovement, boolean showDirectionArrow, boolean showWingsuitCanopy, boolean showTarget, boolean showSpeedChart, LatLngAlt portalLocation) {
-        this(name, mockTrack, sourceModel, destination, shader, roomMovement, showDirectionArrow, showWingsuitCanopy, showTarget, showSpeedChart, portalLocation, null, null, null);
+        this(name, mockTrack, sourceModel, destination, shader, roomMovement, showDirectionArrow, showWingsuitCanopy, showTarget, showSpeedChart, portalLocation, null, null, null, null, null);
+    }
+
+    // Backward compatibility constructor (no video)
+    public VROptions(String name, String mockTrack, String sourceModel, LatLngAlt destination, ShaderType shader,
+                     boolean roomMovement, boolean showDirectionArrow, boolean showWingsuitCanopy, boolean showTarget, boolean showSpeedChart, LatLngAlt portalLocation,
+                     String mockSensor, Integer mockTrackStartSec, Integer mockTrackEndSec) {
+        this(name, mockTrack, sourceModel, destination, shader, roomMovement, showDirectionArrow, showWingsuitCanopy, showTarget, showSpeedChart, portalLocation, mockSensor, mockTrackStartSec, mockTrackEndSec, null, null);
     }
 
     public static MiniMapOptions minimap = VROptionsList.MM_OGDEN;
@@ -126,5 +139,15 @@ public class VROptions {
         // Apply north/east adjustments
         return GeoUtils.applyOffset(destination,
                 new Vector3(Adjustments.eastAdjustment, 0, Adjustments.northAdjustment));
+    }
+
+    // Check if this configuration uses 360 video instead of passthrough
+    public boolean has360Video() {
+        return video360File != null;
+    }
+
+    // Get the filename of the 360 video file (stored in device Movies folder)
+    public String get360VideoPath() {
+        return video360File;
     }
 }

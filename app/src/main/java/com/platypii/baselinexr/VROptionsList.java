@@ -291,6 +291,25 @@ public class VROptionsList {
             962  // mockTrackEndSec (end at 60 seconds)
     );
 
+    public static final VROptions SQUAW_360_VIDEO = new VROptions(
+            "Squaw 360",
+            null,
+            "eiger",
+            new LatLngAlt(40.2709309,-111.620655,2146.342),
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            true,
+            false,
+            true,
+            new LatLngAlt(46.57835, 7.984, 2670.5),
+            "squaw072925",          // mockSensor folder
+            850,                     // mockTrackStartSec
+            962,                     // mockTrackEndSec
+            "360squawbaselinexr.mp4", // video360File (filename only, in Movies folder)
+            1000                        // videoGpsOffsetMs (adjust as needed for sync)
+    );
+
     public static final VROptions CHINA_SENSORS_CLIP = new VROptions(
             "CHINA Clip",
             null,

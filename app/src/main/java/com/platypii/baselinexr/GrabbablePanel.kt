@@ -1,5 +1,7 @@
 package com.platypii.baselinexr
 
+import android.view.MotionEvent
+import android.view.View
 import com.meta.spatial.core.Entity
 import com.meta.spatial.core.Pose
 import com.meta.spatial.core.Quaternion
@@ -10,6 +12,7 @@ import com.meta.spatial.runtime.InputListener
 import com.meta.spatial.runtime.SceneObject
 import com.meta.spatial.toolkit.Controller
 import com.meta.spatial.toolkit.SceneObjectSystem
+import com.meta.spatial.toolkit.Scale
 import com.meta.spatial.toolkit.Transform
 import com.meta.spatial.toolkit.getAbsoluteTransform
 import com.platypii.baselinexr.util.HeadPoseUtil
@@ -25,47 +28,12 @@ class GrabbablePanel(
     private var dragController: Entity? = null
     private var dragLocalOffset: Vector3? = null
     private var dragDistance: Float = 0f
+    private var panelSceneObject: SceneObject? = null
 
     fun setupInteraction() {
-        if (inputListenerAdded) return
-        
-        val sceneObjectSystem = systemManager.findSystem<SceneObjectSystem>()
-        val systemObject = sceneObjectSystem.getSceneObject(panelEntity) ?: return
-
-        systemObject.thenAccept { sceneObject ->
-            inputListenerAdded = true
-            sceneObject.addInputListener(object : InputListener {
-                override fun onInput(
-                    receiver: SceneObject,
-                    hitInfo: HitInfo,
-                    sourceOfInput: Entity,
-                    changed: Int,
-                    clicked: Int,
-                    downTime: Long
-                ): Boolean {
-                    val triggerPressed = changed and clicked and (ButtonBits.AllButtonClickMask)
-                    val triggerReleased = changed and clicked.inv() and (ButtonBits.AllButtonClickMask)
-
-                    if (triggerPressed != 0 && !isDragging) {
-                        isDragging = true
-                        dragController = sourceOfInput
-                        val panelTransform = getAbsoluteTransform(panelEntity)
-                        dragLocalOffset = panelTransform.inverse() * hitInfo.point
-                        dragDistance = hitInfo.distance
-                        return true
-                    }
-
-                    if (triggerReleased != 0 && isDragging && sourceOfInput == dragController) {
-                        isDragging = false
-                        dragController = null
-                        dragLocalOffset = null
-                        return true
-                    }
-
-                    return false
-                }
-            })
-        }
+        // Input handling is managed by the Panel component's built-in hittable property
+        // which automatically routes VR controller clicks to Android View touch events.
+        // No custom InputListener needed.
     }
 
     fun updatePosition() {
@@ -81,11 +49,11 @@ class GrabbablePanel(
                 // Store the new offset relative to head
                 val headPose = HeadPoseUtil.getHeadPose(systemManager)
                 if (headPose != null) {
-                        val panelTransform = panelEntity.tryGetComponent<Transform>()
-                        if (panelTransform != null) {
-                            val relativeToHead = headPose.inverse() * panelTransform.transform
-                            panelOffset = relativeToHead.t
-                        }
+                    val panelTransform = panelEntity.tryGetComponent<Transform>()
+                    if (panelTransform != null) {
+                        val relativeToHead = headPose.inverse() * panelTransform.transform
+                        panelOffset = relativeToHead.t
+                    }
                 }
                 dragController = null
                 dragLocalOffset = null
@@ -139,6 +107,10 @@ class GrabbablePanel(
 
     fun moveByOffset(additionalOffset: Vector3) {
         panelOffset = panelOffset + additionalOffset
+    }
+
+    fun setMenuScale(scale: Vector3) {
+        panelEntity.setComponent(Scale(scale))
     }
 
 }

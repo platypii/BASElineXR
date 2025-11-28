@@ -123,15 +123,12 @@ public class MockSensorProvider {
      */
     @Nullable
     public MSensorData getSensorAtTime(long gpsMillis) {
-        Log.d(TAG, String.format("TIMESYNC: getSensorAtTime called with gpsMillis=%d, sensorData.size()=%d",
-                gpsMillis, sensorData.size()));
-
         if (sensorData.isEmpty()) {
-            Log.w(TAG, "TIMESYNC: getSensorAtTime: No sensor data loaded - sensor provider may not have been started");
+            // Silently return null - no need to spam logs when sensor data isn't loaded
             return null;
         }
 
-        // Debug: Log time range and request
+        // Debug: Log time range and request (only when data is loaded)
         long firstTime = sensorData.get(0).millis;
         long lastTime = sensorData.get(sensorData.size() - 1).millis;
         Log.d(TAG, String.format("TIMESYNC: Requested GPS time=%d, sensor range=[%d, %d], span=%ds",

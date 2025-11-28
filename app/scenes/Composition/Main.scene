@@ -37,9 +37,10 @@ entities:
           componentVersion: 1
         com.meta.spatial.toolkit.Grabbable:
           type: 0
-          enabled: true
+          enabled: false
         com.meta.spatial.toolkit.Panel:
           panel: "@layout/hud"
+          hittable: LineTest
         com.meta.spatial.toolkit.PanelDimensions:
           {}
       tag: Panel

@@ -24,6 +24,12 @@ class TerrainSystem(
 
     fun initialize() {
         loadTerrainConfiguration()
+
+        // Hide terrain if using 360 video mode
+        if (VROptions.current.has360Video()) {
+            setVisible(false)
+            Log.d(TAG, "Terrain hidden - using 360 video mode")
+        }
     }
 
     override fun execute() {
@@ -165,5 +171,9 @@ class TerrainSystem(
 //        terrainTiles.forEach { it.entity.destroy() }
         terrainTiles.clear()
         isInitialized = false
+    }
+
+    companion object {
+        private const val TAG = "TerrainSystem"
     }
 }

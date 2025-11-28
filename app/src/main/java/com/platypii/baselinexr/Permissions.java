@@ -3,6 +3,7 @@ package com.platypii.baselinexr;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static com.platypii.baselinexr.RequestCodes.RC_BLUE_ALL;
 import static com.platypii.baselinexr.RequestCodes.RC_LOCATION;
+import static com.platypii.baselinexr.RequestCodes.RC_STORAGE;
 
 import android.Manifest;
 import android.app.Activity;
@@ -118,6 +119,32 @@ public class Permissions {
         } else {
             return true; // TODO: check for location permission on older android?
         }
+    }
+
+    /**
+     * Check for storage permissions to read video files
+     */
+    public static boolean hasStoragePermissions(@NonNull Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // Android 13+ uses READ_MEDIA_VIDEO
+            return ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_MEDIA_VIDEO) == PERMISSION_GRANTED;
+        } else {
+            // Android 12 and below use READ_EXTERNAL_STORAGE
+            return ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PERMISSION_GRANTED;
+        }
+    }
+
+    /**
+     * Request storage permissions for reading video files
+     */
+    public static void requestStoragePermissions(@NonNull Activity activity) {
+        String[] permissions;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions = new String[]{Manifest.permission.READ_MEDIA_VIDEO};
+        } else {
+            permissions = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE};
+        }
+        ActivityCompat.requestPermissions(activity, permissions, RC_STORAGE);
     }
 
 }
