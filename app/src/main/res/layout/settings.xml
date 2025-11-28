@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings Sub-menu (placeholder) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/settingsMenuContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="4dp"
+    android:clickable="false"
+    android:focusable="false">
+
+    <!-- Placeholder Content -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Settings Menu"
+        android:textColor="#ffffff"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:padding="16dp"
+        android:background="#00000000"
+        android:layout_margin="4dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:text="System settings will be displayed here"
+        android:textColor="#cccccc"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:background="#00000000"
+        android:layout_margin="4dp" />
+
+</LinearLayout>

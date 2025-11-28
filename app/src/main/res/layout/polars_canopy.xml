@@ -1,0 +1,454 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Canopy Polars Configuration -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/canopy_section"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#00000000"
+    android:padding="8dp"
+    android:visibility="gone">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🪂 Canopy"
+        android:textColor="#66ff66"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:paddingBottom="8dp" />
+
+    <!-- 3-Column Layout for Standard Controls -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <!-- Left Spacer -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <!-- Center Column: Standard Controls -->
+        <LinearLayout
+            android:id="@+id/canopy_standard_controls"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <Spinner
+                android:id="@+id/canopy_polar_spinner"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:background="@drawable/button_bg"
+                android:padding="8dp"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Area Controls -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Area (sq ft)"
+                android:textColor="#cccccc"
+                android:textSize="11sp"
+                android:gravity="center"
+                android:layout_marginTop="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="4dp">
+
+                <Button
+                    android:id="@+id/canopy_area_minus"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:text="-"
+                    android:textColor="#ffffff"
+                    android:textSize="18sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+
+                <TextView
+                    android:id="@+id/canopy_area_value"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:textColor="#ffffff"
+                    android:textSize="14sp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/button_bg" />
+
+                <Button
+                    android:id="@+id/canopy_area_plus"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:text="+"
+                    android:textColor="#ffffff"
+                    android:textSize="18sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+            </LinearLayout>
+
+            <!-- Converted area display (m²) -->
+            <TextView
+                android:id="@+id/canopy_area_m2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="(0.0 m²)"
+                android:textColor="#ffcc00"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_marginTop="4dp" />
+
+            <!-- Mass Controls -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Mass (lbs)"
+                android:textColor="#cccccc"
+                android:textSize="11sp"
+                android:gravity="center"
+                android:layout_marginTop="12dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="4dp">
+
+                <Button
+                    android:id="@+id/canopy_mass_minus"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:text="-"
+                    android:textColor="#ffffff"
+                    android:textSize="18sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+
+                <TextView
+                    android:id="@+id/canopy_mass_value"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:textColor="#ffffff"
+                    android:textSize="14sp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/button_bg" />
+
+                <Button
+                    android:id="@+id/canopy_mass_plus"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:text="+"
+                    android:textColor="#ffffff"
+                    android:textSize="18sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+            </LinearLayout>
+
+            <!-- Converted mass display (kg) -->
+            <TextView
+                android:id="@+id/canopy_mass_kg"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="(0.0 kg)"
+                android:textColor="#ffcc00"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+
+        <!-- Right Spacer -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+    </LinearLayout>
+
+    <!-- Custom Canopy Parameters -->
+    <LinearLayout
+        android:id="@+id/canopy_custom_params"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:visibility="gone"
+        android:layout_marginTop="16dp">
+
+        <!-- Column 1: Min Drag, CL0 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:padding="4dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Polar Params 1"
+                android:textColor="#ffcc00"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:paddingBottom="4dp" />
+
+            <!-- Polar Min Drag -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Min Drag"
+                android:textColor="#cccccc"
+                android:textSize="9sp"
+                android:layout_marginTop="2dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="2dp">
+                <Button
+                    android:id="@+id/canopy_polar_min_drag_minus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="-"
+                    android:textSize="10sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+                <TextView
+                    android:id="@+id/canopy_polar_min_drag_value"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:textSize="10sp"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:background="@drawable/button_bg" />
+                <Button
+                    android:id="@+id/canopy_polar_min_drag_plus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="+"
+                    android:textSize="10sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+            </LinearLayout>
+
+            <!-- Polar CL0 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="CL0"
+                android:textColor="#cccccc"
+                android:textSize="9sp"
+                android:layout_marginTop="6dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="2dp">
+                <Button
+                    android:id="@+id/canopy_polar_clo_minus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="-"
+                    android:textSize="10sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+                <TextView
+                    android:id="@+id/canopy_polar_clo_value"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:textSize="10sp"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:background="@drawable/button_bg" />
+                <Button
+                    android:id="@+id/canopy_polar_clo_plus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="+"
+                    android:textSize="10sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Column 2: Slope -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:padding="4dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Polar Params 2"
+                android:textColor="#ffcc00"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:paddingBottom="4dp" />
+
+            <!-- Polar Slope -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Slope"
+                android:textColor="#cccccc"
+                android:textSize="9sp"
+                android:layout_marginTop="2dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="2dp">
+                <Button
+                    android:id="@+id/canopy_polar_slope_minus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="-"
+                    android:textSize="10sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+                <TextView
+                    android:id="@+id/canopy_polar_slope_value"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:textSize="10sp"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:background="@drawable/button_bg" />
+                <Button
+                    android:id="@+id/canopy_polar_slope_plus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="+"
+                    android:textSize="10sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Column 3: Range Parameters -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:padding="4dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="CL Range"
+                android:textColor="#ffcc00"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:paddingBottom="4dp" />
+
+            <!-- Range Min CL -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Min CL"
+                android:textColor="#cccccc"
+                android:textSize="9sp"
+                android:layout_marginTop="2dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="2dp">
+                <Button
+                    android:id="@+id/canopy_range_min_cl_minus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="-"
+                    android:textSize="10sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+                <TextView
+                    android:id="@+id/canopy_range_min_cl_value"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:textSize="10sp"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:background="@drawable/button_bg" />
+                <Button
+                    android:id="@+id/canopy_range_min_cl_plus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="+"
+                    android:textSize="10sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+            </LinearLayout>
+
+            <!-- Range Max CL -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Max CL"
+                android:textColor="#cccccc"
+                android:textSize="9sp"
+                android:layout_marginTop="6dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="2dp">
+                <Button
+                    android:id="@+id/canopy_range_max_cl_minus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="-"
+                    android:textSize="10sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+                <TextView
+                    android:id="@+id/canopy_range_max_cl_value"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:textSize="10sp"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:background="@drawable/button_bg" />
+                <Button
+                    android:id="@+id/canopy_range_max_cl_plus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="+"
+                    android:textSize="10sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

@@ -1,0 +1,704 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Airplane Polars Configuration -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/airplane_section"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#00000000"
+    android:padding="8dp"
+    android:visibility="gone">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="✈ Airplane"
+        android:textColor="#ff9933"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:paddingBottom="8dp" />
+
+    <!-- 3-Column Layout for Standard Controls -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <!-- Left Spacer -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <!-- Center Column: Standard Controls -->
+        <LinearLayout
+            android:id="@+id/airplane_standard_mass_controls"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <Spinner
+                android:id="@+id/airplane_polar_spinner"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:background="@drawable/button_bg"
+                android:padding="8dp"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Mass (kg)"
+                android:textColor="#cccccc"
+                android:textSize="11sp"
+                android:gravity="center"
+                android:layout_marginTop="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="4dp">
+
+                <Button
+                    android:id="@+id/airplane_mass_minus"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:text="-"
+                    android:textColor="#ffffff"
+                    android:textSize="18sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+
+                <TextView
+                    android:id="@+id/airplane_mass_value"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:textColor="#ffffff"
+                    android:textSize="14sp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/button_bg" />
+
+                <Button
+                    android:id="@+id/airplane_mass_plus"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:text="+"
+                    android:textColor="#ffffff"
+                    android:textSize="18sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Right Spacer -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+    </LinearLayout>
+
+    <!-- Custom Airplane Parameters -->
+    <LinearLayout
+        android:id="@+id/airplane_custom_params"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:visibility="gone"
+        android:layout_marginTop="8dp">
+
+        <!-- Column 1: Mass Calculation -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:padding="4dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Mass Calculation"
+                android:textColor="#ffcc00"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:paddingBottom="4dp" />
+
+            <!-- Dry Weight -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Dry Weight (kg)"
+                android:textColor="#cccccc"
+                android:textSize="9sp"
+                android:layout_marginTop="2dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="2dp">
+                <Button
+                    android:id="@+id/airplane_dry_wt_minus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="-"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+                <TextView
+                    android:id="@+id/airplane_dry_wt_value"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="2150"
+                    android:textColor="#ffffff"
+                    android:textSize="10sp"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:background="@drawable/button_bg" />
+                <Button
+                    android:id="@+id/airplane_dry_wt_plus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="+"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+            </LinearLayout>
+
+            <!-- Fuel Percentage -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Fuel % (1019kg full)"
+                android:textColor="#cccccc"
+                android:textSize="9sp"
+                android:layout_marginTop="6dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="2dp">
+                <Button
+                    android:id="@+id/airplane_fuel_pct_minus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="-"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+                <TextView
+                    android:id="@+id/airplane_fuel_pct_value"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="0.5"
+                    android:textColor="#ffffff"
+                    android:textSize="10sp"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:background="@drawable/button_bg" />
+                <Button
+                    android:id="@+id/airplane_fuel_pct_plus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="+"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+            </LinearLayout>
+
+            <!-- Number of People -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Passengers"
+                android:textColor="#cccccc"
+                android:textSize="9sp"
+                android:layout_marginTop="6dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="2dp">
+                <Button
+                    android:id="@+id/airplane_num_people_minus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="-"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+                <TextView
+                    android:id="@+id/airplane_num_people_value"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="10"
+                    android:textColor="#ffffff"
+                    android:textSize="10sp"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:background="@drawable/button_bg" />
+                <Button
+                    android:id="@+id/airplane_num_people_plus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="+"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+            </LinearLayout>
+
+            <!-- Person Weight -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Avg Person Wt (kg)"
+                android:textColor="#cccccc"
+                android:textSize="9sp"
+                android:layout_marginTop="6dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="2dp">
+                <Button
+                    android:id="@+id/airplane_person_wt_minus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="-"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+                <TextView
+                    android:id="@+id/airplane_person_wt_value"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="80"
+                    android:textColor="#ffffff"
+                    android:textSize="10sp"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:background="@drawable/button_bg" />
+                <Button
+                    android:id="@+id/airplane_person_wt_plus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="+"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+            </LinearLayout>
+
+            <!-- Total Mass Display -->
+            <TextView
+                android:id="@+id/airplane_total_mass"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Total: 3159 kg"
+                android:textColor="#ffcc00"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_marginTop="8dp"
+                android:padding="3dp"
+                android:background="@drawable/button_bg" />
+
+        </LinearLayout>
+
+        <!-- Column 2: Aerodynamics Part 1 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:padding="4dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Aerodynamics"
+                android:textColor="#ffcc00"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:paddingBottom="4dp" />
+
+            <!-- Span -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Span (m)"
+                android:textColor="#cccccc"
+                android:textSize="9sp"
+                android:layout_marginTop="2dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="2dp">
+                <Button
+                    android:id="@+id/airplane_span_minus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="-"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+                <TextView
+                    android:id="@+id/airplane_span_value"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="16.0"
+                    android:textColor="#ffffff"
+                    android:textSize="10sp"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:background="@drawable/button_bg" />
+                <Button
+                    android:id="@+id/airplane_span_plus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="+"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+            </LinearLayout>
+
+            <!-- Area -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Area (m²)"
+                android:textColor="#cccccc"
+                android:textSize="9sp"
+                android:layout_marginTop="6dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="2dp">
+                <Button
+                    android:id="@+id/airplane_area_minus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="-"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+                <TextView
+                    android:id="@+id/airplane_area_value"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="28.0"
+                    android:textColor="#ffffff"
+                    android:textSize="10sp"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:background="@drawable/button_bg" />
+                <Button
+                    android:id="@+id/airplane_area_plus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="+"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+            </LinearLayout>
+
+            <!-- AR (calculated, display only) -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="AR (calculated)"
+                android:textColor="#cccccc"
+                android:textSize="9sp"
+                android:layout_marginTop="6dp" />
+            <TextView
+                android:id="@+id/airplane_ar_value"
+                android:layout_width="match_parent"
+                android:layout_height="30dp"
+                android:gravity="center"
+                android:text="9.1"
+                android:textColor="#ffcc00"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:layout_marginTop="2dp"
+                android:background="@drawable/button_bg" />
+
+        </LinearLayout>
+
+        <!-- Column 3: Aerodynamics Part 2 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:padding="4dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text=" "
+                android:textSize="11sp"
+                android:paddingBottom="4dp" />
+
+            <!-- e (Oswald efficiency) -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="e (Oswald)"
+                android:textColor="#cccccc"
+                android:textSize="9sp"
+                android:layout_marginTop="2dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="2dp">
+                <Button
+                    android:id="@+id/airplane_e_minus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="-"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+                <TextView
+                    android:id="@+id/airplane_e_value"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="0.9"
+                    android:textColor="#ffffff"
+                    android:textSize="10sp"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:background="@drawable/button_bg" />
+                <Button
+                    android:id="@+id/airplane_e_plus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="+"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+            </LinearLayout>
+
+            <!-- CD0 (zero-lift drag) -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="CD0 (min drag)"
+                android:textColor="#cccccc"
+                android:textSize="9sp"
+                android:layout_marginTop="6dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="2dp">
+                <Button
+                    android:id="@+id/airplane_cd0_minus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="-"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+                <TextView
+                    android:id="@+id/airplane_cd0_value"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="0.04"
+                    android:textColor="#ffffff"
+                    android:textSize="10sp"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:background="@drawable/button_bg" />
+                <Button
+                    android:id="@+id/airplane_cd0_plus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="+"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+            </LinearLayout>
+
+            <!-- Engine Power -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Engine Power (hp)"
+                android:textColor="#cccccc"
+                android:textSize="9sp"
+                android:layout_marginTop="6dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="2dp">
+                <Button
+                    android:id="@+id/airplane_power_minus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="-"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+                <TextView
+                    android:id="@+id/airplane_power_value"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="867"
+                    android:textColor="#ffffff"
+                    android:textSize="10sp"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:background="@drawable/button_bg" />
+                <Button
+                    android:id="@+id/airplane_power_plus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="+"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+            </LinearLayout>
+
+            <!-- Polar Min CL -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Polar Min CL"
+                android:textColor="#cccccc"
+                android:textSize="9sp"
+                android:layout_marginTop="6dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="2dp">
+                <Button
+                    android:id="@+id/airplane_min_cl_minus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="-"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+                <TextView
+                    android:id="@+id/airplane_min_cl_value"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="0.01"
+                    android:textColor="#ffffff"
+                    android:textSize="10sp"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:background="@drawable/button_bg" />
+                <Button
+                    android:id="@+id/airplane_min_cl_plus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="+"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+            </LinearLayout>
+
+            <!-- Polar Max CL -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Polar Max CL"
+                android:textColor="#cccccc"
+                android:textSize="9sp"
+                android:layout_marginTop="6dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="2dp">
+                <Button
+                    android:id="@+id/airplane_max_cl_minus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="-"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+                <TextView
+                    android:id="@+id/airplane_max_cl_value"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="0.81"
+                    android:textColor="#ffffff"
+                    android:textSize="10sp"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:background="@drawable/button_bg" />
+                <Button
+                    android:id="@+id/airplane_max_cl_plus"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:text="+"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:padding="0dp"
+                    android:background="@drawable/button_bg" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

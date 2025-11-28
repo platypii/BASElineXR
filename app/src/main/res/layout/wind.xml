@@ -1,0 +1,390 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Wind Estimation Sub-menu -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/windMenuContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="4dp"
+    android:clickable="false"
+    android:focusable="false">
+
+    <!-- Wind Input Source Buttons -->
+    <LinearLayout
+        android:id="@+id/wind_input_source_group"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="4dp">
+        
+        <Button
+            android:id="@+id/wind_input_estimation"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:layout_margin="2dp"
+            android:background="@drawable/button_bg"
+            android:text="Wind Estimation"
+            android:textColor="#ffffff"
+            android:textSize="12sp" />
+        
+        <Button
+            android:id="@+id/wind_input_nowind"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:layout_margin="2dp"
+            android:background="@drawable/button_bg"
+            android:text="No Wind"
+            android:textColor="#ffffff"
+            android:textSize="12sp" />
+        
+        <Button
+            android:id="@+id/wind_input_saved"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:layout_margin="2dp"
+            android:background="@drawable/button_bg"
+            android:text="Saved Wind"
+            android:textColor="#ffffff"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- Wind Estimation Display Container (visible when estimation mode) -->
+    <LinearLayout
+        android:id="@+id/wind_estimation_display"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="visible">
+
+        <!-- Wind Estimation Charts/Controls -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="4dp">
+
+            <!-- Row 1: Velocity Chart + Data Legend -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="0.7" />
+
+                <FrameLayout
+                    android:id="@+id/wind_velocity_chart_container"
+                    android:layout_width="0dp"
+                    android:layout_height="200dp"
+                    android:layout_weight="1.25"
+                    android:layout_margin="2dp"
+                    android:background="#00000000" />
+
+                <!-- Wind Data Legend Box (vertical, to the right of chart) -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="200dp"
+                    android:layout_weight="0.9"
+                    android:orientation="vertical"
+                    android:layout_margin="2dp"
+                    android:padding="2dp"
+                    android:gravity="top">
+
+                    <TextView
+                        android:id="@+id/gps_wind_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="GPS Wind: -- mph @ --° (R²=--)"
+                        android:textColor="#ffffff"
+                        android:textSize="9sp"
+                        android:padding="2dp" />
+
+                    <TextView
+                        android:id="@+id/sustained_wind_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Sustained Wind: -- mph @ --° (R²=--)"
+                        android:textColor="#ffffff"
+                        android:textSize="9sp"
+                        android:padding="2dp" />
+
+                    <TextView
+                        android:id="@+id/gps_aircraft_speed_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="GPS Aircraft Speed: -- mph"
+                        android:textColor="#cccccc"
+                        android:textSize="9sp"
+                        android:padding="2dp" />
+
+                    <TextView
+                        android:id="@+id/sustained_aircraft_speed_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Sustained Aircraft Speed: -- mph"
+                        android:textColor="#cccccc"
+                        android:textSize="9sp"
+                        android:padding="2dp" />
+
+                    <TextView
+                        android:id="@+id/dataset_altitude_range_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Dataset: -- - -- m"
+                        android:textColor="#FFD700"
+                        android:textSize="9sp"
+                        android:padding="2dp" />
+
+                    <TextView
+                        android:id="@+id/current_altitude_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Current: -- m"
+                        android:textColor="#FFD700"
+                        android:textSize="9sp"
+                        android:padding="2dp" />
+
+                </LinearLayout>
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="0.15" />
+
+            </LinearLayout>
+
+            <!-- Row 2: Data Boundary Controls + Wind Layers (aligned left with chart) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_margin="2dp">
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="0.7" />
+
+                <!-- Data Boundary Controls (stacked vertically) -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="#00000000"
+                    android:padding="4dp"
+                    android:layout_marginEnd="4dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Data Bounds"
+                        android:textColor="#ffffff"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:layout_marginBottom="2dp" />
+
+                    <Button
+                        android:id="@+id/upper_data_boundary_plus_button"
+                        android:layout_width="40dp"
+                        android:layout_height="35dp"
+                        android:layout_margin="1dp"
+                        android:background="@drawable/button_bg"
+                        android:text="U+"
+                        android:textColor="#ffffff"
+                        android:textSize="10sp" />
+
+                    <Button
+                        android:id="@+id/upper_data_boundary_minus_button"
+                        android:layout_width="40dp"
+                        android:layout_height="35dp"
+                        android:layout_margin="1dp"
+                        android:background="@drawable/button_bg"
+                        android:text="U-"
+                        android:textColor="#ffffff"
+                        android:textSize="10sp" />
+
+                    <Button
+                        android:id="@+id/lower_data_boundary_plus_button"
+                        android:layout_width="40dp"
+                        android:layout_height="35dp"
+                        android:layout_margin="1dp"
+                        android:background="@drawable/button_bg"
+                        android:text="L+"
+                        android:textColor="#ffffff"
+                        android:textSize="10sp" />
+
+                    <Button
+                        android:id="@+id/lower_data_boundary_minus_button"
+                        android:layout_width="40dp"
+                        android:layout_height="35dp"
+                        android:layout_margin="1dp"
+                        android:background="@drawable/button_bg"
+                        android:text="L-"
+                        android:textColor="#ffffff"
+                        android:textSize="10sp" />
+
+                </LinearLayout>
+
+                <!-- Wind Layers List -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="180dp"
+                    android:layout_weight="1.25"
+                    android:orientation="horizontal"
+                    android:background="#00000000">
+
+                    <!-- Main list area -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Wind Layers"
+                            android:textColor="#ffffff"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:gravity="center"
+                            android:padding="4dp"
+                            android:background="#00000000" />
+
+                        <ScrollView
+                            android:id="@+id/wind_layers_scroll"
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_weight="1"
+                            android:background="#00000000">
+
+                            <LinearLayout
+                                android:id="@+id/wind_layers_list"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:padding="2dp" />
+
+                        </ScrollView>
+
+                    </LinearLayout>
+
+                    <!-- Scroll buttons -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:paddingStart="2dp">
+
+                        <Button
+                            android:id="@+id/layers_scroll_up_button"
+                            android:layout_width="30dp"
+                            android:layout_height="40dp"
+                            android:layout_margin="2dp"
+                            android:background="@drawable/button_bg"
+                            android:text="▲"
+                            android:textColor="#ffffff"
+                            android:textSize="14sp" />
+
+                        <Button
+                            android:id="@+id/layers_scroll_down_button"
+                            android:layout_width="30dp"
+                            android:layout_height="40dp"
+                            android:layout_margin="2dp"
+                            android:background="@drawable/button_bg"
+                            android:text="▼"
+                            android:textColor="#ffffff"
+                            android:textSize="14sp" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="0.9" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Layer Management Controls -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="#333333"
+            android:padding="4dp">
+
+            <Button
+                android:id="@+id/new_layer_button"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:layout_margin="2dp"
+                android:background="@drawable/button_bg"
+                android:text="New Layer"
+                android:textColor="#ffffff"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/split_layer_button"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:layout_margin="2dp"
+                android:background="@drawable/button_bg"
+                android:text="Split Layer"
+                android:textColor="#ffffff"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Saved Wind Display Container (visible when saved wind mode) -->
+    <LinearLayout
+        android:id="@+id/wind_saved_display"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:padding="4dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Saved Wind Display"
+            android:textColor="#ffffff"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:padding="8dp"
+            android:background="#00000000" />
+
+        <!-- Placeholder for saved wind visualization -->
+        <TextView
+            android:id="@+id/saved_wind_info"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:text="Saved wind data will be displayed here"
+            android:textColor="#cccccc"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:background="#00000000"
+            android:layout_margin="4dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 360 Video Panel ID -->
+    <item name="video_360_panel" type="id" />
+</resources>
