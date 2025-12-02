@@ -1,4 +1,5 @@
 [versions]
+activityKtx = "1.9.2"
 blessedAndroid = "2.5.2"
 converterGson = "3.0.0"
 eventbus = "3.3.1"
@@ -35,6 +36,7 @@ meta-spatial-sdk-isdk = { group = "com.meta.spatial", name = "meta-spatial-sdk-i
 
 
 # Core Android Libraries
+androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activityKtx" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }

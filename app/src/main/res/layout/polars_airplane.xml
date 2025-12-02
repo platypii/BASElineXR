@@ -19,8 +19,40 @@
         android:gravity="center"
         android:paddingBottom="8dp" />
 
+    <!-- Polar Selector (always visible) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <!-- Left Spacer -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <!-- Center Column: Polar Selector -->
+        <Button
+            android:id="@+id/airplane_polar_spinner"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:background="@drawable/button_bg"
+            android:textColor="#ffffff"
+            android:textSize="12sp"
+            android:gravity="center"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Right Spacer -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+    </LinearLayout>
+
     <!-- 3-Column Layout for Standard Controls -->
     <LinearLayout
+        android:id="@+id/airplane_standard_mass_controls"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
@@ -33,19 +65,10 @@
 
         <!-- Center Column: Standard Controls -->
         <LinearLayout
-            android:id="@+id/airplane_standard_mass_controls"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical">
-
-            <Spinner
-                android:id="@+id/airplane_polar_spinner"
-                android:layout_width="match_parent"
-                android:layout_height="40dp"
-                android:background="@drawable/button_bg"
-                android:padding="8dp"
-                android:layout_marginBottom="8dp" />
 
             <TextView
                 android:layout_width="match_parent"

@@ -30,7 +30,7 @@ class PolarsController(private val rootView: View) {
     private val selectAirplane: Button = rootView.findViewById(R.id.select_airplane)
 
     // Wingsuit controls
-    private val wingsuitSpinner: Spinner = rootView.findViewById(R.id.wingsuit_polar_spinner)
+    private val wingsuitSpinner: Button = rootView.findViewById(R.id.wingsuit_polar_spinner)
     private val wingsuitAreaValue: TextView = rootView.findViewById(R.id.wingsuit_area_value)
     private val wingsuitMassValue: TextView = rootView.findViewById(R.id.wingsuit_mass_value)
     private val wingsuitMassKg: TextView = rootView.findViewById(R.id.wingsuit_mass_kg)
@@ -58,7 +58,7 @@ class PolarsController(private val rootView: View) {
     private val wingsuitRangeMaxClPlus: Button = rootView.findViewById(R.id.wingsuit_range_max_cl_plus)
 
     // Canopy controls
-    private val canopySpinner: Spinner = rootView.findViewById(R.id.canopy_polar_spinner)
+    private val canopySpinner: Button = rootView.findViewById(R.id.canopy_polar_spinner)
     private val canopyAreaValue: TextView = rootView.findViewById(R.id.canopy_area_value)
     private val canopyAreaM2: TextView = rootView.findViewById(R.id.canopy_area_m2)
     private val canopyMassValue: TextView = rootView.findViewById(R.id.canopy_mass_value)
@@ -87,7 +87,7 @@ class PolarsController(private val rootView: View) {
     private val canopyRangeMaxClPlus: Button = rootView.findViewById(R.id.canopy_range_max_cl_plus)
 
     // Airplane controls (no area controls)
-    private val airplaneSpinner: Spinner = rootView.findViewById(R.id.airplane_polar_spinner)
+    private val airplaneSpinner: Button = rootView.findViewById(R.id.airplane_polar_spinner)
     private val airplaneStandardMassControls: LinearLayout = rootView.findViewById(R.id.airplane_standard_mass_controls)
     private val airplaneMassValue: TextView = rootView.findViewById(R.id.airplane_mass_value)
     private val airplaneMassMinus: Button = rootView.findViewById(R.id.airplane_mass_minus)
@@ -187,51 +187,39 @@ class PolarsController(private val rootView: View) {
     private fun setupWingsuitUI() {
         // Get wingsuit polars
         val wingsuitPolars = PolarLibrary.getPolarsByType("Wingsuit")
-        val adapter = ArrayAdapter(
-            rootView.context,
-            android.R.layout.simple_spinner_item,
-            wingsuitPolars.map { it.name }
-        )
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        wingsuitSpinner.adapter = adapter
-
-        // Set initial selection
+        
+        // Set initial button text
         val currentPolar = Polars.instance.wingsuitPolar
-        val currentIndex = wingsuitPolars.indexOfFirst { it.name == currentPolar.name }
-        if (currentIndex >= 0) {
-            wingsuitSpinner.setSelection(currentIndex)
-        }
+        wingsuitSpinner.text = currentPolar.name
 
         // Set initial values
         updateWingsuitFields()
 
-        // Handle spinner selection
-        wingsuitSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                if (!isUpdating && position < wingsuitPolars.size) {
-                    val selectedPolar = wingsuitPolars[position]
-                    Polars.instance.setWingsuitPolar(selectedPolar)
+        // Handle button click to cycle through polars
+        wingsuitSpinner.setOnClickListener {
+            val currentIndex = wingsuitPolars.indexOfFirst { it.name == Polars.instance.wingsuitPolar.name }
+            val nextIndex = (currentIndex + 1) % wingsuitPolars.size
+            val selectedPolar = wingsuitPolars[nextIndex]
+            
+            Polars.instance.setWingsuitPolar(selectedPolar)
+            wingsuitSpinner.text = selectedPolar.name
 
-                    // Show/hide custom parameters
-                    if (selectedPolar.name == "Custom Wingsuit") {
-                        wingsuitCustomParams.visibility = View.VISIBLE
-                        // Initialize custom parameters from current polar if not already set
-                        if (wingsuitPolarMinDrag == null) {
-                            wingsuitPolarMinDrag = selectedPolar.polarMinDrag
-                            wingsuitPolarClo = selectedPolar.polarClo
-                            wingsuitPolarSlope = selectedPolar.polarSlope
-                            wingsuitRangeMinCl = selectedPolar.rangeMinCl
-                            wingsuitRangeMaxCl = selectedPolar.rangeMaxCl
-                        }
-                        updateCustomWingsuit()
-                    } else {
-                        wingsuitCustomParams.visibility = View.GONE
-                        updateWingsuitFields()
-                    }
+            // Show/hide custom parameters
+            if (selectedPolar.name == "Custom Wingsuit") {
+                wingsuitCustomParams.visibility = View.VISIBLE
+                // Initialize custom parameters from current polar if not already set
+                if (wingsuitPolarMinDrag == null) {
+                    wingsuitPolarMinDrag = selectedPolar.polarMinDrag
+                    wingsuitPolarClo = selectedPolar.polarClo
+                    wingsuitPolarSlope = selectedPolar.polarSlope
+                    wingsuitRangeMinCl = selectedPolar.rangeMinCl
+                    wingsuitRangeMaxCl = selectedPolar.rangeMaxCl
                 }
+                updateCustomWingsuit()
+            } else {
+                wingsuitCustomParams.visibility = View.GONE
+                updateWingsuitFields()
             }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
         // Handle +/- buttons - Wingsuit area in m², mass in lbs
@@ -247,51 +235,39 @@ class PolarsController(private val rootView: View) {
     private fun setupCanopyUI() {
         // Get canopy polars
         val canopyPolars = PolarLibrary.getPolarsByType("Canopy")
-        val adapter = ArrayAdapter(
-            rootView.context,
-            android.R.layout.simple_spinner_item,
-            canopyPolars.map { it.name }
-        )
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        canopySpinner.adapter = adapter
-
-        // Set initial selection
+        
+        // Set initial button text
         val currentPolar = Polars.instance.canopyPolar
-        val currentIndex = canopyPolars.indexOfFirst { it.name == currentPolar.name }
-        if (currentIndex >= 0) {
-            canopySpinner.setSelection(currentIndex)
-        }
+        canopySpinner.text = currentPolar.name
 
         // Set initial values
         updateCanopyFields()
 
-        // Handle spinner selection
-        canopySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                if (!isUpdating && position < canopyPolars.size) {
-                    val selectedPolar = canopyPolars[position]
-                    Polars.instance.setCanopyPolar(selectedPolar)
+        // Handle button click to cycle through polars
+        canopySpinner.setOnClickListener {
+            val currentIndex = canopyPolars.indexOfFirst { it.name == Polars.instance.canopyPolar.name }
+            val nextIndex = (currentIndex + 1) % canopyPolars.size
+            val selectedPolar = canopyPolars[nextIndex]
+            
+            Polars.instance.setCanopyPolar(selectedPolar)
+            canopySpinner.text = selectedPolar.name
 
-                    // Show/hide custom parameters
-                    if (selectedPolar.name == "Custom Canopy") {
-                        canopyCustomParams.visibility = View.VISIBLE
-                        // Initialize custom parameters from current polar if not already set
-                        if (canopyPolarMinDrag == null) {
-                            canopyPolarMinDrag = selectedPolar.polarMinDrag
-                            canopyPolarClo = selectedPolar.polarClo
-                            canopyPolarSlope = selectedPolar.polarSlope
-                            canopyRangeMinCl = selectedPolar.rangeMinCl
-                            canopyRangeMaxCl = selectedPolar.rangeMaxCl
-                        }
-                        updateCustomCanopy()
-                    } else {
-                        canopyCustomParams.visibility = View.GONE
-                        updateCanopyFields()
-                    }
+            // Show/hide custom parameters
+            if (selectedPolar.name == "Custom Canopy") {
+                canopyCustomParams.visibility = View.VISIBLE
+                // Initialize custom parameters from current polar if not already set
+                if (canopyPolarMinDrag == null) {
+                    canopyPolarMinDrag = selectedPolar.polarMinDrag
+                    canopyPolarClo = selectedPolar.polarClo
+                    canopyPolarSlope = selectedPolar.polarSlope
+                    canopyRangeMinCl = selectedPolar.rangeMinCl
+                    canopyRangeMaxCl = selectedPolar.rangeMaxCl
                 }
+                updateCustomCanopy()
+            } else {
+                canopyCustomParams.visibility = View.GONE
+                updateCanopyFields()
             }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
         // Handle +/- buttons - Canopy area in sq ft, mass in lbs
@@ -307,45 +283,33 @@ class PolarsController(private val rootView: View) {
     private fun setupAirplaneUI() {
         // Get airplane polars
         val airplanePolars = PolarLibrary.getPolarsByType("Airplane")
-        val adapter = ArrayAdapter(
-            rootView.context,
-            android.R.layout.simple_spinner_item,
-            airplanePolars.map { it.name }
-        )
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        airplaneSpinner.adapter = adapter
-
-        // Set initial selection
+        
+        // Set initial button text
         val currentPolar = Polars.instance.airplanePolar
-        val currentIndex = airplanePolars.indexOfFirst { it.name == currentPolar.name }
-        if (currentIndex >= 0) {
-            airplaneSpinner.setSelection(currentIndex)
-        }
+        airplaneSpinner.text = currentPolar.name
 
         // Set initial values
         updateAirplaneFields()
 
-        // Handle spinner selection
-        airplaneSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                if (!isUpdating && position < airplanePolars.size) {
-                    val selectedPolar = airplanePolars[position]
-                    Polars.instance.setAirplanePolar(selectedPolar)
+        // Handle button click to cycle through polars
+        airplaneSpinner.setOnClickListener {
+            val currentIndex = airplanePolars.indexOfFirst { it.name == Polars.instance.airplanePolar.name }
+            val nextIndex = (currentIndex + 1) % airplanePolars.size
+            val selectedPolar = airplanePolars[nextIndex]
+            
+            Polars.instance.setAirplanePolar(selectedPolar)
+            airplaneSpinner.text = selectedPolar.name
 
-                    // Show/hide custom parameters and toggle mass controls
-                    if (selectedPolar.name == "Custom Airplane") {
-                        airplaneStandardMassControls.visibility = View.GONE
-                        airplaneCustomParams.visibility = View.VISIBLE
-                        updateCustomAirplane()
-                    } else {
-                        airplaneStandardMassControls.visibility = View.VISIBLE
-                        airplaneCustomParams.visibility = View.GONE
-                        updateAirplaneFields()
-                    }
-                }
+            // Show/hide custom parameters and toggle mass controls
+            if (selectedPolar.name == "Custom Airplane") {
+                airplaneStandardMassControls.visibility = View.GONE
+                airplaneCustomParams.visibility = View.VISIBLE
+                updateCustomAirplane()
+            } else {
+                airplaneStandardMassControls.visibility = View.VISIBLE
+                airplaneCustomParams.visibility = View.GONE
+                updateAirplaneFields()
             }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
         // Handle +/- buttons - Airplane mass in kg (±100 kg increments)

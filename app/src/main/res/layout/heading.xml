@@ -1,17 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Main Menu: Heading Controls + Sub-menu Access -->
-<GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/headingMenuGrid"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
+    android:orientation="vertical"
     android:layout_gravity="center_horizontal"
-    android:columnCount="3"
-    android:rowCount="5"
-    android:padding="4dp"
     android:clickable="false"
     android:focusable="false">
 
-    <!-- Row 1: Sub-menu Access Buttons -->
+    <GridLayout
+        android:id="@+id/headingMenuGrid"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:columnCount="3"
+        android:rowCount="5"
+        android:padding="4dp"
+        android:clickable="false"
+        android:focusable="false">
+
+    <!-- Row 1: Sub-menu Access Buttons (3 buttons) -->
     <Button
         android:id="@+id/wind_menu_button"
         android:layout_width="100dp"
@@ -135,4 +143,6 @@
         android:textColor="#ffffff"
         android:textSize="22sp" />
 
-</GridLayout>
+    </GridLayout>
+
+</LinearLayout>

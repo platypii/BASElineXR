@@ -73,6 +73,11 @@ public class SensorCSVParser {
         Float humidity = null, humidityTemp = null;
         Float vbat = null;
 
+        // Last known good humidity values (sensor sometimes outputs bad data during startup)
+        Float lastGoodHumidity = null;
+        Float lastGoodHumidityTemp = null;
+        int badHumidityCount = 0;
+
         String line;
         int lineNumber = 0;
 
@@ -151,8 +156,28 @@ public class SensorCSVParser {
                             // $HUM,time,humidity,temperature
                             if (parts.length >= 4) {
                                 double sensorTime = parseDouble(parts[1]);
-                                humidity = parseFloat(parts[2]);
-                                humidityTemp = parseFloat(parts[3]);
+                                float rawHumidity = parseFloat(parts[2]);
+                                float rawHumidityTemp = parseFloat(parts[3]);
+                                
+                                // Validate humidity: must be 0-100% (sensor sometimes outputs bad data like 6000%)
+                                if (isValidHumidity(rawHumidity)) {
+                                    humidity = rawHumidity;
+                                    humidityTemp = rawHumidityTemp;
+                                    lastGoodHumidity = rawHumidity;
+                                    lastGoodHumidityTemp = rawHumidityTemp;
+                                } else {
+                                    // Bad reading - use last known good value if available
+                                    badHumidityCount++;
+                                    if (badHumidityCount <= 5) {
+                                        Log.w(TAG, String.format("Bad humidity value %.1f%% at line %d, using last good value", 
+                                                rawHumidity, lineNumber));
+                                    }
+                                    if (lastGoodHumidity != null) {
+                                        humidity = lastGoodHumidity;
+                                        humidityTemp = lastGoodHumidityTemp;
+                                    }
+                                    // else humidity stays null/NaN
+                                }
                             }
                             break;
 
@@ -171,6 +196,9 @@ public class SensorCSVParser {
             }
         }
 
+        if (badHumidityCount > 0) {
+            Log.w(TAG, String.format("Filtered %d bad humidity readings from SENSOR.CSV", badHumidityCount));
+        }
         Log.i(TAG, String.format("Parsed %d sensor measurements from SENSOR.CSV", data.size()));
         return data;
     }
@@ -235,5 +263,13 @@ public class SensorCSVParser {
         } catch (NumberFormatException e) {
             return 0;
         }
+    }
+
+    /**
+     * Validate humidity reading. Sensor sometimes outputs bad values (negative, >100%, or extreme values like 6000%)
+     * Valid range is 0-100% relative humidity.
+     */
+    private static boolean isValidHumidity(float humidity) {
+        return !Float.isNaN(humidity) && humidity >= 0f && humidity <= 100f;
     }
 }

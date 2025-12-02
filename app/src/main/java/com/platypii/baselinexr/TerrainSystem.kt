@@ -109,7 +109,8 @@ class TerrainSystem(
         if (!isInitialized || terrainTiles.isEmpty() || terrainConfig == null) return
         if (gpsToWorldTransform.initialOrigin == null) return
 
-        val currentTime = System.currentTimeMillis()
+        // Use effective time that accounts for pause duration in mock mode
+        val currentTime = Services.location?.getEffectivePhoneTime() ?: System.currentTimeMillis()
         val motionEstimator = Services.location.motionEstimator
 
         // Get destination position in world coordinates

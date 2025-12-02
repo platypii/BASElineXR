@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Wind Layer Item - Display Only (controls moved to external panel) -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/layer_item_container"
     android:layout_width="match_parent"
@@ -27,6 +28,18 @@
             android:textSize="10sp"
             android:textStyle="bold" />
 
+        <!-- Selection indicator (shown when this layer is selected for editing) -->
+        <TextView
+            android:id="@+id/layer_selected_indicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="◆"
+            android:textColor="#00FF00"
+            android:textSize="12sp"
+            android:layout_marginEnd="4dp"
+            android:visibility="gone" />
+
+        <!-- Active indicator (shown when this is the altitude-based active layer) -->
         <TextView
             android:id="@+id/layer_active_indicator"
             android:layout_width="wrap_content"
@@ -34,17 +47,7 @@
             android:text="●"
             android:textColor="#4CAF50"
             android:textSize="12sp"
-            android:layout_marginEnd="4dp"
             android:visibility="gone" />
-
-        <Button
-            android:id="@+id/layer_select_button"
-            android:layout_width="40dp"
-            android:layout_height="20dp"
-            android:background="@drawable/button_bg"
-            android:text="SEL"
-            android:textColor="#ffffff"
-            android:textSize="8sp" />
 
     </LinearLayout>
 
@@ -75,94 +78,6 @@
         android:layout_marginBottom="2dp"
         android:gravity="center" />
 
-    <!-- Altitude Adjustment Buttons -->
-    <LinearLayout
-        android:id="@+id/altitude_adjustment_buttons"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="2dp"
-        android:visibility="gone">
-
-        <!-- Lower Boundary Adjustment -->
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="horizontal"
-            android:gravity="center">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Lower:"
-                android:textColor="#CCCCCC"
-                android:textSize="7sp"
-                android:layout_marginEnd="2dp" />
-
-            <Button
-                android:id="@+id/lower_boundary_minus_button"
-                android:layout_width="20dp"
-                android:layout_height="18dp"
-                android:background="@drawable/button_bg"
-                android:text="-"
-                android:textColor="#ffffff"
-                android:textSize="8sp"
-                android:layout_margin="1dp" />
-
-            <Button
-                android:id="@+id/lower_boundary_plus_button"
-                android:layout_width="20dp"
-                android:layout_height="18dp"
-                android:background="@drawable/button_bg"
-                android:text="+"
-                android:textColor="#ffffff"
-                android:textSize="8sp"
-                android:layout_margin="1dp" />
-
-        </LinearLayout>
-
-        <!-- Upper Boundary Adjustment -->
-        <LinearLayout
-            android:id="@+id/upper_boundary_controls"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="horizontal"
-            android:gravity="center">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Upper:"
-                android:textColor="#CCCCCC"
-                android:textSize="7sp"
-                android:layout_marginEnd="2dp" />
-
-            <Button
-                android:id="@+id/upper_boundary_minus_button"
-                android:layout_width="20dp"
-                android:layout_height="18dp"
-                android:background="@drawable/button_bg"
-                android:text="-"
-                android:textColor="#ffffff"
-                android:textSize="8sp"
-                android:layout_margin="1dp" />
-
-            <Button
-                android:id="@+id/upper_boundary_plus_button"
-                android:layout_width="20dp"
-                android:layout_height="18dp"
-                android:background="@drawable/button_bg"
-                android:text="+"
-                android:textColor="#ffffff"
-                android:textSize="8sp"
-                android:layout_margin="1dp" />
-
-        </LinearLayout>
-
-    </LinearLayout>
-
     <!-- Wind Data -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -184,72 +99,6 @@
             android:background="#0D1F0D"
             android:padding="3dp"
             android:gravity="center" />
-
-    </LinearLayout>
-
-    <!-- Layer Controls -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="2dp"
-        android:visibility="gone"
-        android:id="@+id/layer_controls">
-
-        <Button
-            android:id="@+id/split_layer_button"
-            android:layout_width="0dp"
-            android:layout_height="25dp"
-            android:layout_weight="1"
-            android:layout_margin="1dp"
-            android:background="@drawable/button_bg"
-            android:text="Split"
-            android:textColor="#ffffff"
-            android:textSize="8sp" />
-
-        <Button
-            android:id="@+id/delete_layer_button"
-            android:layout_width="0dp"
-            android:layout_height="25dp"
-            android:layout_weight="1"
-            android:layout_margin="1dp"
-            android:background="@drawable/button_bg"
-            android:text="Del"
-            android:textColor="#ffffff"
-            android:textSize="8sp" />
-
-    </LinearLayout>
-
-    <!-- Save Buttons (only for active top layer) -->
-    <LinearLayout
-        android:id="@+id/layer_save_buttons"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="2dp"
-        android:visibility="gone">
-
-        <Button
-            android:id="@+id/save_gps_layer_button"
-            android:layout_width="0dp"
-            android:layout_height="25dp"
-            android:layout_weight="1"
-            android:layout_margin="1dp"
-            android:background="@drawable/button_bg"
-            android:text="Save GPS"
-            android:textColor="#ffffff"
-            android:textSize="8sp" />
-
-        <Button
-            android:id="@+id/save_sustained_layer_button"
-            android:layout_width="0dp"
-            android:layout_height="25dp"
-            android:layout_weight="1"
-            android:layout_margin="1dp"
-            android:background="@drawable/button_bg"
-            android:text="Save Sus"
-            android:textColor="#ffffff"
-            android:textSize="8sp" />
 
     </LinearLayout>
 

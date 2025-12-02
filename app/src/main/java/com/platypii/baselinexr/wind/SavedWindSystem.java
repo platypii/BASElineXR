@@ -92,4 +92,18 @@ public class SavedWindSystem {
         double diff = ((b - a + 540) % 360) - 180;
         return (a + diff * t + 360) % 360;
     }
+
+    /**
+     * Returns all keyframes for display purposes.
+     */
+    public List<WindKeyframe> getKeyframes() {
+        return new ArrayList<>(keyframes);
+    }
+
+    /**
+     * Returns the number of keyframes loaded.
+     */
+    public int getKeyframeCount() {
+        return keyframes.size();
+    }
 }

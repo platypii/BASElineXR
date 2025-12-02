@@ -145,6 +145,8 @@ public final class KalmanFilter3D implements MotionEstimator {
         Q[3][3] = 0.4226; Q[4][4] = 0.4226; Q[5][5] = 0.4226;
         // accel (higher)
         Q[6][6] = 5; Q[7][7] = 5; Q[8][8] = 5;
+        // accel (higher)
+        //Q[6][6] = 68.5; Q[7][7] = 68.5; Q[8][8] = 68.5;
         // wingsuit params (slow)
         Q[9][9]   = 0.01;
         Q[10][10] = 0.01;
@@ -401,6 +403,25 @@ public final class KalmanFilter3D implements MotionEstimator {
     // Cached position delta for 90Hz updates
     private Vector3 cachedDelta = null;
     private long cachedDeltaTime = 0;
+    
+    // Frozen state - when true, predictDelta returns zero (no extrapolation)
+    private volatile boolean frozen = false;
+    
+    @Override
+    public void freeze() {
+        frozen = true;
+    }
+    
+    @Override
+    public void unfreeze() {
+        frozen = false;
+    }
+    
+    @Override
+    public boolean isFrozen() {
+        return frozen;
+    }
+    
     // Implement MotionEstimator interface method
     @Override
     public Vector3 predictDelta(long currentTimeMillis) {
@@ -408,7 +429,10 @@ public final class KalmanFilter3D implements MotionEstimator {
     }
     /** Predict the state delta from last update (without mutating this filter) at a given wallclock time in ms. */
     public Vector3 predictDelta(long currentTimeMillis, boolean shouldUpdateCache) {
-
+        // When frozen, return zero delta (no extrapolation)
+        if (frozen) {
+            return new Vector3(0, 0, 0);
+        }
 
         if (lastGps == null) {
             cachedPredictedState = toState(x);

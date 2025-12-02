@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Seekbar thumb - large enough to grab easily in VR -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="#FFFFFF" />
+    <stroke
+        android:width="3dp"
+        android:color="#66BB66" />
+    <size
+        android:width="32dp"
+        android:height="32dp" />
+</shape>

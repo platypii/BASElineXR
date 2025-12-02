@@ -80,25 +80,24 @@ public class MockSensorProvider {
             final long sensorGpsOffset = sensorOriginalStart - trackStartTime;
             Log.i(TAG, String.format("TIMESYNC: Sensor data starts %d ms after GPS track in original recording", sensorGpsOffset));
 
-            // Use GPS track start time as reference for time delta
-            // This ensures GPS and sensor data are synchronized in the replay
-            final long referenceTime = trackStartTime > 0 ? trackStartTime : sensorOriginalStart;
-            final long timeDelta = systemStartTime - referenceTime;
+            // Use GPS track start time as reference for time delta (same as MockLocationProvider)
+            // This preserves the temporal relationship between GPS and sensor data
+            final long timeDelta = systemStartTime - trackStartTime;
             Log.i(TAG, String.format("TIMESYNC: systemStartTime=%d, trackStartTime=%d, timeDelta=%d ms",
                     systemStartTime, trackStartTime, timeDelta));
             Log.i(TAG, String.format("TIMESYNC: Original sensor range: [%d, %d], span=%ds",
                     sensorOriginalStart, sensorOriginalEnd, (sensorOriginalEnd - sensorOriginalStart) / 1000));
 
-            // Adjust all sensor timestamps: subtract offset to align with GPS start, then add timeDelta
-            // This removes the original recording delay and synchronizes both data sources to "now"
+            // Apply same time delta as GPS data - preserves temporal alignment
+            // Sensor data may not be available for first few seconds if TIME sync came later
             for (MSensorData sensor : sensorData) {
-                sensor.millis = sensor.millis - sensorGpsOffset + timeDelta;
+                sensor.millis = sensor.millis + timeDelta;
             }
 
             final long sensorAdjustedStart = sensorData.get(0).millis;
             final long sensorAdjustedEnd = sensorData.get(sensorData.size() - 1).millis;
-            Log.i(TAG, String.format("TIMESYNC: Adjusted sensor range: [%d, %d], span=%ds (offset removed, aligned with GPS)",
-                    sensorAdjustedStart, sensorAdjustedEnd, (sensorAdjustedEnd - sensorAdjustedStart) / 1000));
+            Log.i(TAG, String.format("TIMESYNC: Adjusted sensor range: [%d, %d], span=%ds (starts %d ms after GPS)",
+                    sensorAdjustedStart, sensorAdjustedEnd, (sensorAdjustedEnd - sensorAdjustedStart) / 1000, sensorGpsOffset));
         }
 
         started = true;
@@ -112,6 +111,31 @@ public class MockSensorProvider {
         started = false;
         currentIndex = 0;
         sensorData = new ArrayList<>();
+    }
+    
+    /**
+     * Pause sensor data playback (no-op for query-based provider)
+     */
+    public void pause() {
+        Log.i(TAG, "Sensor provider paused");
+        // Sensor data is query-based, no active thread to pause
+    }
+    
+    /**
+     * Resume sensor data playback (no-op for query-based provider)
+     */
+    public void resume() {
+        Log.i(TAG, "Sensor provider resumed");
+        // Sensor data is query-based, no active thread to resume
+    }
+    
+    /**
+     * Restart sensor data playback from beginning
+     */
+    public void restart(@NonNull Context context, long trackStartTime) {
+        Log.i(TAG, "Restarting sensor provider");
+        stop();
+        start(context, trackStartTime);
     }
 
     /**

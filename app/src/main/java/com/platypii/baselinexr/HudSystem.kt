@@ -48,6 +48,9 @@ class HudSystem : SystemBase() {
             if (!inputListenerAdded && panelEntity != null) {
                 addPanelInputListener(activity, panelEntity!!)
             }
+            
+            // Update seekbar position during playback
+            activity.hudPanelController?.updateSeekBarPosition()
         }
 
         updateLocation()
@@ -177,10 +180,14 @@ class HudSystem : SystemBase() {
                         
                             // Header area is top ~20% of panel (80dp header in ~400dp panel)
                             // Exit button is rightmost ~14% (80dp in ~600dp panel)
+                            // Record button is next to exit button
+                            // Play controls button is next to record button (when visible in replay mode)
                             // HudPanel (header text) is left ~72% (panel minus 170dp button area)
                             val headerThreshold = 0.20f  // Top 20% is header row
                             val exitButtonLeft = 0.86f   // Exit button starts at 86% from left
-                            val hudPanelRight = 0.72f    // HudPanel ends at 72% (170dp button area)
+                            val recordButtonLeft = 0.72f // Record button starts at 72% from left
+                            val playControlsButtonLeft = 0.58f // Play controls button starts at 58% from left (when visible)
+                            val hudPanelRight = 0.72f    // HudPanel ends at 72% (170dp button area) - adjusted when play controls visible
                             
                             // Check for exit button (right ~14% of width, top header area)
                             if (u > exitButtonLeft && v < headerThreshold) {
@@ -191,21 +198,42 @@ class HudSystem : SystemBase() {
                                 return true
                             }
                             
-                            // Check for heading button (between hudPanel and exit button, ~72%-86% range)
-                            // Heading button is only active when visible (menu open state)
-                            if (u > hudPanelRight && u < exitButtonLeft && v < headerThreshold) {
-                                Log.i(TAG, "  -> HEADING BUTTON clicked!")
+                            // Check for record button (between hudPanel and exit button, ~72%-86% range)
+                            if (u > recordButtonLeft && u < exitButtonLeft && v < headerThreshold) {
+                                Log.i(TAG, "  -> RECORD BUTTON clicked!")
                                 activity.runOnUiThread {
-                                    activity.hudPanelController?.handleHeadingButtonClick()
+                                    activity.screenRecordController?.toggleRecording()
                                 }
                                 return true
                             }
                             
-                            // Check for hudPanel area (left ~72% of width, top header area)
-                            if (u < hudPanelRight && v < headerThreshold) {
+                            // Check for play controls button (when visible, between ~58%-72% range)
+                            val isPlayControlsVisible = activity.hudPanelController?.isPlayControlsButtonVisible() == true
+                            if (isPlayControlsVisible && u > playControlsButtonLeft && u < recordButtonLeft && v < headerThreshold) {
+                                Log.i(TAG, "  -> PLAY CONTROLS BUTTON clicked!")
+                                activity.runOnUiThread {
+                                    activity.hudPanelController?.togglePlayControlsPopup()
+                                }
+                                return true
+                            }
+                            
+                            // Check for hudPanel area (left part of width, top header area)
+                            // Adjust threshold if play controls button is visible
+                            val effectiveHudPanelRight = if (isPlayControlsVisible) playControlsButtonLeft else hudPanelRight
+                            if (u < effectiveHudPanelRight && v < headerThreshold) {
                                 Log.i(TAG, "  -> HUD HEADER clicked - toggling menu")
                                 activity.runOnUiThread {
                                     activity.hudPanelController?.handleHeaderClick()
+                                }
+                                return true
+                            }
+                            
+                            // Check for play controls popup (when visible, below header)
+                            val isPlayControlsPopupVisible = activity.hudPanelController?.isPlayControlsPopupVisible() == true
+                            if (isPlayControlsPopupVisible && v > headerThreshold) {
+                                Log.i(TAG, "  -> PLAY CONTROLS POPUP clicked at ($u, $v)")
+                                activity.runOnUiThread {
+                                    activity.hudPanelController?.handlePlayControlsClick(u, v)
                                 }
                                 return true
                             }

@@ -54,7 +54,7 @@
 
     <!-- Button container background to fill the right side -->
     <LinearLayout
-        android:layout_width="170dp"
+        android:layout_width="330dp"
         android:layout_height="80dp"
         android:layout_gravity="top|end"
         android:background="#000000"
@@ -62,6 +62,31 @@
         android:gravity="end"
         android:clickable="false"
         android:focusable="false">
+
+        <Button
+            android:id="@+id/play_controls_button"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_margin="2dp"
+            android:background="@drawable/button_bg"
+            android:text="▶"
+            android:textColor="#ffffff"
+            android:textSize="24sp"
+            android:visibility="gone"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <Button
+            android:id="@+id/record_button"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_margin="2dp"
+            android:background="@drawable/button_bg"
+            android:text="⏺ Rec"
+            android:textColor="#ffffff"
+            android:textSize="14sp"
+            android:clickable="true"
+            android:focusable="true" />
 
         <Button
             android:id="@+id/heading_button"
@@ -101,5 +126,24 @@
         android:visibility="gone"
         android:clickable="false"
         android:focusable="false" />
+
+    <!-- Play Controls Popup Container (separate from menu system) -->
+    <FrameLayout
+        android:id="@+id/playControlsPopupContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="85dp"
+        android:layout_marginStart="5dp"
+        android:layout_marginEnd="5dp"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true">
+
+        <include
+            layout="@layout/play_controls"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </FrameLayout>
 
 </FrameLayout>

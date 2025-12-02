@@ -29,6 +29,10 @@ class WindSystem {
         savedWindSystem = system
         Log.d(TAG, "SavedWindSystem set")
     }
+
+    fun getSavedWindSystem(): SavedWindSystem? {
+        return savedWindSystem
+    }
     companion object {
         private const val TAG = "WindSystem"
 

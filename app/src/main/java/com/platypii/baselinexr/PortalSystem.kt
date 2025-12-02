@@ -12,6 +12,7 @@ import com.meta.spatial.toolkit.Mesh
 import com.meta.spatial.toolkit.Scale
 import com.meta.spatial.toolkit.Transform
 import com.meta.spatial.toolkit.Visible
+import com.platypii.baselinexr.util.HeadPoseUtil
 
 /**
  * Portal system that detects when the user flies through a portal and transports them to space.
@@ -102,9 +103,10 @@ class PortalSystem(
         val portalLocation = LatLngAlt(offsetDest.lat, offsetDest.lng, offsetDest.alt)
 
         // Convert to world coordinates
-        val currentTime = System.currentTimeMillis()
+        // Use effective time that accounts for pause duration in mock mode
+        val currentTime = Services.location?.getEffectivePhoneTime() ?: System.currentTimeMillis()
         val motionEstimator = Services.location.motionEstimator
-        val portalWorldPos = gpsTransform.toWorldCoordinates(
+        var portalWorldPos = gpsTransform.toWorldCoordinates(
             portalLocation.lat,
             portalLocation.lng,
             portalLocation.alt,
@@ -112,6 +114,12 @@ class PortalSystem(
             motionEstimator,
             false
         )
+
+        // Apply room movement correction, if enabled (matching TerrainSystem behavior)
+        val headPose = HeadPoseUtil.getHeadPose(systemManager)
+        if (VROptions.current.roomMovement && headPose != null) {
+            //portalWorldPos -= headPose.t
+        }
 
         // Apply yaw adjustment and portal orientation to align with world coordinate system
         val yawDegrees = Adjustments.yawAdjustmentDegrees().toFloat() + PORTAL_ORIENTATION_YAW.toFloat()

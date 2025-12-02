@@ -39,12 +39,14 @@
             android:layout_weight="1"
             android:orientation="vertical">
 
-            <Spinner
+            <Button
                 android:id="@+id/wingsuit_polar_spinner"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
                 android:background="@drawable/button_bg"
-                android:padding="8dp"
+                android:textColor="#ffffff"
+                android:textSize="12sp"
+                android:gravity="center"
                 android:layout_marginBottom="8dp" />
 
             <!-- Area Controls -->

@@ -127,7 +127,7 @@ public class VROptions {
     public static final Vector3 AMBIENT_COLOR = new Vector3(1.4f);
     public static final Vector3 SUN_COLOR = new Vector3(1f);
     public static final Vector3 SUN_DIRECTION = new Vector3(-4f, 10f, -2f).normalize();
-    public static final float ENVIRONMENT_INTENSITY = 0.01f;
+    public static final float ENVIRONMENT_INTENSITY = 0.0f;  // Disabled IBL to test spotlight issue
 
     // Map the short "sourceModel" string to the asset location
     public String getTerrainModel() {

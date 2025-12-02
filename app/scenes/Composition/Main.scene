@@ -10,6 +10,7 @@ entities:
             - ref:FlightStatsPanel
             - ref:MiniMapPanel
             - ref:SpeedChartPanel
+            - ref:AtmosphericPanel
       tag: Scene
   com.meta.models.SceneNode:
     - components:
@@ -167,5 +168,37 @@ entities:
         com.meta.spatial.toolkit.PanelDimensions:
           {}
       tag: SpeedChartPanel
+  com.meta.models.SceneNode:
+    - components:
+        com.meta.components.Animatable:
+          {}
+        com.meta.components.Name:
+          name: AtmosphericPanel
+        com.meta.components.PointerNodeInverseComponent:
+          {}
+        com.meta.components.SceneNode:
+          rotation.data:
+            - 0
+            - 0
+            - 1
+            - 0
+          rotation.format: Quaternion
+          scale:
+            - 1.5
+            - 1.2
+            - 1
+          translation:
+            - 1.5
+            - -1.2
+            - -1.70000005
+          componentVersion: 1
+        com.meta.spatial.toolkit.Grabbable:
+          type: 0
+          enabled: true
+        com.meta.spatial.toolkit.Panel:
+          panel: "@layout/atmospheric"
+        com.meta.spatial.toolkit.PanelDimensions:
+          {}
+      tag: AtmosphericPanel
 metadata:
   version: 1.33

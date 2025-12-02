@@ -119,7 +119,10 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
     public void drawData(@NonNull Plot plot) {
         options.padding.right = (int) (plot.options.font_size * 5);
         if (locationService != null) {
-            final long currentTime = TimeOffset.phoneToGpsTime(System.currentTimeMillis());
+            // Use effective time that accounts for pause duration in mock mode
+            final long currentTime = Services.location != null 
+                ? Services.location.getEffectiveCurrentTime() 
+                : TimeOffset.phoneToGpsTime(System.currentTimeMillis());
             final MLocation loc = locationService.lastLoc;
             if (loc != null && currentTime - loc.millis <= window) {
                 ellipses.setEnabled(true);
@@ -146,7 +149,7 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
                 double vx, vy;
                 if (Services.location != null && Services.location.motionEstimator instanceof KalmanFilter3D) {
                     final KalmanFilter3D kf3d = (KalmanFilter3D) Services.location.motionEstimator;
-                    final KalmanFilter3D.KFState predictedState = kf3d.getCachedPredictedState(System.currentTimeMillis());
+                    final KalmanFilter3D.KFState predictedState = kf3d.getCachedPredictedState(Services.location != null ? Services.location.getEffectivePhoneTime() : System.currentTimeMillis());
                     vx = Math.sqrt(predictedState.velocity().x * predictedState.velocity().x + predictedState.velocity().z * predictedState.velocity().z);
                     vy = predictedState.velocity().y;
 
@@ -206,7 +209,10 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
      * Update sustained speed history with 90Hz interpolated kl/kd parameters
      */
     private void updateSustainedSpeedHistory(double vxs, double vys) {
-        final long currentTime = TimeOffset.phoneToGpsTime(System.currentTimeMillis());
+        // Use effective time that accounts for pause duration in mock mode
+        final long currentTime = Services.location != null 
+            ? Services.location.getEffectiveCurrentTime() 
+            : TimeOffset.phoneToGpsTime(System.currentTimeMillis());
         // Throttle to ~90Hz (every 11ms)
         if (currentTime - lastSustainedSpeedUpdate >= 11) {
             sustainedHistory.append(new SustainedSpeedPoint(currentTime, vxs, vys));
@@ -256,7 +262,7 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
                     // Use predicted velocity for the most recent point (90Hz updates)
                     if (t < 100 && Services.location != null && Services.location.motionEstimator instanceof KalmanFilter3D) {
                         final KalmanFilter3D kf3d = (KalmanFilter3D) Services.location.motionEstimator;
-                        final KalmanFilter3D.KFState predictedState = kf3d.getCachedPredictedState(System.currentTimeMillis());
+                        final KalmanFilter3D.KFState predictedState = kf3d.getCachedPredictedState(Services.location != null ? Services.location.getEffectivePhoneTime() : System.currentTimeMillis());
                         vx = Math.sqrt(predictedState.velocity().x * predictedState.velocity().x + predictedState.velocity().z * predictedState.velocity().z);
                         vy = predictedState.velocity().y;
                     } else {
@@ -318,7 +324,7 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
             final KalmanFilter3D kf3d = (KalmanFilter3D) Services.location.motionEstimator;
 
             // Use cached predicted state from last predictDelta() call with 90Hz interpolated kl/kd
-            final KalmanFilter3D.KFState state = kf3d.getCachedPredictedState(System.currentTimeMillis());
+            final KalmanFilter3D.KFState state = kf3d.getCachedPredictedState(Services.location != null ? Services.location.getEffectivePhoneTime() : System.currentTimeMillis());
 
             if (isReal(state.kl()) && isReal(state.kd())) {
                 // Calculate sustained speeds using 90Hz interpolated wingsuit parameters
@@ -348,7 +354,7 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
             final KalmanFilter3D kf3d = (KalmanFilter3D) Services.location.motionEstimator;
 
             // Use cached predicted state from last predictDelta() call with 90Hz interpolated wind parameters
-            final KalmanFilter3D.KFState state = kf3d.getCachedPredictedState(System.currentTimeMillis());
+            final KalmanFilter3D.KFState state = kf3d.getCachedPredictedState(Services.location != null ? Services.location.getEffectivePhoneTime() : System.currentTimeMillis());
 
             if (isReal(state.klwind()) && isReal(state.kdwind())) {
                 // Calculate wind-adjusted sustained speeds using 90Hz interpolated wind-based wingsuit parameters
@@ -375,7 +381,7 @@ public class SpeedChartLive extends PlotSurface implements Subscriber<MLocation>
             final KalmanFilter3D kf3d = (KalmanFilter3D) Services.location.motionEstimator;
 
             // Use cached predicted state from last predictDelta() call
-            final KalmanFilter3D.KFState state = kf3d.getCachedPredictedState(System.currentTimeMillis());
+            final KalmanFilter3D.KFState state = kf3d.getCachedPredictedState(Services.location != null ? Services.location.getEffectivePhoneTime() : System.currentTimeMillis());
 
             // Get velocity and acceleration from the predicted filter state
             final double vx = state.velocity().x;

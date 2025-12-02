@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Play Controls Popup: Seekbar + Play/Pause + Stop -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/playControlsContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#CC000000"
+    android:padding="8dp"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- Current time tooltip (follows thumb position) -->
+    <LinearLayout
+        android:id="@+id/playControlsTooltip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/tooltip_bg"
+        android:orientation="vertical"
+        android:padding="6dp"
+        android:layout_marginBottom="4dp">
+
+        <TextView
+            android:id="@+id/playControlsTimeLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="12:34:56 PM"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/playControlsDateLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="Jan 15, 2024"
+            android:textColor="#CCCCCC"
+            android:textSize="11sp" />
+
+    </LinearLayout>
+
+    <!-- GPS Labels (above seekbar) -->
+    <FrameLayout
+        android:id="@+id/playControlsGpsLabelsFrame"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="2dp"
+        android:clipChildren="false"
+        android:clipToPadding="false">
+
+        <TextView
+            android:id="@+id/playControlsGpsStartLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="GPS Start"
+            android:textColor="#88FF88"
+            android:textSize="10sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/playControlsGpsEndLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="GPS End"
+            android:textColor="#88FF88"
+            android:textSize="10sp"
+            android:visibility="gone" />
+
+    </FrameLayout>
+
+    <!-- Seekbar with markers -->
+    <FrameLayout
+        android:id="@+id/playControlsSeekbarFrame"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <SeekBar
+            android:id="@+id/playControlsSeekBar"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:min="0"
+            android:max="1000"
+            android:progress="0"
+            android:progressDrawable="@drawable/seekbar_progress"
+            android:thumb="@drawable/seekbar_thumb"
+            android:splitTrack="false"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp" />
+
+        <!-- GPS Start Marker (green line) -->
+        <View
+            android:id="@+id/playControlsGpsStartMarker"
+            android:layout_width="2dp"
+            android:layout_height="48dp"
+            android:background="#88FF88"
+            android:visibility="gone" />
+
+        <!-- GPS End Marker (green line) -->
+        <View
+            android:id="@+id/playControlsGpsEndMarker"
+            android:layout_width="2dp"
+            android:layout_height="48dp"
+            android:background="#88FF88"
+            android:visibility="gone" />
+
+        <!-- Video Start Marker (blue line) -->
+        <View
+            android:id="@+id/playControlsVideoStartMarker"
+            android:layout_width="2dp"
+            android:layout_height="48dp"
+            android:background="#8888FF"
+            android:visibility="gone" />
+
+        <!-- Video End Marker (blue line) -->
+        <View
+            android:id="@+id/playControlsVideoEndMarker"
+            android:layout_width="2dp"
+            android:layout_height="48dp"
+            android:background="#8888FF"
+            android:visibility="gone" />
+
+    </FrameLayout>
+
+    <!-- Video Labels (below seekbar) -->
+    <FrameLayout
+        android:id="@+id/playControlsVideoLabelsFrame"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:clipChildren="false"
+        android:clipToPadding="false">
+
+        <TextView
+            android:id="@+id/playControlsVideoStartLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Video Start"
+            android:textColor="#8888FF"
+            android:textSize="10sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/playControlsVideoEndLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Video End"
+            android:textColor="#8888FF"
+            android:textSize="10sp"
+            android:visibility="gone" />
+
+    </FrameLayout>
+
+    <!-- Duration labels row -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
+
+        <TextView
+            android:id="@+id/playControlsElapsedLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:text="0:00"
+            android:textColor="#AAAAAA"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/playControlsTotalLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:text="0:00"
+            android:textColor="#AAAAAA"
+            android:textSize="12sp" />
+
+    </RelativeLayout>
+
+    <!-- Play/Pause and Stop buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="8dp">
+
+        <Button
+            android:id="@+id/playControlsPlayPauseButton"
+            android:layout_width="100dp"
+            android:layout_height="60dp"
+            android:layout_margin="4dp"
+            android:background="@drawable/button_bg"
+            android:text="⏸"
+            android:textColor="#ffffff"
+            android:textSize="24sp"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <Button
+            android:id="@+id/playControlsStopButton"
+            android:layout_width="100dp"
+            android:layout_height="60dp"
+            android:layout_margin="4dp"
+            android:background="@drawable/button_bg"
+            android:text="⏹"
+            android:textColor="#ffffff"
+            android:textSize="24sp"
+            android:clickable="true"
+            android:focusable="true" />
+
+    </LinearLayout>
+
+</LinearLayout>

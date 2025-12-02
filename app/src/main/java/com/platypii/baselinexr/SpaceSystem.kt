@@ -191,7 +191,8 @@ class SpaceSystem(
             val trenchLocation = GeoUtils.applyOffset(VROptions.current.destination, terrainToPortal)
 
             // Convert to world coordinates
-            val currentTime = System.currentTimeMillis()
+            // Use effective time that accounts for pause duration in mock mode
+            val currentTime = Services.location?.getEffectivePhoneTime() ?: System.currentTimeMillis()
             val motionEstimator = Services.location.motionEstimator
             val trenchWorldPos = gpsTransform.toWorldCoordinates(
                 trenchLocation.lat,

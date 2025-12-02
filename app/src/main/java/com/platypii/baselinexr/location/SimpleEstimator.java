@@ -28,6 +28,24 @@ public final class SimpleEstimator implements MotionEstimator {
     public MLocation lastUpdate = null;     // last GPS update
     private Vector3 positionDelta = null;    // Difference between last gps point and last estimated position
     private MLocation origin = null;         // GPS origin for ENU conversion
+    
+    // Frozen state - when true, predictDelta returns zero (no extrapolation)
+    private volatile boolean frozen = false;
+    
+    @Override
+    public void freeze() {
+        frozen = true;
+    }
+    
+    @Override
+    public void unfreeze() {
+        frozen = false;
+    }
+    
+    @Override
+    public boolean isFrozen() {
+        return frozen;
+    }
 
     /**
      * Converts GPS lat/lon/alt to ENU coordinates relative to the origin
@@ -106,6 +124,10 @@ public final class SimpleEstimator implements MotionEstimator {
      */
     @Override
     public Vector3 predictDelta(long currentTimeMillis) {
+        // When frozen, return zero delta (no extrapolation)
+        if (frozen) {
+            return new Vector3();
+        }
         if (lastUpdate == null) return new Vector3();
         // Correct for phone/gps time skew
         final double adjustedCurrentTime = TimeOffset.phoneToGpsTime(currentTimeMillis);

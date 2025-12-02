@@ -6,10 +6,16 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.FrameLayout
+import android.widget.Spinner
 import android.widget.TextView
 import com.platypii.baselinexr.BaselineActivity
 import com.platypii.baselinexr.R
+import com.platypii.baselinexr.Services
+import com.platypii.baselinexr.VROptions
+import com.platypii.baselinexr.replay.PlaybackTimeline
+import com.platypii.baselinexr.replay.ReplayController
 import com.platypii.baselinexr.ui.wind.WindEstimationController
+import com.platypii.baselinexr.ui.wind.SavedWindDisplayController
 import com.platypii.baselinexr.wind.WindDataPoint
 import com.platypii.baselinexr.wind.WindSystem
 
@@ -27,8 +33,27 @@ class HudPanelController(private val activity: BaselineActivity) {
     private var windInputSource: WindInputSource = WindInputSource.ESTIMATION
 
     private val windEstimationController = WindEstimationController(activity)
+    private val savedWindDisplayController = SavedWindDisplayController(activity)
     private val headingController = HeadingController(activity)
     private var polarsController: PolarsController? = null
+    private var settingsController: SettingsController? = null
+    private var playControlsController: PlayControlsController? = null
+    
+    // Replay controller for coordinated GPS + video playback
+    var replayController: ReplayController? = null
+    
+    // Play controls popup visibility
+    private var playControlsVisible = false
+    private var playControlsPopupContainer: View? = null
+    private var playControlsButton: Button? = null
+    
+    // Debounce for playback buttons (prevent double-clicks)
+    private var lastPlaybackButtonTime = 0L
+    private val playbackButtonDebounceMs = 1000L  // 1 second debounce for playback buttons
+    
+    // Cooldown for handleMenuClick (prevents second click from long button press)
+    private var lastMenuClickTime = 0L
+    private val menuClickCooldownMs = 1500L  // 1.5 seconds cooldown after click completes
 
     private var rootView: View? = null
     private var menuContainer: FrameLayout? = null
@@ -40,13 +65,36 @@ class HudPanelController(private val activity: BaselineActivity) {
     fun setupPanel(rootView: View?) {
         this.rootView = rootView
         this.menuContainer = rootView?.findViewById(R.id.menuContainer)
+        this.playControlsPopupContainer = rootView?.findViewById(R.id.playControlsPopupContainer)
+        this.playControlsButton = rootView?.findViewById(R.id.play_controls_button)
 
         android.util.Log.d("BXRINPUT", "HudPanelController.setupPanel() called - rootView=$rootView")
 
         // Get references to views
         val exitButton = rootView?.findViewById<Button>(R.id.exit_button)
         val headingButton = rootView?.findViewById<Button>(R.id.heading_button)
+        val recordButton = rootView?.findViewById<Button>(R.id.record_button)
         val hudPanel = rootView?.findViewById<View>(R.id.hudPanel)
+        
+        android.util.Log.i("BXRINPUT", "Button refs: exit=$exitButton, heading=$headingButton, record=$recordButton, hudPanel=$hudPanel, playControls=$playControlsButton")
+        
+        // Show play controls button in replay mode
+        val isReplay = replayController?.isReplayMode == true
+        android.util.Log.i("BXRINPUT", "isReplayMode=$isReplay, replayController=$replayController")
+        if (isReplay) {
+            playControlsButton?.visibility = View.VISIBLE
+            android.util.Log.i("BXRINPUT", "Play controls button set to VISIBLE")
+            setupPlayControls()
+        } else {
+            // Always set up play controls in case we switch to replay mode later
+            setupPlayControls()
+        }
+        
+        // Wire up screen record button
+        recordButton?.let { button ->
+            activity.screenRecordController?.setRecordButton(button)
+            android.util.Log.i("BXRINPUT", "Record button wired to screenRecordController")
+        } ?: android.util.Log.e("BXRINPUT", "Record button is NULL - not found in layout!")
 
         // Set up touch listener on root that manually dispatches based on coordinates
         // This is necessary because Meta Spatial SDK may not properly dispatch to child views
@@ -55,6 +103,17 @@ class HudPanelController(private val activity: BaselineActivity) {
                 val x = event.x.toInt()
                 val y = event.y.toInt()
                 android.util.Log.i("BXRINPUT", "ROOT TOUCH at ($x, $y)")
+                
+                // Debug: Log button bounds
+                recordButton?.let { btn ->
+                    val loc = IntArray(2)
+                    val parentLoc = IntArray(2)
+                    btn.getLocationInWindow(loc)
+                    rootView.getLocationInWindow(parentLoc)
+                    val relX = loc[0] - parentLoc[0]
+                    val relY = loc[1] - parentLoc[1]
+                    android.util.Log.i("BXRINPUT", "Record button bounds: x=$relX-${relX + btn.width}, y=$relY-${relY + btn.height}, visible=${btn.visibility == View.VISIBLE}")
+                }
 
                 // Check if touch is on exit button
                 if (exitButton != null && isPointInView(exitButton, x, y, rootView)) {
@@ -62,11 +121,44 @@ class HudPanelController(private val activity: BaselineActivity) {
                     activity.finish()
                     return@setOnTouchListener true
                 }
+                
+                // Check if touch is on play controls button (when visible)
+                val playCtrlBtn = rootView.findViewById<Button>(R.id.play_controls_button)
+                if (playCtrlBtn != null) {
+                    val loc = IntArray(2)
+                    val parentLoc = IntArray(2)
+                    playCtrlBtn.getLocationInWindow(loc)
+                    rootView.getLocationInWindow(parentLoc)
+                    val relX = loc[0] - parentLoc[0]
+                    val relY = loc[1] - parentLoc[1]
+                    android.util.Log.i("BXRINPUT", "Play controls button bounds: x=$relX-${relX + playCtrlBtn.width}, y=$relY-${relY + playCtrlBtn.height}, visible=${playCtrlBtn.visibility == View.VISIBLE}, touch=($x,$y)")
+                }
+                if (playCtrlBtn != null && playCtrlBtn.visibility == View.VISIBLE && 
+                    isPointInView(playCtrlBtn, x, y, rootView)) {
+                    android.util.Log.i("BXRINPUT", "Touch is on PLAY CONTROLS BUTTON - toggling play controls")
+                    togglePlayControls()
+                    return@setOnTouchListener true
+                }
+                
+                // Check if touch is on record button
+                if (recordButton != null && isPointInView(recordButton, x, y, rootView)) {
+                    android.util.Log.i("BXRINPUT", "Touch is on RECORD BUTTON - toggling recording")
+                    activity.screenRecordController?.toggleRecording()
+                    return@setOnTouchListener true
+                }
 
                 // Check if touch is on heading button (when visible)
                 if (headingButton != null && headingButton.visibility == View.VISIBLE && isPointInView(headingButton, x, y, rootView)) {
                     android.util.Log.i("BXRINPUT", "Touch is on HEADING BUTTON - showing main menu")
                     showMenu(MenuState.MAIN_MENU)
+                    return@setOnTouchListener true
+                }
+
+                // Check if touch is on play controls popup (when visible)
+                if (playControlsPopupContainer != null && playControlsPopupContainer?.visibility == View.VISIBLE && 
+                    isPointInView(playControlsPopupContainer!!, x, y, rootView)) {
+                    android.util.Log.i("BXRINPUT", "Touch is in PLAY CONTROLS POPUP area at ($x, $y)")
+                    dispatchTouchToPlayControls(event, x, y)
                     return@setOnTouchListener true
                 }
 
@@ -131,6 +223,37 @@ class HudPanelController(private val activity: BaselineActivity) {
     }
 
     /**
+     * Dispatch touch event to play controls popup
+     */
+    private fun dispatchTouchToPlayControls(event: android.view.MotionEvent, x: Int, y: Int) {
+        val popup = playControlsPopupContainer ?: return
+        
+        // Find all clickable views and check if touch hits them
+        findClickableViews(popup).forEach { view ->
+            if (isPointInView(view, x, y, rootView!!)) {
+                android.util.Log.i("BXRINPUT", "Play controls hit: ${view.javaClass.simpleName} id=${view.id}")
+                view.performClick()
+                return
+            }
+        }
+        
+        // Also handle seekbar dragging
+        val seekBar = popup.findViewById<android.widget.SeekBar>(R.id.playControlsSeekBar)
+        if (seekBar != null && isPointInView(seekBar, x, y, rootView!!)) {
+            android.util.Log.i("BXRINPUT", "Play controls seekbar touched")
+            // Let the seekbar handle its own touch
+            val seekbarLocation = IntArray(2)
+            seekBar.getLocationInWindow(seekbarLocation)
+            val rootLocation = IntArray(2)
+            rootView!!.getLocationInWindow(rootLocation)
+            val localX = x - (seekbarLocation[0] - rootLocation[0])
+            val localY = y - (seekbarLocation[1] - rootLocation[1])
+            event.setLocation(localX.toFloat(), localY.toFloat())
+            seekBar.dispatchTouchEvent(event)
+        }
+    }
+
+    /**
      * Recursively find all clickable views (buttons) in a view hierarchy
      */
     private fun findClickableViews(view: View): List<View> {
@@ -179,47 +302,66 @@ class HudPanelController(private val activity: BaselineActivity) {
             return
         }
         
-        // Convert normalized UV to pixel coordinates within the panel
-        // The panel view dimensions tell us the actual pixel size
-        val panelView = rootView ?: return
-        val panelWidth = panelView.width.toFloat()
-        val panelHeight = panelView.height.toFloat()
+        // Check if this is a top row click (row 0) which needs cooldown
+        // Top row contains playback buttons that need protection from double-clicks
+        val isTopRowClick = isClickInTopRow(v)
+        val now = System.currentTimeMillis()
         
-        if (panelWidth <= 0 || panelHeight <= 0) {
-            android.util.Log.w("BXRINPUT", "Panel has invalid dimensions: ${panelWidth}x${panelHeight}")
+        if (isTopRowClick && now - lastMenuClickTime < menuClickCooldownMs) {
+            android.util.Log.i("BXRINPUT", "Ignoring top row click - cooldown active (${now - lastMenuClickTime}ms since last click)")
             return
         }
         
-        val pixelX = (u * panelWidth).toInt()
-        val pixelY = (v * panelHeight).toInt()
-        
-        android.util.Log.i("BXRINPUT", "Converted to pixels: ($pixelX, $pixelY) in ${panelWidth.toInt()}x${panelHeight.toInt()} panel")
-        
-        // Try to find and click the button at these pixel coordinates
-        // First search in the current menu view
-        val menuView = currentMenuView
-        if (menuView != null) {
-            android.util.Log.d("BXRINPUT", "Searching in menuView: ${menuView.javaClass.simpleName}")
-            val clickedView = findViewAtPosition(menuView, pixelX, pixelY, panelView)
-            if (clickedView != null) {
-                android.util.Log.i("BXRINPUT", "Found clickable view: ${clickedView.javaClass.simpleName} id=${clickedView.id}")
-                // Use callOnClick() which directly invokes the OnClickListener
-                // performClick() may not always trigger the listener
-                val clicked = clickedView.callOnClick()
-                android.util.Log.i("BXRINPUT", "callOnClick() returned: $clicked")
-                if (clicked) return
-                // If callOnClick returned false (no listener), try performClick as fallback
-                clickedView.performClick()
-                return
-            } else {
-                android.util.Log.d("BXRINPUT", "No clickable view found at ($pixelX, $pixelY)")
-                // Log all buttons and their positions for debugging
-                logAllButtonPositions(menuView, panelView)
-            }
+        // Record click time for top row clicks only
+        if (isTopRowClick) {
+            lastMenuClickTime = now
         }
         
-        // Fallback to grid-based handling for main menu
-        handleMenuClickByGrid(u, v)
+        try {
+            // Convert normalized UV to pixel coordinates within the panel
+            // The panel view dimensions tell us the actual pixel size
+            val panelView = rootView ?: return
+            val panelWidth = panelView.width.toFloat()
+            val panelHeight = panelView.height.toFloat()
+            
+            if (panelWidth <= 0 || panelHeight <= 0) {
+                android.util.Log.w("BXRINPUT", "Panel has invalid dimensions: ${panelWidth}x${panelHeight}")
+                return
+            }
+            
+            val pixelX = (u * panelWidth).toInt()
+            val pixelY = (v * panelHeight).toInt()
+            
+            android.util.Log.i("BXRINPUT", "Converted to pixels: ($pixelX, $pixelY) in ${panelWidth.toInt()}x${panelHeight.toInt()} panel")
+            
+            // Try to find and click the button at these pixel coordinates
+            // First search in the current menu view
+            val menuView = currentMenuView
+            if (menuView != null) {
+                android.util.Log.d("BXRINPUT", "Searching in menuView: ${menuView.javaClass.simpleName}")
+                val clickedView = findViewAtPosition(menuView, pixelX, pixelY, panelView)
+                if (clickedView != null) {
+                    android.util.Log.i("BXRINPUT", "Found clickable view: ${clickedView.javaClass.simpleName} id=${clickedView.id}")
+                    // Use callOnClick() which directly invokes the OnClickListener
+                    // performClick() may not always trigger the listener
+                    val clicked = clickedView.callOnClick()
+                    android.util.Log.i("BXRINPUT", "callOnClick() returned: $clicked")
+                    if (clicked) return
+                    // If callOnClick returned false (no listener), try performClick as fallback
+                    clickedView.performClick()
+                    return
+                } else {
+                    android.util.Log.d("BXRINPUT", "No clickable view found at ($pixelX, $pixelY)")
+                    // Log all buttons and their positions for debugging
+                    logAllButtonPositions(menuView, panelView)
+                }
+            }
+            
+            // Fallback to grid-based handling for main menu
+            handleMenuClickByGrid(u, v)
+        } catch (e: Exception) {
+            android.util.Log.e("BXRINPUT", "Error in handleMenuClick", e)
+        }
     }
     
     /**
@@ -270,6 +412,20 @@ class HudPanelController(private val activity: BaselineActivity) {
     }
     
     /**
+     * Check if a click is in the top row (row 0) of the menu grid.
+     * Top row contains Wind, Polars, Settings buttons.
+     * These buttons need cooldown protection to prevent VR double-clicks.
+     */
+    private fun isClickInTopRow(v: Float): Boolean {
+        // Menu starts at v=0.20 (below header)
+        val menuTop = 0.20f
+        val menuV = (v - menuTop) / (1.0f - menuTop)  // Normalize v within menu area (0-1)
+        
+        // Row 0 is from menuV 0.0 to ~0.21 (80dp out of 380dp total menu height)
+        return menuV >= 0.0f && menuV < 0.21f
+    }
+    
+    /**
      * Fallback grid-based menu click handling (for main menu)
      */
     private fun handleMenuClickByGrid(u: Float, v: Float) {
@@ -279,7 +435,7 @@ class HudPanelController(private val activity: BaselineActivity) {
         // - Rows 1-3: Direction buttons (100dp height each)
         // - Total menu height: ~380dp (80 + 100*3)
         // - Button width: ~104dp each (100dp + margins)
-        // - Total menu width: ~312dp
+        // - Total menu width: ~312dp (3 buttons)
         
         // Menu is centered horizontally, so we need to find menu bounds
         // The menu starts at v=0.20 (below header which is 20% of panel)
@@ -311,7 +467,7 @@ class HudPanelController(private val activity: BaselineActivity) {
         // Row 3: 0.74 to 1.0 (100/380)
         val row = when {
             menuV < 0.0f -> -1  // Above menu
-            menuV < 0.21f -> 0  // Wind/Polars/Settings row
+            menuV < 0.21f -> 0  // Wind, Polars, Settings row
             menuV < 0.47f -> 1  // Tail/N/Nose row
             menuV < 0.74f -> 2  // W/Center/E row
             menuV <= 1.0f -> 3  // -5°/S/+5° row
@@ -329,7 +485,7 @@ class HudPanelController(private val activity: BaselineActivity) {
                     android.util.Log.d("BXRINPUT", "Click outside menu bounds")
                     return
                 }
-                // Row 0: Wind, Polars, Settings buttons
+                // Row 0: Wind, Polars, Settings buttons (3 columns)
                 if (row == 0) {
                     when (col) {
                         0 -> {
@@ -346,7 +502,7 @@ class HudPanelController(private val activity: BaselineActivity) {
                         }
                     }
                 } else if (row in 1..3) {
-                    // Direction buttons in rows 1-3
+                    // Direction buttons in rows 1-3 (3 columns)
                     handleDirectionButton(row, col)
                 }
             }
@@ -389,6 +545,12 @@ class HudPanelController(private val activity: BaselineActivity) {
      */
     private fun toggleMainMenu() {
         android.util.Log.d("BXRINPUT", "toggleMainMenu() - currentMenuState=$currentMenuState")
+        
+        // Close play controls if visible
+        if (playControlsVisible) {
+            hidePlayControls()
+        }
+        
         when (currentMenuState) {
             MenuState.CLOSED -> {
                 android.util.Log.i("BXRINPUT", "Opening main menu")
@@ -406,6 +568,11 @@ class HudPanelController(private val activity: BaselineActivity) {
      */
     private fun showMenu(menuState: MenuState) {
         android.util.Log.i("BXRINPUT", "showMenu() - showing $menuState")
+        
+        // Close play controls if visible (only one popup at a time)
+        if (playControlsVisible) {
+            hidePlayControls()
+        }
 
         // Clean up previous menu
         currentMenuView?.let {
@@ -422,6 +589,7 @@ class HudPanelController(private val activity: BaselineActivity) {
                 currentMenuView = inflater.inflate(R.layout.heading, menuContainer, false)
                 setupMainMenuButtons(currentMenuView)
                 headingController.setupControls(currentMenuView)
+                // Seekbar is now in the play controls popup, not in the menu
             }
             MenuState.WIND_MENU -> {
                 android.util.Log.d("BXRINPUT", "Inflating wind.xml for wind menu")
@@ -436,6 +604,8 @@ class HudPanelController(private val activity: BaselineActivity) {
                     windEstimationController.setupWindEstimationUI(currentMenuView)
                 }
                 windEstimationController.startCollection()
+                // Initialize saved wind display
+                savedWindDisplayController.initialize(currentMenuView)
             }
             MenuState.POLARS_MENU -> {
                 currentMenuView = inflater.inflate(R.layout.polars, menuContainer, false)
@@ -447,6 +617,10 @@ class HudPanelController(private val activity: BaselineActivity) {
             }
             MenuState.SETTINGS_MENU -> {
                 currentMenuView = inflater.inflate(R.layout.settings, menuContainer, false)
+                // Initialize settings controller
+                currentMenuView?.let { view ->
+                    settingsController = SettingsController(view)
+                }
             }
             MenuState.CLOSED -> {
                 menuContainer?.visibility = View.GONE
@@ -489,8 +663,8 @@ class HudPanelController(private val activity: BaselineActivity) {
      * This allows touches to pass through transparent layout containers to underlying UI elements.
      */
     private fun disableClickInterceptionRecursive(view: View) {
-        // Only disable click interception on container views, not on interactive elements like buttons
-        if (view is ViewGroup && view !is Button) {
+        // Only disable click interception on container views, not on interactive elements like buttons or spinners
+        if (view is ViewGroup && view !is Button && view !is Spinner) {
             view.isClickable = false
             view.isFocusable = false
             android.util.Log.v("BXRINPUT", "Disabled clicks on: ${view.javaClass.simpleName} id=${view.id}")
@@ -549,6 +723,236 @@ class HudPanelController(private val activity: BaselineActivity) {
             android.util.Log.i("BXRINPUT", "Settings menu button clicked")
             showMenu(MenuState.SETTINGS_MENU)
         }
+    }
+    
+    // Note: Old setupSeekBar removed - now using PlayControlsController instead
+    
+    /**
+     * Update the seekbar position during playback.
+     * Call this periodically (e.g., from frame update loop) when menu is visible.
+     */
+    fun updateSeekBarPosition() {
+        // Update play controls popup (if visible)
+        if (playControlsVisible && playControlsController != null) {
+            val mockProvider = Services.location?.getMockLocationProvider() ?: return
+            val currentGpsTimeMs = mockProvider.getCurrentGpsTimeMs()
+            if (currentGpsTimeMs > 0) {
+                playControlsController?.updatePosition(currentGpsTimeMs)
+            }
+            
+            // Update play/pause button state using ReplayController state
+            val isPlaying = replayController?.state == com.platypii.baselinexr.replay.ReplayController.PlaybackState.PLAYING
+            playControlsController?.updatePlayPauseButton(!isPlaying)
+        }
+    }
+    
+    /**
+     * Enable replay mode UI - shows the play controls button
+     * Call this when replay mode becomes active
+     */
+    fun enableReplayModeUI() {
+        android.util.Log.i("BXRINPUT", "enableReplayModeUI() called")
+        // Must run on UI thread since this may be called from background thread
+        activity.runOnUiThread {
+            playControlsButton?.visibility = View.VISIBLE
+            android.util.Log.i("BXRINPUT", "Play controls button visibility set to VISIBLE, button=$playControlsButton")
+        }
+    }
+    
+    /**
+     * Check if the play controls button is visible
+     */
+    fun isPlayControlsButtonVisible(): Boolean {
+        return playControlsButton?.visibility == View.VISIBLE
+    }
+    
+    /**
+     * Check if the play controls popup is visible
+     */
+    fun isPlayControlsPopupVisible(): Boolean {
+        return playControlsVisible
+    }
+    
+    /**
+     * Handle click in the play controls popup area
+     * The popup spans v from about 0.11 (top header) to ~0.67 (bottom)
+     * The buttons are in a horizontal LinearLayout at the bottom, centered
+     * Play/Pause is on the left, Stop is on the right
+     */
+    fun handlePlayControlsClick(u: Float, v: Float) {
+        android.util.Log.i("BXRINPUT", "handlePlayControlsClick($u, $v)")
+        
+        // Debounce playback button clicks
+        val now = System.currentTimeMillis()
+        if (now - lastPlaybackButtonTime < playbackButtonDebounceMs) {
+            android.util.Log.d("BXRINPUT", "Ignoring playback button click (debounce)")
+            return
+        }
+        
+        // The popup occupies approximately:
+        // - Top: v ~0.11 (85px / 774px)
+        // - Bottom: v ~0.67 (based on popup height ~437px from logs)
+        // The buttons are at the bottom of the popup (last ~80dp out of 437px)
+        // Button area: v from ~0.57 to ~0.67
+        
+        val popupTopV = 0.11f
+        val popupBottomV = 0.67f
+        val buttonAreaTopV = 0.55f  // Buttons are in bottom portion of popup
+        
+        // Check if click is in button row area (bottom of popup)
+        if (v >= buttonAreaTopV && v <= popupBottomV) {
+            // Buttons are centered horizontally, each 100dp wide with 4dp margin
+            // Play/Pause is around u = 0.40-0.50, Stop is around u = 0.50-0.60
+            
+            android.util.Log.i("BXRINPUT", "Click in button area, u=$u")
+            
+            if (u >= 0.35f && u <= 0.50f) {
+                // Play/Pause button
+                android.util.Log.i("BXRINPUT", "Play/Pause button clicked!")
+                lastPlaybackButtonTime = now
+                playControlsController?.onPlayPauseClick()
+                return
+            } else if (u >= 0.50f && u <= 0.65f) {
+                // Stop button
+                android.util.Log.i("BXRINPUT", "Stop button clicked!")
+                lastPlaybackButtonTime = now
+                playControlsController?.onStopClick()
+                return
+            }
+        }
+        
+        android.util.Log.d("BXRINPUT", "No play controls button hit at ($u, $v)")
+    }
+    
+    /**
+     * Toggle the play controls popup visibility (public for HudSystem)
+     */
+    fun togglePlayControlsPopup() {
+        togglePlayControls()
+    }
+    
+    /**
+     * Toggle the play controls popup visibility
+     */
+    private fun togglePlayControls() {
+        if (playControlsVisible) {
+            hidePlayControls()
+        } else {
+            showPlayControls()
+        }
+    }
+    
+    /**
+     * Show the play controls popup
+     */
+    private fun showPlayControls() {
+        // Close any open menu first
+        showMenu(MenuState.CLOSED)
+        
+        // Setup play controls if not yet initialized
+        if (playControlsController == null) {
+            setupPlayControls()
+        }
+        
+        playControlsPopupContainer?.visibility = View.VISIBLE
+        playControlsVisible = true
+        playControlsController?.show()
+        
+        // Update play/pause button to match current playback state
+        // Use ReplayController state - show play icon unless actively PLAYING
+        val isPlaying = replayController?.state == com.platypii.baselinexr.replay.ReplayController.PlaybackState.PLAYING
+        playControlsController?.updatePlayPauseButton(!isPlaying)
+        
+        android.util.Log.i("BXRINPUT", "Play controls popup shown, isPlaying=$isPlaying")
+    }
+    
+    /**
+     * Hide the play controls popup
+     */
+    private fun hidePlayControls() {
+        playControlsPopupContainer?.visibility = View.GONE
+        playControlsVisible = false
+        playControlsController?.hide()
+        
+        android.util.Log.i("BXRINPUT", "Play controls popup hidden")
+    }
+    
+    /**
+     * Setup the play controls popup
+     */
+    private fun setupPlayControls() {
+        val popup = playControlsPopupContainer ?: return
+        
+        // Get track data
+        val mockProvider = Services.location?.getMockLocationProvider()
+        val gpsTrackStartMs = mockProvider?.getTrackStartTime() ?: 0L
+        val gpsTrackEndMs = gpsTrackStartMs + (mockProvider?.getTrackDuration() ?: 0L)
+        
+        if (gpsTrackStartMs <= 0 || gpsTrackEndMs <= gpsTrackStartMs) {
+            android.util.Log.w("BXRINPUT", "No valid GPS track for play controls")
+            playControlsButton?.visibility = View.GONE
+            return
+        }
+        
+        // Get video duration
+        val videoDurationMs = replayController?.videoController?.getDuration() ?: 0L
+        
+        android.util.Log.i("BXRINPUT", "Setting up play controls: gps=${(gpsTrackEndMs-gpsTrackStartMs)/1000}s, video=${videoDurationMs/1000}s")
+        
+        // Initialize the shared PlaybackTimeline FIRST
+        // This must happen before PlayControlsController.initialize() and before video sync starts
+        PlaybackTimeline.initialize(
+            gpsTrackStartMs = gpsTrackStartMs,
+            gpsTrackEndMs = gpsTrackEndMs,
+            videoDurationMs = videoDurationMs
+        )
+        
+        // Create controller
+        playControlsController = PlayControlsController(popup, replayController)
+        
+        // Initialize with track data
+        playControlsController?.initialize(
+            gpsTrackStartMs = gpsTrackStartMs,
+            gpsTrackEndMs = gpsTrackEndMs,
+            videoDurationMs = videoDurationMs
+        )
+        
+        // Wire up callbacks
+        playControlsController?.onSeek = { gpsTimeMs, videoTimeMs ->
+            android.util.Log.i("BXRINPUT", "Play controls seek: gps=$gpsTimeMs, video=$videoTimeMs")
+            replayController?.seekTo(gpsTimeMs, videoTimeMs)
+        }
+        
+        playControlsController?.onPlayPause = {
+            togglePlayback()
+            // Update button state immediately after toggle
+            // Use ReplayController state - show play icon unless actively PLAYING
+            val isPlaying = replayController?.state == com.platypii.baselinexr.replay.ReplayController.PlaybackState.PLAYING
+            playControlsController?.updatePlayPauseButton(!isPlaying)
+        }
+        
+        playControlsController?.onStop = {
+            stopPlayback()
+            // Update button state to show play icon (since we're stopped)
+            playControlsController?.updatePlayPauseButton(true)
+            // Don't hide popup - user may want to click play again
+        }
+        
+        android.util.Log.i("BXRINPUT", "Play controls setup complete")
+    }
+    
+    /**
+     * Toggle playback (play/pause)
+     */
+    private fun togglePlayback() {
+        replayController?.togglePlayPause()
+    }
+    
+    /**
+     * Stop playback
+     */
+    private fun stopPlayback() {
+        replayController?.stop()
     }
 
     /**
@@ -610,6 +1014,8 @@ class HudPanelController(private val activity: BaselineActivity) {
             WindInputSource.SAVED -> {
                 estimationDisplay?.visibility = View.GONE
                 savedDisplay?.visibility = View.VISIBLE
+                // Refresh the saved wind display when showing
+                savedWindDisplayController.refresh()
             }
             WindInputSource.NO_WIND -> {
                 estimationDisplay?.visibility = View.GONE

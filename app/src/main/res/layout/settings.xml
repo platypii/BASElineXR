@@ -1,35 +1,246 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Settings Sub-menu (placeholder) -->
+<!-- Settings Sub-menu with 3-column layout -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/settingsMenuContainer"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="4dp"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:padding="8dp"
     android:clickable="false"
     android:focusable="false">
 
-    <!-- Placeholder Content -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Settings Menu"
-        android:textColor="#ffffff"
-        android:textSize="20sp"
-        android:textStyle="bold"
+    <!-- Left Column (empty for now) -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
         android:gravity="center"
-        android:padding="16dp"
-        android:background="#00000000"
-        android:layout_margin="4dp" />
+        android:padding="8dp">
+        
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="#666666"
+            android:textSize="14sp" />
+    </LinearLayout>
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:text="System settings will be displayed here"
-        android:textColor="#cccccc"
-        android:textSize="14sp"
+    <!-- Middle Column - Atmosphere Settings -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:padding="8dp"
+        android:background="#22000000">
+
+        <!-- Title -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Atmosphere"
+            android:textColor="#00FFFF"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:paddingBottom="12dp" />
+
+        <!-- Show Atmospheric Panel Toggle -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="6dp">
+            
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Show Panel"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp" />
+            
+            <Button
+                android:id="@+id/btn_show_atmospheric"
+                android:layout_width="70dp"
+                android:layout_height="36dp"
+                android:text="ON"
+                android:textSize="12sp"
+                android:backgroundTint="#00AA00" />
+        </LinearLayout>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#444444"
+            android:layout_marginVertical="6dp" />
+
+        <!-- Temperature Mode Toggle -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="6dp">
+            
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Temp Source"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp" />
+            
+            <Button
+                android:id="@+id/btn_temp_mode"
+                android:layout_width="90dp"
+                android:layout_height="36dp"
+                android:text="OFFSET"
+                android:textSize="11sp"
+                android:backgroundTint="#0066AA" />
+        </LinearLayout>
+
+        <!-- Temperature Offset Controls (visible when using offset mode) -->
+        <LinearLayout
+            android:id="@+id/temp_offset_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingVertical="6dp"
+            android:visibility="visible">
+
+            <!-- Offset Label -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="ISA Offset"
+                android:textColor="#AAAAAA"
+                android:textSize="12sp"
+                android:paddingBottom="2dp" />
+
+            <!-- Offset Controls Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                
+                <Button
+                    android:id="@+id/btn_offset_minus"
+                    android:layout_width="50dp"
+                    android:layout_height="44dp"
+                    android:text="-"
+                    android:textSize="22sp"
+                    android:backgroundTint="#AA0000" />
+                
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center">
+                    
+                    <TextView
+                        android:id="@+id/temp_offset_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="+18°F"
+                        android:textColor="#FFFFFF"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+                    
+                    <TextView
+                        android:id="@+id/temp_offset_celsius"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="(+10°C)"
+                        android:textColor="#AAAAAA"
+                        android:textSize="12sp" />
+                </LinearLayout>
+                
+                <Button
+                    android:id="@+id/btn_offset_plus"
+                    android:layout_width="50dp"
+                    android:layout_height="44dp"
+                    android:text="+"
+                    android:textSize="22sp"
+                    android:backgroundTint="#00AA00" />
+            </LinearLayout>
+
+            <!-- Calculated Temperature Display -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingTop="8dp">
+                
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Calc Temp:"
+                    android:textColor="#AAAAAA"
+                    android:textSize="14sp" />
+                
+                <TextView
+                    android:id="@+id/calculated_temp_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="71.5°F"
+                    android:textColor="#00FFFF"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Device Temperature Display (visible when using device mode) -->
+        <LinearLayout
+            android:id="@+id/device_temp_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="6dp"
+            android:visibility="gone">
+            
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Device Temp:"
+                android:textColor="#AAAAAA"
+                android:textSize="14sp" />
+            
+            <TextView
+                android:id="@+id/device_temp_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No sensor"
+                android:textColor="#FFAA00"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Right Column (empty for now) -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
         android:gravity="center"
-        android:background="#00000000"
-        android:layout_margin="4dp" />
+        android:padding="8dp">
+        
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="#666666"
+            android:textSize="14sp" />
+    </LinearLayout>
 
 </LinearLayout>

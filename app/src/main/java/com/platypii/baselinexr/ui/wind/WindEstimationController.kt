@@ -36,6 +36,10 @@ class WindEstimationController(private val activity: BaselineActivity) {
     private var datasetAltitudeRangeText: TextView? = null
     private var currentAltitudeText: TextView? = null
 
+    // Selected layer controls
+    private var selectedLayerNameText: TextView? = null
+    private var selectedLayerIndex: Int = 0  // Index of currently selected layer for editing
+
     // Store latest live data for chart updates
     private var latestLiveData: List<WindDataPoint> = emptyList()
 
@@ -110,8 +114,13 @@ class WindEstimationController(private val activity: BaselineActivity) {
         datasetAltitudeRangeText = rootView?.findViewById(R.id.dataset_altitude_range_text)
         currentAltitudeText = rootView?.findViewById(R.id.current_altitude_text)
 
+        // Selected layer controls
+        selectedLayerNameText = rootView?.findViewById(R.id.selected_layer_name)
+
         setupDataBoundaryControls(rootView)
         setupScrollControls(rootView)
+        setupLayerSelectControls(rootView)
+        setupSelectedLayerControls(rootView)
     }
 
     private fun setupScrollControls(rootView: View?) {
@@ -154,6 +163,148 @@ class WindEstimationController(private val activity: BaselineActivity) {
             android.util.Log.i("BXRINPUT", "L- button clicked!")
             adjustDataBoundary(false, -10.0) // Lower boundary -10m
         }
+    }
+
+    /**
+     * Setup layer selection controls (Prev/Next buttons to cycle through layers)
+     */
+    private fun setupLayerSelectControls(rootView: View?) {
+        rootView?.findViewById<Button>(R.id.layer_select_prev_button)?.setOnClickListener {
+            android.util.Log.i("BXRINPUT", "Layer Prev button clicked!")
+            selectPreviousLayer()
+        }
+
+        rootView?.findViewById<Button>(R.id.layer_select_next_button)?.setOnClickListener {
+            android.util.Log.i("BXRINPUT", "Layer Next button clicked!")
+            selectNextLayer()
+        }
+    }
+
+    /**
+     * Setup selected layer controls (boundary adjustment, save buttons)
+     */
+    private fun setupSelectedLayerControls(rootView: View?) {
+        // Layer boundary adjustment buttons
+        rootView?.findViewById<Button>(R.id.selected_layer_lower_minus)?.setOnClickListener {
+            android.util.Log.i("BXRINPUT", "Selected Layer Lower- button clicked!")
+            adjustSelectedLayerBoundary(isUpper = false, increment = false)
+        }
+
+        rootView?.findViewById<Button>(R.id.selected_layer_lower_plus)?.setOnClickListener {
+            android.util.Log.i("BXRINPUT", "Selected Layer Lower+ button clicked!")
+            adjustSelectedLayerBoundary(isUpper = false, increment = true)
+        }
+
+        rootView?.findViewById<Button>(R.id.selected_layer_upper_minus)?.setOnClickListener {
+            android.util.Log.i("BXRINPUT", "Selected Layer Upper- button clicked!")
+            adjustSelectedLayerBoundary(isUpper = true, increment = false)
+        }
+
+        rootView?.findViewById<Button>(R.id.selected_layer_upper_plus)?.setOnClickListener {
+            android.util.Log.i("BXRINPUT", "Selected Layer Upper+ button clicked!")
+            adjustSelectedLayerBoundary(isUpper = true, increment = true)
+        }
+
+        // Save buttons
+        rootView?.findViewById<Button>(R.id.selected_layer_save_gps)?.setOnClickListener {
+            android.util.Log.i("BXRINPUT", "Save GPS button clicked!")
+            saveLayer("GPS")
+        }
+
+        rootView?.findViewById<Button>(R.id.selected_layer_save_sustained)?.setOnClickListener {
+            android.util.Log.i("BXRINPUT", "Save Sustained button clicked!")
+            saveLayer("Sustained")
+        }
+    }
+
+    /**
+     * Select the previous layer in the list
+     */
+    private fun selectPreviousLayer() {
+        val layers = windLayerManager?.getLayers() ?: return
+        if (layers.isEmpty()) return
+
+        selectedLayerIndex = if (selectedLayerIndex > 0) selectedLayerIndex - 1 else layers.size - 1
+        val layer = layers.getOrNull(selectedLayerIndex) ?: return
+
+        selectLayer(layer)
+        updateSelectedLayerDisplay()
+    }
+
+    /**
+     * Select the next layer in the list
+     */
+    private fun selectNextLayer() {
+        val layers = windLayerManager?.getLayers() ?: return
+        if (layers.isEmpty()) return
+
+        selectedLayerIndex = (selectedLayerIndex + 1) % layers.size
+        val layer = layers.getOrNull(selectedLayerIndex) ?: return
+
+        selectLayer(layer)
+        updateSelectedLayerDisplay()
+    }
+
+    /**
+     * Get the currently selected layer
+     */
+    private fun getSelectedLayer(): WindLayer? {
+        val layers = windLayerManager?.getLayers() ?: return null
+        return layers.getOrNull(selectedLayerIndex)
+    }
+
+    /**
+     * Adjust the selected layer's boundary
+     */
+    private fun adjustSelectedLayerBoundary(isUpper: Boolean, increment: Boolean) {
+        val layer = getSelectedLayer()
+        if (layer == null) {
+            android.util.Log.w("WindEstimationController", "No selected layer for boundary adjustment")
+            return
+        }
+
+        val altitudeChange = if (increment) 152.4 else -152.4 // 500 feet in meters
+
+        try {
+            windLayerManager?.let { manager ->
+                val allLayers = manager.getLayers()
+                val success = layer.adjustLayerBoundary(
+                    isUpper,
+                    altitudeChange,
+                    allLayers,
+                    manager.datasetMinAltitude,
+                    manager.datasetMaxAltitude
+                )
+
+                if (success) {
+                    android.util.Log.d("WindEstimationController", "Successfully adjusted ${layer.name} layer boundary")
+
+                    // Validate and fix any boundary issues
+                    manager.validateAndFixBoundaries()
+
+                    // Notify wind system that layer boundaries have changed
+                    WindSystemIntegration.notifyWindDataChanged()
+
+                    // Refresh displays
+                    activity.runOnUiThread {
+                        updateLayersList()
+                        updateSelectedLayerDisplay()
+                    }
+                } else {
+                    android.util.Log.w("WindEstimationController", "Failed to adjust ${layer.name} layer boundary - validation failed")
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("WindEstimationController", "Error adjusting layer boundary: ${e.message}", e)
+        }
+    }
+
+    /**
+     * Update the selected layer name display
+     */
+    private fun updateSelectedLayerDisplay() {
+        val layer = getSelectedLayer()
+        selectedLayerNameText?.text = layer?.name ?: "No Layer"
     }
 
     private fun setupWindEstimationCallbacks() {
@@ -316,6 +467,7 @@ class WindEstimationController(private val activity: BaselineActivity) {
                 val layers = windLayerManager?.getLayers() ?: emptyList()
                 val activeLayer = windLayerManager?.getActiveLayer()
                 val topLayer = windLayerManager?.getTopLayer()
+                val selectedLayer = getSelectedLayer()
 
                 android.util.Log.d("WindEstimationController", "Found ${layers.size} layers")
                 windLayerManager?.let { manager ->
@@ -335,22 +487,25 @@ class WindEstimationController(private val activity: BaselineActivity) {
                     return@let
                 }
 
-                for (layer in layers) {
+                // Ensure selected index is valid
+                if (selectedLayerIndex >= layers.size) {
+                    selectedLayerIndex = layers.size - 1
+                }
+
+                for ((index, layer) in layers.withIndex()) {
+                    val isSelected = index == selectedLayerIndex
                     val layerView = layerItemViewManager.createLayerItemView(
                         layer,
                         layer == activeLayer,
                         layer == topLayer,
-                        windLayerManager,
-                        ::updateLayersList,
-                        { selectedLayer ->
-                            // Use the proper layer selection method
-                            selectLayer(selectedLayer)
-                        },
-                        ::updateWindDisplaysFromActiveLayer,
-                        ::getCurrentAltitude
+                        isSelected,
+                        windLayerManager
                     )
                     container.addView(layerView)
                 }
+
+                // Update selected layer name display
+                updateSelectedLayerDisplay()
             }
         } catch (e: Exception) {
             android.util.Log.e("WindEstimationController", "Error updating layers list: ${e.message}", e)

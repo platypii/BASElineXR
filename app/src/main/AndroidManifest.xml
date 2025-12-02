@@ -44,6 +44,11 @@
     <!-- Storage permissions for reading 360 video files -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
+    
+    <!-- Screen recording permissions -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29"/>
 
     <!-- Shouldn't be needed as these are all runtime permissions now -->
     <!--  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>-->
@@ -106,6 +111,12 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
             </intent-filter>
         </receiver>
+
+        <!-- Screen recording foreground service -->
+        <service
+            android:name=".recording.ScreenRecordService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection"/>
 
     </application>
 </manifest>

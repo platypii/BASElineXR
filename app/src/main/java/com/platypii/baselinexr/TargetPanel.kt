@@ -57,7 +57,8 @@ class TargetPanel(private val gpsTransform: GpsToWorldTransform) : SystemBase() 
         if (gpsTransform.initialOrigin == null) return
 
         // Convert target GPS coordinates to world space
-        val currentTime = System.currentTimeMillis()
+        // Use effective time that accounts for pause duration in mock mode
+        val currentTime = Services.location?.getEffectivePhoneTime() ?: System.currentTimeMillis()
         val dest = VROptions.dropzone
         val targetWorldPos = gpsTransform.toWorldCoordinates(
             dest.lat, dest.lng, dest.alt, currentTime, Services.location.motionEstimator, false

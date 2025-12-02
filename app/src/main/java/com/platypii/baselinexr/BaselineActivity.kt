@@ -24,6 +24,9 @@ import com.meta.spatial.toolkit.Transform
 import com.meta.spatial.toolkit.VideoSurfacePanelRegistration
 import com.meta.spatial.vr.LocomotionSystem
 import com.meta.spatial.vr.VRFeature
+import com.platypii.baselinexr.replay.PlaybackTimeline
+import com.platypii.baselinexr.replay.ReplayController
+import com.platypii.baselinexr.replay.ReplayManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -33,6 +36,7 @@ import com.meta.spatial.core.PerformanceLevel
 import com.meta.spatial.toolkit.PlayerBodyAttachmentSystem
 import com.platypii.baselinexr.location.LocationStatus
 import com.platypii.baselinexr.measurements.MLocation
+import com.platypii.baselinexr.recording.ScreenRecordController
 import com.platypii.baselinexr.ui.HudPanelController
 import com.platypii.baselinexr.video.Video360Controller
 
@@ -46,6 +50,7 @@ class BaselineActivity : AppSystemActivity() {
     var wingsuitCanopySystem: WingsuitCanopySystem? = null
     var hudSystem: HudSystem? = null
     private var flightStatsSystem: FlightStatsSystem? = null
+    private var atmosphericSystem: AtmosphericSystem? = null
     private var speedChartSystem: SpeedChartSystem? = null
     private var targetPanelSystem: TargetPanel? = null
     private var portalSystem: PortalSystem? = null
@@ -55,7 +60,14 @@ class BaselineActivity : AppSystemActivity() {
     var hudPanelController: HudPanelController? = null
         private set
     private var video360Controller: Video360Controller? = null
-    private var trackStartTimeMs: Long? = null  // First GPS timestamp for video sync
+    
+    // Screen recording controller
+    var screenRecordController: ScreenRecordController? = null
+        private set
+    
+    // Replay controller for coordinated GPS + video playback
+    var replayController: ReplayController? = null
+        private set
 
     override fun registerFeatures(): List<SpatialFeature> {
         val features =
@@ -75,6 +87,10 @@ class BaselineActivity : AppSystemActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Initialize screen recording controller BEFORE super.onCreate()
+        screenRecordController = ScreenRecordController(this)
+        screenRecordController?.initialize()
+        
         super.onCreate(savedInstanceState)
 
         // Set CPU/GPU performance to SustainedHigh for better performance
@@ -94,9 +110,27 @@ class BaselineActivity : AppSystemActivity() {
         // Initialize panel controllers
         hudPanelController = HudPanelController(this)
 
-        // Initialize 360 video controller if configured
-        video360Controller = Video360Controller(this)
-        video360Controller?.initialize(VROptions.current)
+        // Initialize 360 video controller only if configured
+        if (VROptions.current.has360Video()) {
+            video360Controller = Video360Controller(this)
+            video360Controller?.initialize(VROptions.current)
+        }
+        
+        // Initialize replay controller for coordinated GPS + video playback
+        replayController = ReplayController(this)
+        replayController?.videoController = video360Controller
+        hudPanelController?.replayController = replayController
+        
+        // Connect ReplayManager callbacks to ReplayController
+        ReplayManager.onGpsStartedCallback = {
+            replayController?.onGpsStarted()
+            // Enable replay UI when GPS replay starts
+            hudPanelController?.enableReplayModeUI()
+        }
+        ReplayManager.onPlaybackCompletedCallback = {
+            Log.i(TAG, "Playback completed - auto-stopping and resetting to beginning")
+            replayController?.stop()
+        }
 
         // Initialize SavedWindSystem and register with WindSystem singleton
         val savedWindSystem = com.platypii.baselinexr.wind.SavedWindSystem(this)
@@ -105,6 +139,7 @@ class BaselineActivity : AppSystemActivity() {
         // Create systems
         hudSystem = HudSystem()
         flightStatsSystem = FlightStatsSystem()
+        atmosphericSystem = AtmosphericSystem()
         speedChartSystem = SpeedChartSystem()
         directionArrowSystem = DirectionArrowSystem()
         wingsuitCanopySystem = WingsuitCanopySystem()
@@ -119,6 +154,7 @@ class BaselineActivity : AppSystemActivity() {
         // Register systems
         systemManager.registerSystem(hudSystem!!)
         systemManager.registerSystem(flightStatsSystem!!)
+        systemManager.registerSystem(atmosphericSystem!!)
         systemManager.registerSystem(speedChartSystem!!)
         systemManager.registerSystem(directionArrowSystem!!)
         systemManager.registerSystem(wingsuitCanopySystem!!)
@@ -159,11 +195,33 @@ class BaselineActivity : AppSystemActivity() {
 
     override fun onStart() {
         super.onStart()
+        
+        // Check if we should restart replay (both video and GPS have completed)
+        if (ReplayManager.isReadyToRestart()) {
+            Log.i(TAG, "Replay completed - restarting on headset wake")
+            ReplayManager.prepareForRestart()
+            // Video will restart when the panel is re-created
+            // GPS will restart with Services.start below
+        }
+        
+        // Notify replay controller of wake (handles coordinated GPS+video state)
+        replayController?.onWake()
+        
+        // Resume video from sleep (prevents renderer errors)
+        video360Controller?.onWake()
+        
         Services.start(this)
     }
 
     override fun onStop() {
         Log.i(TAG, "Stopping...")
+        
+        // Notify replay controller of sleep (pauses GPS+video together)
+        replayController?.onSleep()
+        
+        // Pause video for sleep (stops frame updates to surface)
+        video360Controller?.onSleep()
+        
         super.onStop()
         Services.stop()
     }
@@ -175,9 +233,13 @@ class BaselineActivity : AppSystemActivity() {
             locationSubscriber = null
         }
 
+        // Reset replay state
+        ReplayManager.reset()
+
         // Clean up all systems that have cleanup methods
         hudSystem?.cleanup()
         flightStatsSystem?.cleanup()
+        atmosphericSystem?.cleanup()
         speedChartSystem?.cleanup()
         terrainSystem?.cleanup()
         directionArrowSystem?.cleanup()
@@ -190,10 +252,21 @@ class BaselineActivity : AppSystemActivity() {
         video360Controller?.release()
         video360Controller = null
 
+        // Clean up screen record controller
+        screenRecordController?.release()
+        screenRecordController = null
+
         // Clean up panel controllers to prevent memory leaks
         hudPanelController = null
 
         super.onDestroy()
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        // Forward to screen record controller for MediaProjection permission handling
+        screenRecordController?.onActivityResult(requestCode, resultCode, data)
     }
 
     override fun onSceneReady() {
@@ -283,6 +356,30 @@ class BaselineActivity : AppSystemActivity() {
                     // Set up speed chart references
                     val speedChartLive = rootView?.findViewById<com.platypii.baselinexr.charts.SpeedChartLive>(R.id.speed_chart_live)
                     speedChartSystem?.setSpeedChart(speedChartLive)
+                }
+            },
+            PanelRegistration(R.layout.atmospheric) {
+                config {
+                    themeResourceId = R.style.PanelAppThemeTransparent
+                    includeGlass = false
+                    enableTransparent = true
+                }
+                panel {
+                    // Set up atmospheric display references
+                    val altitudeValue = rootView?.findViewById<TextView>(R.id.atmo_altitude_value)
+                    val densityAltValue = rootView?.findViewById<TextView>(R.id.atmo_density_alt_value)
+                    val densityAltOffset = rootView?.findViewById<TextView>(R.id.atmo_density_alt_offset)
+                    val densityValue = rootView?.findViewById<TextView>(R.id.atmo_density_value)
+                    val tempValue = rootView?.findViewById<TextView>(R.id.atmo_temp_value)
+                    val tempOffset = rootView?.findViewById<TextView>(R.id.atmo_temp_offset)
+                    val pressureValue = rootView?.findViewById<TextView>(R.id.atmo_pressure_value)
+                    val pressureOffset = rootView?.findViewById<TextView>(R.id.atmo_pressure_offset)
+                    val humidityValue = rootView?.findViewById<TextView>(R.id.atmo_humidity_value)
+                    atmosphericSystem?.setLabels(
+                        altitudeValue, densityAltValue, densityAltOffset,
+                        densityValue, tempValue, tempOffset,
+                        pressureValue, pressureOffset, humidityValue
+                    )
                 }
             })
 
@@ -375,17 +472,37 @@ class BaselineActivity : AppSystemActivity() {
     }
 
     private fun updateVideo360Sync(loc: MLocation) {
-        // Store first GPS timestamp as track start
-        if (trackStartTimeMs == null) {
-            trackStartTimeMs = loc.millis
-            Log.d(TAG, "Video sync initialized - track start time: $trackStartTimeMs")
+        // Use PlaybackTimeline for accurate GPS → Video time conversion
+        if (!PlaybackTimeline.isInitialized) {
+            Log.w(TAG, "PlaybackTimeline not initialized, skipping video sync")
+            return
         }
+        
+        // Get elapsed time from GPS provider (ms from track start)
+        // This is the true track position, independent of wall-clock adjustments
+        val mockProvider = Services.location.getMockLocationProvider() ?: return
+        val gpsElapsedMs = mockProvider.getCurrentElapsedMs()
+        
+        // Convert elapsed time to original GPS timestamp for PlaybackTimeline
+        val gpsTimeMs = PlaybackTimeline.gpsStartMs + gpsElapsedMs
+        
+        // Update timeline position
+        PlaybackTimeline.updatePosition(gpsTimeMs)
+        
+        // Get the corresponding video time
+        val videoTimeMs = PlaybackTimeline.getCurrentVideoTimeMs()
+        if (videoTimeMs != null) {
+            video360Controller?.updateSync(videoTimeMs)
+        }
+    }
 
-        // Calculate GPS time relative to track start (milliseconds since first fix)
-        val gpsTimeMs = loc.millis - trackStartTimeMs!!
-
-        // Update video sync directly (no GL thread needed with SDK approach)
-        video360Controller?.updateSync(gpsTimeMs)
+    /**
+     * Reset video sync state when starting fresh playback.
+     * Called by ReplayController.startFresh() to prepare for new playback.
+     */
+    fun resetVideoSyncState() {
+        PlaybackTimeline.reset()
+        Log.d(TAG, "Video sync state reset via PlaybackTimeline")
     }
 
     companion object {

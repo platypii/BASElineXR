@@ -46,6 +46,7 @@ android {
 
 dependencies {
   implementation(libs.androidx.core.ktx)
+  implementation(libs.androidx.activity.ktx)  // For MediaProjection activity result
   testImplementation(libs.junit)
   androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.espresso.core)
@@ -82,6 +83,7 @@ spatial {
   scenes {
     // if you have installed Meta Spatial Editor somewhere else, update the file path.
     // cliPath.set("/Applications/Meta Spatial Editor.app/Contents/MacOS/CLI")
+    cliPath.set("C:/Program Files/Meta Spatial Editor/v11/Resources/CLI.exe")
     exportItems {
       item {
         projectPath.set(sceneDirectory.file("Main.metaspatial"))

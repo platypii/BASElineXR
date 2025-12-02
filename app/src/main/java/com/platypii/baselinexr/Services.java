@@ -47,6 +47,12 @@ public class Services {
     public static final TrackLogger trackLogger = new TrackLogger();
 
     /**
+     * Timestamp when location service start was requested.
+     * Used by Video360Controller to calculate how much of the GPS startup delay has elapsed.
+     */
+    public static long locationStartRequestedMs = 0;
+
+    /**
      * We want preferences to be available as early as possible.
      * Call this in onCreate
      */
@@ -82,6 +88,7 @@ public class Services {
             }
 
             Log.i(TAG, "Starting location service");
+            locationStartRequestedMs = System.currentTimeMillis();
             location.start(appContext);
 
             Log.i(TAG, "Starting flight services");

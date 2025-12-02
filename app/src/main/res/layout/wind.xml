@@ -159,7 +159,7 @@
 
             </LinearLayout>
 
-            <!-- Row 2: Data Boundary Controls + Wind Layers (aligned left with chart) -->
+            <!-- Row 2: Data Boundary Controls + Wind Layers + Layer Controls -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -169,9 +169,9 @@
                 <Space
                     android:layout_width="0dp"
                     android:layout_height="1dp"
-                    android:layout_weight="0.7" />
+                    android:layout_weight="0.3" />
 
-                <!-- Data Boundary Controls (stacked vertically) -->
+                <!-- Left Column: Data Boundary Controls + Layer Selection -->
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -193,7 +193,7 @@
                     <Button
                         android:id="@+id/upper_data_boundary_plus_button"
                         android:layout_width="40dp"
-                        android:layout_height="35dp"
+                        android:layout_height="32dp"
                         android:layout_margin="1dp"
                         android:background="@drawable/button_bg"
                         android:text="U+"
@@ -203,7 +203,7 @@
                     <Button
                         android:id="@+id/upper_data_boundary_minus_button"
                         android:layout_width="40dp"
-                        android:layout_height="35dp"
+                        android:layout_height="32dp"
                         android:layout_margin="1dp"
                         android:background="@drawable/button_bg"
                         android:text="U-"
@@ -213,7 +213,7 @@
                     <Button
                         android:id="@+id/lower_data_boundary_plus_button"
                         android:layout_width="40dp"
-                        android:layout_height="35dp"
+                        android:layout_height="32dp"
                         android:layout_margin="1dp"
                         android:background="@drawable/button_bg"
                         android:text="L+"
@@ -223,7 +223,7 @@
                     <Button
                         android:id="@+id/lower_data_boundary_minus_button"
                         android:layout_width="40dp"
-                        android:layout_height="35dp"
+                        android:layout_height="32dp"
                         android:layout_margin="1dp"
                         android:background="@drawable/button_bg"
                         android:text="L-"
@@ -232,7 +232,7 @@
 
                 </LinearLayout>
 
-                <!-- Wind Layers List -->
+                <!-- Center: Wind Layers List (display only) -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="180dp"
@@ -276,7 +276,7 @@
 
                     </LinearLayout>
 
-                    <!-- Scroll buttons -->
+                    <!-- Scroll + Layer Select buttons -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
@@ -287,18 +287,38 @@
                         <Button
                             android:id="@+id/layers_scroll_up_button"
                             android:layout_width="30dp"
-                            android:layout_height="40dp"
-                            android:layout_margin="2dp"
+                            android:layout_height="36dp"
+                            android:layout_margin="1dp"
                             android:background="@drawable/button_bg"
                             android:text="▲"
                             android:textColor="#ffffff"
                             android:textSize="14sp" />
 
                         <Button
+                            android:id="@+id/layer_select_prev_button"
+                            android:layout_width="30dp"
+                            android:layout_height="36dp"
+                            android:layout_margin="1dp"
+                            android:background="@drawable/button_bg"
+                            android:text="◀"
+                            android:textColor="#00FF00"
+                            android:textSize="14sp" />
+
+                        <Button
+                            android:id="@+id/layer_select_next_button"
+                            android:layout_width="30dp"
+                            android:layout_height="36dp"
+                            android:layout_margin="1dp"
+                            android:background="@drawable/button_bg"
+                            android:text="▶"
+                            android:textColor="#00FF00"
+                            android:textSize="14sp" />
+
+                        <Button
                             android:id="@+id/layers_scroll_down_button"
                             android:layout_width="30dp"
-                            android:layout_height="40dp"
-                            android:layout_margin="2dp"
+                            android:layout_height="36dp"
+                            android:layout_margin="1dp"
                             android:background="@drawable/button_bg"
                             android:text="▼"
                             android:textColor="#ffffff"
@@ -308,46 +328,129 @@
 
                 </LinearLayout>
 
+                <!-- Right Column: Selected Layer Controls -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="#1A1A1A"
+                    android:padding="4dp"
+                    android:layout_marginStart="4dp">
+
+                    <!-- Selected Layer Header -->
+                    <TextView
+                        android:id="@+id/selected_layer_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Layer 1"
+                        android:textColor="#00FF00"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:layout_marginBottom="2dp" />
+
+                    <!-- Layer Boundary Controls -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Layer Alt"
+                        android:textColor="#AAAAAA"
+                        android:textSize="8sp"
+                        android:gravity="center" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/selected_layer_lower_minus"
+                            android:layout_width="38dp"
+                            android:layout_height="28dp"
+                            android:layout_margin="1dp"
+                            android:background="@drawable/button_bg"
+                            android:text="L-"
+                            android:textColor="#ffffff"
+                            android:textSize="9sp" />
+
+                        <Button
+                            android:id="@+id/selected_layer_lower_plus"
+                            android:layout_width="38dp"
+                            android:layout_height="28dp"
+                            android:layout_margin="1dp"
+                            android:background="@drawable/button_bg"
+                            android:text="L+"
+                            android:textColor="#ffffff"
+                            android:textSize="9sp" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/selected_layer_upper_controls"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/selected_layer_upper_minus"
+                            android:layout_width="38dp"
+                            android:layout_height="28dp"
+                            android:layout_margin="1dp"
+                            android:background="@drawable/button_bg"
+                            android:text="U-"
+                            android:textColor="#ffffff"
+                            android:textSize="9sp" />
+
+                        <Button
+                            android:id="@+id/selected_layer_upper_plus"
+                            android:layout_width="38dp"
+                            android:layout_height="28dp"
+                            android:layout_margin="1dp"
+                            android:background="@drawable/button_bg"
+                            android:text="U+"
+                            android:textColor="#ffffff"
+                            android:textSize="9sp" />
+
+                    </LinearLayout>
+
+                    <!-- Save Buttons -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Save Wind"
+                        android:textColor="#AAAAAA"
+                        android:textSize="8sp"
+                        android:gravity="center"
+                        android:layout_marginTop="4dp" />
+
+                    <Button
+                        android:id="@+id/selected_layer_save_gps"
+                        android:layout_width="80dp"
+                        android:layout_height="28dp"
+                        android:layout_margin="1dp"
+                        android:background="@drawable/button_bg"
+                        android:text="Save GPS"
+                        android:textColor="#ffffff"
+                        android:textSize="9sp" />
+
+                    <Button
+                        android:id="@+id/selected_layer_save_sustained"
+                        android:layout_width="80dp"
+                        android:layout_height="28dp"
+                        android:layout_margin="1dp"
+                        android:background="@drawable/button_bg"
+                        android:text="Save Sus"
+                        android:textColor="#ffffff"
+                        android:textSize="9sp" />
+
+                </LinearLayout>
+
                 <Space
                     android:layout_width="0dp"
                     android:layout_height="1dp"
-                    android:layout_weight="0.9" />
+                    android:layout_weight="0.3" />
 
             </LinearLayout>
-
-        </LinearLayout>
-
-        <!-- Layer Management Controls -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:background="#333333"
-            android:padding="4dp">
-
-            <Button
-                android:id="@+id/new_layer_button"
-                android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:layout_weight="1"
-                android:layout_margin="2dp"
-                android:background="@drawable/button_bg"
-                android:text="New Layer"
-                android:textColor="#ffffff"
-                android:textSize="12sp"
-                android:visibility="gone" />
-
-            <Button
-                android:id="@+id/split_layer_button"
-                android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:layout_weight="1"
-                android:layout_margin="2dp"
-                android:background="@drawable/button_bg"
-                android:text="Split Layer"
-                android:textColor="#ffffff"
-                android:textSize="12sp"
-                android:visibility="gone" />
 
         </LinearLayout>
 
@@ -356,34 +459,166 @@
     <!-- Saved Wind Display Container (visible when saved wind mode) -->
     <LinearLayout
         android:id="@+id/wind_saved_display"
-        android:layout_width="match_parent"
+        android:layout_width="240dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:visibility="gone"
-        android:padding="4dp">
+        android:padding="4dp"
+        android:layout_gravity="center_horizontal"
+        android:background="#1A1A1A">
 
-        <TextView
+        <!-- Header -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Saved Wind Display"
-            android:textColor="#ffffff"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:padding="8dp"
-            android:background="#00000000" />
+            android:orientation="horizontal"
+            android:background="#2A2A2A"
+            android:padding="4dp">
 
-        <!-- Placeholder for saved wind visualization -->
-        <TextView
-            android:id="@+id/saved_wind_info"
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Wind Keyframes"
+                android:textColor="#00BFFF"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/keyframe_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 keyframes"
+                android:textColor="#888888"
+                android:textSize="10sp" />
+
+        </LinearLayout>
+
+        <!-- Column Headers -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:text="Saved wind data will be displayed here"
-            android:textColor="#cccccc"
-            android:textSize="14sp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="#333333"
+            android:padding="4dp"
+            android:layout_marginTop="2dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.8"
+                android:text="ALT"
+                android:textColor="#AAAAAA"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:gravity="center" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="SPEED"
+                android:textColor="#AAAAAA"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:gravity="center" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="DIR"
+                android:textColor="#AAAAAA"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:gravity="center" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.8"
+                android:text="INCL"
+                android:textColor="#AAAAAA"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:gravity="center" />
+
+        </LinearLayout>
+
+        <!-- Keyframe List with Scroll -->
+        <ScrollView
+            android:id="@+id/keyframe_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:scrollbars="vertical"
+            android:background="#1E1E1E">
+
+            <LinearLayout
+                android:id="@+id/keyframe_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="2dp" />
+
+        </ScrollView>
+
+        <!-- Scroll Controls -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
             android:gravity="center"
-            android:background="#00000000"
-            android:layout_margin="4dp" />
+            android:layout_marginTop="2dp">
+
+            <Button
+                android:id="@+id/keyframe_scroll_up_button"
+                android:layout_width="60dp"
+                android:layout_height="30dp"
+                android:layout_margin="2dp"
+                android:background="@drawable/button_bg"
+                android:text="▲"
+                android:textColor="#ffffff"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/keyframe_scroll_down_button"
+                android:layout_width="60dp"
+                android:layout_height="30dp"
+                android:layout_margin="2dp"
+                android:background="@drawable/button_bg"
+                android:text="▼"
+                android:textColor="#ffffff"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+        <!-- Current Altitude Indicator -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="#2A2A2A"
+            android:padding="4dp"
+            android:layout_marginTop="4dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Current: "
+                android:textColor="#888888"
+                android:textSize="10sp" />
+
+            <TextView
+                android:id="@+id/current_interpolated_wind"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="-- mph @ --° (incl: --°)"
+                android:textColor="#00FF00"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

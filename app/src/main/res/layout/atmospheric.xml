@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp"
+    android:clipToOutline="true">
+
+    <!-- Row 1: Altitude (ftmsl) -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Altitude (ftmsl)"
+            android:textColor="#00FFFF"
+            android:textSize="28sp"
+            android:typeface="monospace" />
+        <TextView
+            android:id="@+id/atmo_altitude_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="----"
+            android:textColor="#FFFFFF"
+            android:textSize="28sp"
+            android:typeface="monospace" />
+    </LinearLayout>
+
+    <!-- Row 2: Density Altitude (ft) -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Density Altitude(ft)"
+            android:textColor="#00FFFF"
+            android:textSize="28sp"
+            android:typeface="monospace" />
+        <TextView
+            android:id="@+id/atmo_density_alt_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="----"
+            android:textColor="#FFFFFF"
+            android:textSize="28sp"
+            android:typeface="monospace" />
+        <TextView
+            android:id="@+id/atmo_density_alt_offset"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:text=""
+            android:textColor="#FF0000"
+            android:textSize="22sp"
+            android:typeface="monospace" />
+    </LinearLayout>
+
+    <!-- Row 3: Air Density (Kg/M^3) -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Air Density (Kg/M³)"
+            android:textColor="#00FFFF"
+            android:textSize="28sp"
+            android:typeface="monospace" />
+        <TextView
+            android:id="@+id/atmo_density_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="----"
+            android:textColor="#FFFFFF"
+            android:textSize="28sp"
+            android:typeface="monospace" />
+    </LinearLayout>
+
+    <!-- Row 4: Air Temperature (F) -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Air Temperature (°F)"
+            android:textColor="#00FFFF"
+            android:textSize="28sp"
+            android:typeface="monospace" />
+        <TextView
+            android:id="@+id/atmo_temp_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="----"
+            android:textColor="#FFFFFF"
+            android:textSize="28sp"
+            android:typeface="monospace" />
+        <TextView
+            android:id="@+id/atmo_temp_offset"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:text=""
+            android:textColor="#FF0000"
+            android:textSize="22sp"
+            android:typeface="monospace" />
+    </LinearLayout>
+
+    <!-- Row 5: Pressure (inHg) -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pressure (inHg)"
+            android:textColor="#00FFFF"
+            android:textSize="28sp"
+            android:typeface="monospace" />
+        <TextView
+            android:id="@+id/atmo_pressure_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="----"
+            android:textColor="#FFFFFF"
+            android:textSize="28sp"
+            android:typeface="monospace" />
+        <TextView
+            android:id="@+id/atmo_pressure_offset"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:text=""
+            android:textColor="#00FF00"
+            android:textSize="22sp"
+            android:typeface="monospace" />
+    </LinearLayout>
+
+    <!-- Row 6: Relative Humidity (%) -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Relative Humidity(%)"
+            android:textColor="#00FFFF"
+            android:textSize="28sp"
+            android:typeface="monospace" />
+        <TextView
+            android:id="@+id/atmo_humidity_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="----"
+            android:textColor="#FFFFFF"
+            android:textSize="28sp"
+            android:typeface="monospace" />
+    </LinearLayout>
+
+</LinearLayout>

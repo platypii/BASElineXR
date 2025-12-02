@@ -322,9 +322,47 @@ public class VROptionsList {
             false,
             true,
             new LatLngAlt(46.57835, 7.984, 2670.5),
-            "china050125",
+            "china050425",
             1824,
             2100
+    );
+
+    public static final VROptions CHINA_PLATFORM_360VIDEO = new VROptions(
+            "China 360 Platform",
+            null,
+            "eiger",
+            new LatLngAlt(40.2709309,-111.620655,2146.342),
+            VROptions.ShaderType.LOD_SHADER,
+            true,
+            true,
+            true,
+            false,
+            true,
+            new LatLngAlt(46.57835, 7.984, 2670.5),
+            "china050425",
+            580,
+            730,
+            "platformflyby360.mp4", // video360File (filename only, in Movies folder)
+            1100                        // videoGpsOffsetMs bigger= delay video more from start of gps(adjust as needed for sync)
+    );
+
+    public static final VROptions CHINA_CLOUDS_360VIDEO = new VROptions(
+            "CHINA 360 Clouds",
+            null,
+            "eiger",
+            new LatLngAlt(40.2709309,-111.620655,2146.342),
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            true,
+            false,
+            true,
+            new LatLngAlt(46.57835, 7.984, 2670.5),
+            "china042825",
+            1440,
+            1650,
+            "Clouds.mp4", // video360File (filename only, in Movies folder)
+            6000                        // videoGpsOffsetMs (adjust as needed for sync)
     );
 
     public static final VROptions TOOELE_SKYDIVE = new VROptions(

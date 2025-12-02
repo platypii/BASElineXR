@@ -196,6 +196,14 @@ class WingsuitCanopySystem : SystemBase() {
     private var enableWindVectors = true // Flag to control wind vector display - now enabled
     private var enableMagneticVector = false // Flag to control magnetic field vector display
 
+    /**
+     * Get effective phone time for prediction calculations.
+     * In mock mode, this accounts for pause duration so predictions don't jump forward.
+     */
+    private fun getEffectiveTime(): Long {
+        return Services.location?.getEffectivePhoneTime() ?: System.currentTimeMillis()
+    }
+
     override fun execute() {
         if (!initialized) {
             initializeModels()
@@ -430,7 +438,7 @@ class WingsuitCanopySystem : SystemBase() {
         val (velocity, rollRad) = when (motionEstimator) {
             is KalmanFilter3D -> {
                 // Get cached predicted state from last predictDelta() call with 90Hz interpolated roll
-                val predictedState = motionEstimator.getCachedPredictedState(System.currentTimeMillis())
+                val predictedState = motionEstimator.getCachedPredictedState(getEffectiveTime())
                 Pair(predictedState.velocity.plus(predictedState.windVelocity), predictedState.rollwind.toFloat())
             }
             is SimpleEstimator -> {
@@ -488,7 +496,7 @@ class WingsuitCanopySystem : SystemBase() {
         // Update wingsuit first (PC and snivel will position relative to it)
         val (velocity, rollRad) = when (motionEstimator) {
             is KalmanFilter3D -> {
-                val predictedState = motionEstimator.getCachedPredictedState(System.currentTimeMillis())
+                val predictedState = motionEstimator.getCachedPredictedState(getEffectiveTime())
                 Pair(predictedState.velocity.plus(predictedState.windVelocity), predictedState.rollwind.toFloat())
             }
             is SimpleEstimator -> {
@@ -512,7 +520,7 @@ class WingsuitCanopySystem : SystemBase() {
         // Calculate AOA from measured KL/KD coefficients using polar data
         val aoaDeg = when (motionEstimator) {
             is KalmanFilter3D -> {
-                //  val predictedState = motionEstimator.getCachedPredictedState(System.currentTimeMillis())
+                //  val predictedState = motionEstimator.getCachedPredictedState(getEffectiveTime())
                 //  val kl = predictedState.kl()
                 //  val kd = predictedState.kd()
                 //  if (!kl.isNaN() && !kd.isNaN()) {
@@ -549,10 +557,10 @@ class WingsuitCanopySystem : SystemBase() {
         // Draw snivel similar to canopy orientation
         val canopyPoint = when (motionEstimator) {
             is KalmanFilter3D -> {
-                val predictedState = motionEstimator.getCachedPredictedState(System.currentTimeMillis())
+                val predictedState = motionEstimator.getCachedPredictedState(getEffectiveTime())
                 val lastUpdate = motionEstimator.getLastUpdate()
                 if (lastUpdate != null) {
-                    computeCanopyOrientation(predictedState, lastUpdate.altitude_gps, System.currentTimeMillis(), isRealCanopyOrientation)
+                    computeCanopyOrientation(predictedState, lastUpdate.altitude_gps, getEffectiveTime(), isRealCanopyOrientation)
                 } else null
             }
             else -> null
@@ -610,7 +618,7 @@ class WingsuitCanopySystem : SystemBase() {
         val (velocity, rollRad) = when (motionEstimator) {
             is KalmanFilter3D -> {
                 // Get cached predicted state from last predictDelta() call with 90Hz interpolated roll
-                val predictedState = motionEstimator.getCachedPredictedState(System.currentTimeMillis())
+                val predictedState = motionEstimator.getCachedPredictedState(getEffectiveTime())
                 Pair(predictedState.velocity.plus(predictedState.windVelocity), predictedState.rollwind.toFloat())
             }
             is SimpleEstimator -> {
@@ -638,7 +646,7 @@ class WingsuitCanopySystem : SystemBase() {
         // Calculate AOA from measured KL/KD coefficients using polar data
         val aoaDeg = when (motionEstimator) {
             is KalmanFilter3D -> {
-                val predictedState = motionEstimator.getCachedPredictedState(System.currentTimeMillis())
+                val predictedState = motionEstimator.getCachedPredictedState(getEffectiveTime())
                 val lastUpdate = motionEstimator.getLastUpdate()
                 if (lastUpdate != null) {
                     PolarLibrary.convertKlKdToAOA(predictedState.kl, predictedState.kd, lastUpdate.altitude_gps,
@@ -685,10 +693,10 @@ class WingsuitCanopySystem : SystemBase() {
         // Compute advanced canopy orientation using physics modeling
         val canopyPoint = when (motionEstimator) {
             is KalmanFilter3D -> {
-                val predictedState = motionEstimator.getCachedPredictedState(System.currentTimeMillis())
+                val predictedState = motionEstimator.getCachedPredictedState(getEffectiveTime())
                 val lastUpdate = motionEstimator.getLastUpdate()
                 if (lastUpdate != null) {
-                    computeCanopyOrientation(predictedState, lastUpdate.altitude_gps, System.currentTimeMillis(), isRealCanopyOrientation)
+                    computeCanopyOrientation(predictedState, lastUpdate.altitude_gps, getEffectiveTime(), isRealCanopyOrientation)
                 } else {
                     return // No GPS data available
                 }
@@ -821,7 +829,7 @@ class WingsuitCanopySystem : SystemBase() {
         // Get velocity components and wind velocity from predicted state (ENU coordinates)
         val (inertialVelocity, windVelocity) = when (motionEstimator) {
             is KalmanFilter3D -> {
-                val currentTime = System.currentTimeMillis()
+                val currentTime = getEffectiveTime()
                 val predictedState = motionEstimator.getCachedPredictedState(currentTime)
                 // ...removed per-frame debug logging...
                 Pair(predictedState.velocity, predictedState.windVelocity)
