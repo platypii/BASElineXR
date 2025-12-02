@@ -77,12 +77,18 @@ class PlayControlsController(
     private var layoutReady: Boolean = false
     private var isVisible: Boolean = false
     
+    // Seek drag state - for restoring playback state after drag
+    private var preSeekWasPlaying: Boolean = false
+    private var lastDragPreviewTimeMs: Long = 0L
+    private val DRAG_THROTTLE_MS = 50L  // 20 fps = 50ms between updates
+    
     // Time formatters
     private val timeFormat = SimpleDateFormat("h:mm:ss a", Locale.getDefault())
     private val dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
     
     // Callbacks
     var onSeek: ((gpsTimeMs: Long, videoTimeMs: Long?) -> Unit)? = null
+    var onSeekPreview: ((gpsTimeMs: Long, videoTimeMs: Long?) -> Unit)? = null  // For drag preview
     var onPlayPause: (() -> Unit)? = null
     var onStop: (() -> Unit)? = null
     
@@ -129,6 +135,150 @@ class PlayControlsController(
     fun onStopClick() {
         android.util.Log.i(TAG, "onStopClick() called externally")
         onStop?.invoke()
+    }
+    
+    /**
+     * Handle seekbar grab - called when user starts dragging the seek cursor via VR controller.
+     * This replaces the SeekBar's onStartTrackingTouch for VR input.
+     * 
+     * @param progress The seekbar progress (0-1000) at grab location
+     */
+    fun handleSeekbarGrab(progress: Int) {
+        android.util.Log.i(TAG, "handleSeekbarGrab($progress) - saving playback state")
+        isUserSeeking = true
+        lastDragPreviewTimeMs = 0L  // Reset throttle
+        
+        // Update seekbar position to match grab point
+        seekBar?.progress = progress
+        
+        // Save current playback state
+        val replayState = replayController?.state
+        preSeekWasPlaying = replayState == com.platypii.baselinexr.replay.ReplayController.PlaybackState.PLAYING
+        android.util.Log.i(TAG, "Pre-seek state: wasPlaying=$preSeekWasPlaying, replayState=$replayState")
+        
+        // Pause playback if currently playing
+        if (preSeekWasPlaying) {
+            replayController?.pause()
+        }
+        
+        // Freeze motion estimator to prevent velocity jumps during drag
+        Services.location.motionEstimator.freeze()
+        
+        // Update UI to show grab position
+        val fraction = progress.toFloat() / SEEKBAR_MAX
+        val gpsTimeMs = timelineStartMs + (fraction * timelineDurationMs).toLong()
+        updateCurrentTimeDisplay(gpsTimeMs, fraction)
+        elapsedTimeLabel?.text = formatDuration(gpsTimeMs - gpsStartMs)
+    }
+    
+    /**
+     * Handle seekbar drag - called during drag to update position via VR controller.
+     * This replaces the SeekBar's onProgressChanged for VR input.
+     * 
+     * @param progress The seekbar progress (0-1000) at current drag location
+     */
+    fun handleSeekbarDrag(progress: Int) {
+        if (!isUserSeeking) return
+        
+        // Update seekbar position
+        seekBar?.progress = progress
+        
+        val fraction = progress.toFloat() / SEEKBAR_MAX
+        val gpsTimeMs = timelineStartMs + (fraction * timelineDurationMs).toLong()
+        
+        // Update UI immediately
+        updateCurrentTimeDisplay(gpsTimeMs, fraction)
+        elapsedTimeLabel?.text = formatDuration(gpsTimeMs - gpsStartMs)
+        
+        // Throttle preview updates to 20fps (50ms)
+        val now = System.currentTimeMillis()
+        if (now - lastDragPreviewTimeMs >= DRAG_THROTTLE_MS) {
+            lastDragPreviewTimeMs = now
+            
+            // Calculate video time for preview
+            val videoTimeMs = if (hasVideo) {
+                gpsTimeMs - gpsStartMs + videoGpsOffsetMs
+            } else {
+                null
+            }
+            
+            // Emit preview position (GPS point + video frame)
+            onSeekPreview?.invoke(gpsTimeMs, videoTimeMs)
+        }
+    }
+    
+    /**
+     * Handle seekbar release - called when user releases the seek cursor via VR controller.
+     * This replaces the SeekBar's onStopTrackingTouch for VR input.
+     * 
+     * @param progress The seekbar progress (0-1000) at release location
+     */
+    fun handleSeekbarRelease(progress: Int) {
+        android.util.Log.i(TAG, "handleSeekbarRelease($progress) - restoring playback state")
+        isUserSeeking = false
+        
+        // Update seekbar to final position
+        seekBar?.progress = progress
+        
+        val fraction = progress.toFloat() / SEEKBAR_MAX
+        val gpsTimeMs = timelineStartMs + (fraction * timelineDurationMs).toLong()
+        
+        val videoTimeMs = if (hasVideo) {
+            gpsTimeMs - gpsStartMs + videoGpsOffsetMs
+        } else {
+            null
+        }
+        
+        android.util.Log.i(TAG, "User seeked to: gps=$gpsTimeMs, video=$videoTimeMs, willResume=$preSeekWasPlaying")
+        
+        // Unfreeze motion estimator
+        Services.location.motionEstimator.unfreeze()
+        
+        // Perform final seek
+        onSeek?.invoke(gpsTimeMs, videoTimeMs)
+        
+        // Restore playback state
+        if (preSeekWasPlaying) {
+            // Use post to let the seek complete first
+            seekBar?.post {
+                android.util.Log.i(TAG, "Resuming playback after seek")
+                replayController?.resume()
+            }
+        }
+    }
+    
+    /**
+     * Check if a point (in panel-local pixel coordinates) is inside the Play/Pause button.
+     */
+    fun isPointInPlayPauseButton(x: Int, y: Int): Boolean {
+        val button = playPauseButton ?: return false
+        val loc = IntArray(2)
+        button.getLocationInWindow(loc)
+        val parentLoc = IntArray(2)
+        view.getLocationInWindow(parentLoc)
+        // Convert to view-local coordinates
+        val left = loc[0] - parentLoc[0]
+        val top = loc[1] - parentLoc[1]
+        val right = left + button.width
+        val bottom = top + button.height
+        return x >= left && x <= right && y >= top && y <= bottom
+    }
+    
+    /**
+     * Check if a point (in panel-local pixel coordinates) is inside the Stop button.
+     */
+    fun isPointInStopButton(x: Int, y: Int): Boolean {
+        val button = stopButton ?: return false
+        val loc = IntArray(2)
+        button.getLocationInWindow(loc)
+        val parentLoc = IntArray(2)
+        view.getLocationInWindow(parentLoc)
+        // Convert to view-local coordinates
+        val left = loc[0] - parentLoc[0]
+        val top = loc[1] - parentLoc[1]
+        val right = left + button.width
+        val bottom = top + button.height
+        return x >= left && x <= right && y >= top && y <= bottom
     }
     
     /**
@@ -356,20 +506,53 @@ class PlayControlsController(
     private fun setupSeekBarListener() {
         seekBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) {
+                if (fromUser && isUserSeeking) {
                     val fraction = progress.toFloat() / SEEKBAR_MAX
                     val gpsTimeMs = timelineStartMs + (fraction * timelineDurationMs).toLong()
                     
+                    // Update UI immediately
                     updateCurrentTimeDisplay(gpsTimeMs, fraction)
                     elapsedTimeLabel?.text = formatDuration(gpsTimeMs - gpsStartMs)
+                    
+                    // Throttle preview updates to 20fps (50ms)
+                    val now = System.currentTimeMillis()
+                    if (now - lastDragPreviewTimeMs >= DRAG_THROTTLE_MS) {
+                        lastDragPreviewTimeMs = now
+                        
+                        // Calculate video time for preview
+                        val videoTimeMs = if (hasVideo) {
+                            gpsTimeMs - gpsStartMs + videoGpsOffsetMs
+                        } else {
+                            null
+                        }
+                        
+                        // Emit preview position (GPS point + video frame)
+                        onSeekPreview?.invoke(gpsTimeMs, videoTimeMs)
+                    }
                 }
             }
             
             override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                android.util.Log.i(TAG, "Seek drag started - saving playback state")
                 isUserSeeking = true
+                lastDragPreviewTimeMs = 0L  // Reset throttle
+                
+                // Save current playback state
+                val replayState = replayController?.state
+                preSeekWasPlaying = replayState == com.platypii.baselinexr.replay.ReplayController.PlaybackState.PLAYING
+                android.util.Log.i(TAG, "Pre-seek state: wasPlaying=$preSeekWasPlaying, replayState=$replayState")
+                
+                // Pause playback if currently playing
+                if (preSeekWasPlaying) {
+                    replayController?.pause()
+                }
+                
+                // Freeze motion estimator to prevent velocity jumps during drag
+                Services.location.motionEstimator.freeze()
             }
             
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                android.util.Log.i(TAG, "Seek drag ended - restoring playback state")
                 isUserSeeking = false
                 
                 val progress = seekBar?.progress ?: 0
@@ -377,14 +560,27 @@ class PlayControlsController(
                 val gpsTimeMs = timelineStartMs + (fraction * timelineDurationMs).toLong()
                 
                 val videoTimeMs = if (hasVideo) {
-                    val gpsTrackStart = gpsStartMs
-                    gpsTimeMs - gpsTrackStart + videoGpsOffsetMs
+                    gpsTimeMs - gpsStartMs + videoGpsOffsetMs
                 } else {
                     null
                 }
                 
-                android.util.Log.i(TAG, "User seeked to: gps=$gpsTimeMs, video=$videoTimeMs")
+                android.util.Log.i(TAG, "User seeked to: gps=$gpsTimeMs, video=$videoTimeMs, willResume=$preSeekWasPlaying")
+                
+                // Unfreeze motion estimator
+                Services.location.motionEstimator.unfreeze()
+                
+                // Perform final seek - resume if was playing
                 onSeek?.invoke(gpsTimeMs, videoTimeMs)
+                
+                // Restore playback state
+                if (preSeekWasPlaying) {
+                    // Use post to let the seek complete first
+                    seekBar?.post {
+                        android.util.Log.i(TAG, "Resuming playback after seek")
+                        replayController?.resume()
+                    }
+                }
             }
         })
     }

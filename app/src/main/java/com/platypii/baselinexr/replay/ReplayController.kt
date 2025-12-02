@@ -209,6 +209,29 @@ class ReplayController(private val context: Context) {
     }
     
     /**
+     * Lightweight seek for drag preview - emits GPS point and updates video frame
+     * without resetting motion estimator or flight computer state.
+     * 
+     * This is called at 20fps during seekbar drag to show the current position.
+     * Motion estimator is frozen by PlayControlsController during the drag.
+     * 
+     * @param gpsTimeMs The target GPS timestamp
+     * @param videoTimeMs The corresponding video time (null if no video)
+     */
+    fun seekPreview(gpsTimeMs: Long, videoTimeMs: Long?) {
+        // Update PlaybackTimeline
+        PlaybackTimeline.updatePosition(gpsTimeMs)
+        
+        // Seek GPS to emit point (without resuming playback)
+        Services.location.seekMockPlayback(gpsTimeMs, false)
+        
+        // Seek video to show frame (paused)
+        videoTimeMs?.let { videoTime ->
+            videoController?.seekTo(videoTime.toInt())
+        }
+    }
+    
+    /**
      * Get the GPS track start time (first point timestamp).
      */
     fun getTrackStartTimeMs(): Long {
@@ -334,7 +357,7 @@ class ReplayController(private val context: Context) {
     /**
      * Resume from paused position
      */
-    private fun resume() {
+    fun resume() {
         Log.i(TAG, "Resuming playback from PAUSED state")
         
         // Unfreeze motion estimator to allow position extrapolation

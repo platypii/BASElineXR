@@ -27,6 +27,10 @@ class HudSystem : SystemBase() {
     private var inputListenerAdded = false
     private var panelEntity: Entity? = null
     private var lastClickTime = 0L  // For debouncing duplicate click events
+    
+    // Seekbar drag tracking
+    private var isSeekbarDragging = false
+    private var seekbarDragStartU = 0f
 
     // HUD content references
     private var latlngLabel: TextView? = null
@@ -132,127 +136,146 @@ class HudSystem : SystemBase() {
                     clicked: Int,
                     downTime: Long
                 ): Boolean {
-                    // Only log when something changes
-                    if (changed != 0) {
-                        Log.d(TAG, "onInput: changed=$changed, clicked=$clicked")
+                    // Calculate button states
+                    val buttonPressed = (changed and clicked) != 0  // Button just went down
+                    val buttonReleased = (changed != 0) && (changed and clicked) == 0  // Button just went up
+                    val buttonHeld = clicked != 0  // Button is currently held (includes just pressed)
+                    
+                    // Get panel coordinates for all input handling
+                    val panelTransform = panelEntity?.tryGetComponent<com.meta.spatial.toolkit.Transform>()
+                    if (panelTransform == null) {
+                        if (buttonReleased && isSeekbarDragging) {
+                            // End drag even without coordinates
+                            Log.i(TAG, "Seekbar drag ended (no transform)")
+                            isSeekbarDragging = false
+                            activity.runOnUiThread {
+                                activity.hudPanelController?.handleSeekbarDragEnd(seekbarDragStartU)
+                            }
+                        }
+                        return false
                     }
                     
-                    // Detect button press: changed has a bit set AND clicked also has that bit
-                    // This means the button went from up to down
-                    val buttonPressed = (changed and clicked) != 0
+                    val localPoint = panelTransform.transform.inverse() * hitInfo.point
+                    val panelWidth = 2.0f
+                    val panelHeight = 1.5f
+                    val u = 1.0f - (localPoint.x + panelWidth / 2) / panelWidth
+                    val v = 1.0f - (localPoint.y + panelHeight / 2) / panelHeight
                     
-                    if (buttonPressed) {
-                        // Debounce: ignore clicks that happen within 200ms of each other
-                        // This prevents double-clicks from left/right controller events
-                        val now = System.currentTimeMillis()
-                        if (now - lastClickTime < CLICK_DEBOUNCE_MS) {
-                            Log.d(TAG, "Ignoring duplicate click (debounce)")
+                    val headerThreshold = 0.20f
+                    val isPlayControlsPopupVisible = activity.hudPanelController?.isPlayControlsPopupVisible() == true
+                    
+                    // Handle seekbar drag state machine
+                    if (isSeekbarDragging) {
+                        if (buttonReleased) {
+                            // End drag
+                            Log.i(TAG, "Seekbar drag ended at u=$u")
+                            isSeekbarDragging = false
+                            activity.runOnUiThread {
+                                activity.hudPanelController?.handleSeekbarDragEnd(u)
+                            }
+                            return true
+                        } else if (buttonHeld) {
+                            // Continue drag - update position
+                            activity.runOnUiThread {
+                                activity.hudPanelController?.handleSeekbarDragUpdate(u)
+                            }
                             return true
                         }
-                        lastClickTime = now
-                        
-                        // We have hitInfo.point (world position) and hitInfo.normal
-                        // We need to convert world position to local panel coordinates
-                        // For now, log what we have and use a simpler approach
-                        
-                        Log.i(TAG, "=== HUD PANEL CLICK ===")
-                        Log.i(TAG, "  Hit point (world): ${hitInfo.point}")
-                        Log.i(TAG, "  Hit normal: ${hitInfo.normal}")
-                        
-                        // Get panel transform to convert world coords to local
-                        val panelTransform = panelEntity?.tryGetComponent<com.meta.spatial.toolkit.Transform>()
-                        if (panelTransform != null) {
-                            // Convert world hit point to local panel coordinates
-                            val localPoint = panelTransform.transform.inverse() * hitInfo.point
-                            Log.i(TAG, "  Hit point (local): $localPoint")
-                            
-                            // Panel is 2m wide x 1.5m tall (from scene scale)
-                            // Local coords: x is left-right, y is up-down
-                            // Note: Panel's local X axis is inverted relative to view (negative X = right side of panel)
-                            // Normalize to 0-1 range
-                            val panelWidth = 2.0f
-                            val panelHeight = 1.5f
-                            val u = 1.0f - (localPoint.x + panelWidth / 2) / panelWidth  // Invert: 0=left, 1=right (in view coords)
-                            val v = 1.0f - (localPoint.y + panelHeight / 2) / panelHeight  // 0=top, 1=bottom (invert for view coords)
-                            
-                            Log.i(TAG, "  Normalized: u=$u, v=$v")
-                            Log.i(TAG, "  Button checks: exitBtn(u>0.86)=${u > 0.86f}, header(v<0.20)=${v < 0.20f}, menu(v>0.20)=${v > 0.20f}")
-                        
-                            // Header area is top ~20% of panel (80dp header in ~400dp panel)
-                            // Exit button is rightmost ~14% (80dp in ~600dp panel)
-                            // Record button is next to exit button
-                            // Play controls button is next to record button (when visible in replay mode)
-                            // HudPanel (header text) is left ~72% (panel minus 170dp button area)
-                            val headerThreshold = 0.20f  // Top 20% is header row
-                            val exitButtonLeft = 0.86f   // Exit button starts at 86% from left
-                            val recordButtonLeft = 0.72f // Record button starts at 72% from left
-                            val playControlsButtonLeft = 0.58f // Play controls button starts at 58% from left (when visible)
-                            val hudPanelRight = 0.72f    // HudPanel ends at 72% (170dp button area) - adjusted when play controls visible
-                            
-                            // Check for exit button (right ~14% of width, top header area)
-                            if (u > exitButtonLeft && v < headerThreshold) {
-                                Log.i(TAG, "  -> EXIT BUTTON clicked!")
-                                activity.runOnUiThread {
-                                    activity.finish()
-                                }
-                                return true
-                            }
-                            
-                            // Check for record button (between hudPanel and exit button, ~72%-86% range)
-                            if (u > recordButtonLeft && u < exitButtonLeft && v < headerThreshold) {
-                                Log.i(TAG, "  -> RECORD BUTTON clicked!")
-                                activity.runOnUiThread {
-                                    activity.screenRecordController?.toggleRecording()
-                                }
-                                return true
-                            }
-                            
-                            // Check for play controls button (when visible, between ~58%-72% range)
-                            val isPlayControlsVisible = activity.hudPanelController?.isPlayControlsButtonVisible() == true
-                            if (isPlayControlsVisible && u > playControlsButtonLeft && u < recordButtonLeft && v < headerThreshold) {
-                                Log.i(TAG, "  -> PLAY CONTROLS BUTTON clicked!")
-                                activity.runOnUiThread {
-                                    activity.hudPanelController?.togglePlayControlsPopup()
-                                }
-                                return true
-                            }
-                            
-                            // Check for hudPanel area (left part of width, top header area)
-                            // Adjust threshold if play controls button is visible
-                            val effectiveHudPanelRight = if (isPlayControlsVisible) playControlsButtonLeft else hudPanelRight
-                            if (u < effectiveHudPanelRight && v < headerThreshold) {
-                                Log.i(TAG, "  -> HUD HEADER clicked - toggling menu")
-                                activity.runOnUiThread {
-                                    activity.hudPanelController?.handleHeaderClick()
-                                }
-                                return true
-                            }
-                            
-                            // Check for play controls popup (when visible, below header)
-                            val isPlayControlsPopupVisible = activity.hudPanelController?.isPlayControlsPopupVisible() == true
-                            if (isPlayControlsPopupVisible && v > headerThreshold) {
-                                Log.i(TAG, "  -> PLAY CONTROLS POPUP clicked at ($u, $v)")
-                                activity.runOnUiThread {
-                                    activity.hudPanelController?.handlePlayControlsClick(u, v)
-                                }
-                                return true
-                            }
-                            
-                            // Check for menu area (when visible, below header)
-                            if (v > headerThreshold) {
-                                Log.i(TAG, "  -> MENU AREA clicked at ($u, $v)")
-                                activity.runOnUiThread {
-                                    activity.hudPanelController?.handleMenuClick(u, v)
-                                }
-                                return true
-                            }
-                            
-                            Log.i(TAG, "  -> Click not in known button area")
-                        } else {
-                            Log.w(TAG, "Panel transform not found")
-                        }
                     }
                     
+                    // Only process new button presses below this point
+                    if (!buttonPressed) {
+                        return false
+                    }
+                    
+                    // Debounce for non-drag clicks
+                    val now = System.currentTimeMillis()
+                    if (now - lastClickTime < CLICK_DEBOUNCE_MS) {
+                        Log.d(TAG, "Ignoring duplicate click (debounce)")
+                        return true
+                    }
+                    lastClickTime = now
+                    
+                    Log.i(TAG, "=== HUD PANEL CLICK === u=$u, v=$v")
+                    
+                    // Check for play controls popup seekbar first (before other popup handling)
+                    if (isPlayControlsPopupVisible && v > headerThreshold) {
+                        // Check if click is in seekbar area
+                        val isInSeekbarArea = activity.hudPanelController?.isPointInSeekbar(u, v) == true
+                        if (isInSeekbarArea) {
+                            Log.i(TAG, "Seekbar drag started at u=$u")
+                            isSeekbarDragging = true
+                            seekbarDragStartU = u
+                            activity.runOnUiThread {
+                                activity.hudPanelController?.handleSeekbarDragStart(u)
+                            }
+                            return true
+                        }
+                    }
+                        
+                    // Header area thresholds
+                    val exitButtonLeft = 0.86f
+                    val recordButtonLeft = 0.72f
+                    val playControlsButtonLeft = 0.58f
+                    val hudPanelRight = 0.72f
+                    
+                    // Check for exit button
+                    if (u > exitButtonLeft && v < headerThreshold) {
+                        Log.i(TAG, "  -> EXIT BUTTON clicked!")
+                        activity.runOnUiThread {
+                            activity.finish()
+                        }
+                        return true
+                    }
+                    
+                    // Check for record button
+                    if (u > recordButtonLeft && u < exitButtonLeft && v < headerThreshold) {
+                        Log.i(TAG, "  -> RECORD BUTTON clicked!")
+                        activity.runOnUiThread {
+                            activity.screenRecordController?.toggleRecording()
+                        }
+                        return true
+                    }
+                    
+                    // Check for play controls button
+                    val isPlayControlsVisible = activity.hudPanelController?.isPlayControlsButtonVisible() == true
+                    if (isPlayControlsVisible && u > playControlsButtonLeft && u < recordButtonLeft && v < headerThreshold) {
+                        Log.i(TAG, "  -> PLAY CONTROLS BUTTON clicked!")
+                        activity.runOnUiThread {
+                            activity.hudPanelController?.togglePlayControlsPopup()
+                        }
+                        return true
+                    }
+                    
+                    // Check for hudPanel header area
+                    val effectiveHudPanelRight = if (isPlayControlsVisible) playControlsButtonLeft else hudPanelRight
+                    if (u < effectiveHudPanelRight && v < headerThreshold) {
+                        Log.i(TAG, "  -> HUD HEADER clicked - toggling menu")
+                        activity.runOnUiThread {
+                            activity.hudPanelController?.handleHeaderClick()
+                        }
+                        return true
+                    }
+                    
+                    // Check for play controls popup (non-seekbar clicks)
+                    if (isPlayControlsPopupVisible && v > headerThreshold) {
+                        Log.i(TAG, "  -> PLAY CONTROLS POPUP clicked at ($u, $v)")
+                        activity.runOnUiThread {
+                            activity.hudPanelController?.handlePlayControlsClick(u, v)
+                        }
+                        return true
+                    }
+                    
+                    // Check for menu area
+                    if (v > headerThreshold) {
+                        Log.i(TAG, "  -> MENU AREA clicked at ($u, $v)")
+                        activity.runOnUiThread {
+                            activity.hudPanelController?.handleMenuClick(u, v)
+                        }
+                        return true
+                    }
+                    
+                    Log.i(TAG, "  -> Click not in known button area")
                     return false
                 }
             })

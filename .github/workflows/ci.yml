@@ -20,6 +20,10 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Install NDK
+        run: |
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install 'ndk;29.0.13599879'
+
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 

@@ -825,6 +825,88 @@ class HudPanelController(private val activity: BaselineActivity) {
     }
     
     /**
+     * Check if the given panel coordinates (u,v) are within the seekbar area.
+     * The seekbar is in the play controls popup, below the header.
+     * 
+     * @param u Horizontal position (0=left, 1=right)
+     * @param v Vertical position (0=top, 1=bottom)
+     * @return true if the point is within the seekbar bounds
+     */
+    fun isPointInSeekbar(u: Float, v: Float): Boolean {
+        // Popup layout (approximate):
+        // - Popup top: v ~0.11
+        // - Seekbar area: roughly v ~0.25 to ~0.45 (seekbar + labels)
+        // - Buttons area: v ~0.55 to ~0.67
+        // - Horizontal: seekbar spans most of the popup width with padding
+        val seekbarTopV = 0.20f
+        val seekbarBottomV = 0.50f
+        val seekbarLeftU = 0.10f
+        val seekbarRightU = 0.90f
+        
+        val inSeekbar = v >= seekbarTopV && v <= seekbarBottomV && u >= seekbarLeftU && u <= seekbarRightU
+        android.util.Log.d("BXRINPUT", "isPointInSeekbar($u, $v) = $inSeekbar")
+        return inSeekbar
+    }
+    
+    /**
+     * Handle seekbar drag start - called when user starts dragging the seek cursor.
+     * Converts panel u coordinate to seekbar progress and triggers grab.
+     * 
+     * @param u Horizontal position (0=left, 1=right) in panel coordinates
+     */
+    fun handleSeekbarDragStart(u: Float) {
+        android.util.Log.i("BXRINPUT", "handleSeekbarDragStart($u)")
+        
+        // Convert panel u to seekbar progress (0-1000)
+        // Seekbar area: u ~0.10 to ~0.90, so normalize
+        val seekbarLeftU = 0.10f
+        val seekbarRightU = 0.90f
+        val normalizedU = ((u - seekbarLeftU) / (seekbarRightU - seekbarLeftU)).coerceIn(0f, 1f)
+        val progress = (normalizedU * 1000).toInt()
+        
+        android.util.Log.i("BXRINPUT", "Seekbar drag start: u=$u -> progress=$progress")
+        
+        // Trigger the grab on PlayControlsController
+        playControlsController?.handleSeekbarGrab(progress)
+    }
+    
+    /**
+     * Handle seekbar drag update - called during drag to update position.
+     * 
+     * @param u Horizontal position (0=left, 1=right) in panel coordinates
+     */
+    fun handleSeekbarDragUpdate(u: Float) {
+        // Convert panel u to seekbar progress
+        val seekbarLeftU = 0.10f
+        val seekbarRightU = 0.90f
+        val normalizedU = ((u - seekbarLeftU) / (seekbarRightU - seekbarLeftU)).coerceIn(0f, 1f)
+        val progress = (normalizedU * 1000).toInt()
+        
+        // Update seekbar position
+        playControlsController?.handleSeekbarDrag(progress)
+    }
+    
+    /**
+     * Handle seekbar drag end - called when user releases the seek cursor.
+     * 
+     * @param u Final horizontal position (0=left, 1=right) in panel coordinates
+     */
+    fun handleSeekbarDragEnd(u: Float) {
+        android.util.Log.i("BXRINPUT", "handleSeekbarDragEnd($u)")
+        
+        // Convert panel u to seekbar progress
+        val seekbarLeftU = 0.10f
+        val seekbarRightU = 0.90f
+        val normalizedU = ((u - seekbarLeftU) / (seekbarRightU - seekbarLeftU)).coerceIn(0f, 1f)
+        val progress = (normalizedU * 1000).toInt()
+        
+        android.util.Log.i("BXRINPUT", "Seekbar drag end: u=$u -> progress=$progress")
+        
+        // Trigger the release on PlayControlsController
+        playControlsController?.handleSeekbarRelease(progress)
+    }
+    
+    /**
      * Toggle the play controls popup visibility (public for HudSystem)
      */
     fun togglePlayControlsPopup() {
@@ -921,6 +1003,11 @@ class HudPanelController(private val activity: BaselineActivity) {
         playControlsController?.onSeek = { gpsTimeMs, videoTimeMs ->
             android.util.Log.i("BXRINPUT", "Play controls seek: gps=$gpsTimeMs, video=$videoTimeMs")
             replayController?.seekTo(gpsTimeMs, videoTimeMs)
+        }
+        
+        playControlsController?.onSeekPreview = { gpsTimeMs, videoTimeMs ->
+            // Lightweight seek for drag preview - 20fps during drag
+            replayController?.seekPreview(gpsTimeMs, videoTimeMs)
         }
         
         playControlsController?.onPlayPause = {
