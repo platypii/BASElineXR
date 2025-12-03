@@ -13,7 +13,7 @@ public class VROptions {
     //public static LatLngAlt dropzone = new LatLngAlt(47.2375, -123.1458, 84);
 
     // Current active configuration
-    public static VROptions current = VROptionsList.OGDEN_AIRPLANE;
+    public static VROptions current = VROptionsList.TEEWINOTT2;
     public enum ShaderType {
         DEFAULT_SHADER,
         LOD_SHADER
@@ -100,6 +100,7 @@ public class VROptions {
     public static void autoSelectMinimap(double lat, double lng) {
         // Check if coordinates are within any minimap bounds
         MiniMapOptions[] availableMinimaps = {
+                VROptionsList.MM_CURRENT,
                 VROptionsList.MM_TOOELE,
                 VROptionsList.MM_OGDEN,
                 VROptionsList.MM_KPOW

@@ -473,6 +473,44 @@ public class VROptionsList {
             null
     );
 
+    public static final VROptions TEEWINOTT2 = new VROptions(
+            "teewinott2",
+            "hrt31flysight.csv",
+            "eiger",
+            new LatLngAlt(43.747298, -110.7799624, 3766.27),
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            true,
+            false,
+            true,
+            new LatLngAlt(46.57835, 7.984, 2670.5),
+            null,
+            null,
+            null,
+            "TEEWINOTT360.mp4",
+            35800
+    );
+
+    public static final VROptions ROCK_WHOPPER = new VROptions(
+            "Rock Whopper",
+            null,
+            "eiger",
+            new LatLngAlt(40.6502764, -115.3992205, 3777.388),
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            true,
+            false,
+            true,
+            null,
+            "rock_whopper",
+            732,
+            800,
+            "rockwhopper.mp4",
+            -9000
+    );
+
     public static final MiniMapOptions MM_KPOW = new MiniMapOptions(
             47.214,    // latMin
             47.2637,   // latMax
@@ -492,6 +530,13 @@ public class VROptionsList {
     public static final MiniMapOptions MM_TOOELE = new MiniMapOptions(
             40.5447, 40.6771, -112.4505, -112.2456,
             R.drawable.minimap_tooele
+    );
+    public static final MiniMapOptions MM_CURRENT = new MiniMapOptions(
+            43.713129,    // latMin
+            43.777762,   // latMax
+            -110.797739,  // lngMin
+            -110.729075, // lngMax
+            R.drawable.minimap_current
     );
 
 }
