@@ -231,8 +231,8 @@ class PlayControlsController(
         
         android.util.Log.i(TAG, "User seeked to: gps=$gpsTimeMs, video=$videoTimeMs, willResume=$preSeekWasPlaying")
         
-        // Unfreeze motion estimator
-        Services.location.motionEstimator.unfreeze()
+        // NOTE: Do NOT unfreeze motion estimator here - seekTo() will freeze it,
+        // and resume() will unfreeze it after the seek completes.
         
         // Perform final seek
         onSeek?.invoke(gpsTimeMs, videoTimeMs)
@@ -329,14 +329,21 @@ class PlayControlsController(
         // Set up seekbar listener
         setupSeekBarListener()
         
-        // Position markers after layout is ready
-        seekbarFrame?.viewTreeObserver?.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
-            override fun onGlobalLayout() {
-                seekbarFrame.viewTreeObserver.removeOnGlobalLayoutListener(this)
-                layoutReady = true
-                positionMarkersAndLabels()
-            }
-        })
+        // Position markers - either now if layout is ready, or after layout completes
+        if (layoutReady && (seekbarFrame?.width ?: 0) > 0) {
+            // Layout already ready (reinitialization case) - position now
+            android.util.Log.i(TAG, "Layout already ready, positioning markers immediately")
+            positionMarkersAndLabels()
+        } else {
+            // Wait for layout to complete
+            seekbarFrame?.viewTreeObserver?.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+                override fun onGlobalLayout() {
+                    seekbarFrame.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                    layoutReady = true
+                    positionMarkersAndLabels()
+                }
+            })
+        }
         
         android.util.Log.i(TAG, "PlayControls initialized: timeline=${timelineDurationMs/1000}s, " +
             "gps=${(gpsEndMs-gpsStartMs)/1000}s, video=${if(hasVideo) "${(videoEndGpsMs-videoStartGpsMs)/1000}s" else "none"}")
@@ -593,19 +600,25 @@ class PlayControlsController(
         isVisible = true
         android.util.Log.i(TAG, "show() called, layoutReady=$layoutReady")
         
-        // Re-position markers when shown (in case layout changed)
-        if (layoutReady) {
-            positionMarkersAndLabels()
-        } else {
-            // Wait for layout to be ready
-            seekbarFrame?.viewTreeObserver?.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
-                override fun onGlobalLayout() {
-                    seekbarFrame.viewTreeObserver.removeOnGlobalLayoutListener(this)
-                    layoutReady = true
-                    android.util.Log.i(TAG, "Layout ready in show(), positioning markers")
-                    positionMarkersAndLabels()
-                }
-            })
+        // Post to ensure layout is measured after visibility change
+        // This is more reliable than viewTreeObserver when view was GONE
+        seekbarFrame?.post {
+            val width = seekbarFrame?.width ?: 0
+            android.util.Log.i(TAG, "show() post: frameWidth=$width")
+            if (width > 0) {
+                layoutReady = true
+                positionMarkersAndLabels()
+            } else {
+                // Still not laid out, wait for layout
+                seekbarFrame?.viewTreeObserver?.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+                    override fun onGlobalLayout() {
+                        seekbarFrame.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                        layoutReady = true
+                        android.util.Log.i(TAG, "Layout ready in show() listener, positioning markers")
+                        positionMarkersAndLabels()
+                    }
+                })
+            }
         }
     }
     

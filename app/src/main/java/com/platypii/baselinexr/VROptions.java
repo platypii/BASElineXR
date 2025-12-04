@@ -9,11 +9,11 @@ public class VROptions {
     // Ogden 41.199716, -112.001832, 2086 m 1353M 41.213346, -111.984535, 2420
     // kpow 47.2375, -123.1458, 84
     // tooele 40.6109180, -112.3480495, 1314
-    public static LatLngAlt dropzone = new LatLngAlt(41.199716, -112.001832, 1353 );
-    //public static LatLngAlt dropzone = new LatLngAlt(47.2375, -123.1458, 84);
+    public static LatLngAlt dropzone = new LatLngAlt(27.391157, 103.222719, 966);
+    //public static LatLngAlt dropzone = new LatLngAlt(27.391157, 103.222719, 966);
 
     // Current active configuration
-    public static VROptions current = VROptionsList.TEEWINOTT2;
+    public static VROptions current = VROptionsList.CHINA_CLOUDS_360VIDEO;
     public enum ShaderType {
         DEFAULT_SHADER,
         LOD_SHADER
@@ -86,7 +86,7 @@ public class VROptions {
         this(name, mockTrack, sourceModel, destination, shader, roomMovement, showDirectionArrow, showWingsuitCanopy, showTarget, showSpeedChart, portalLocation, mockSensor, mockTrackStartSec, mockTrackEndSec, null, null);
     }
 
-    public static MiniMapOptions minimap = VROptionsList.MM_OGDEN;
+    public static MiniMapOptions minimap = VROptionsList.MM_CURRENT;
 
 
     // Offset distance when clicking NSEW

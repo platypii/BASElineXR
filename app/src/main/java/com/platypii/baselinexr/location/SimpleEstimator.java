@@ -46,6 +46,19 @@ public final class SimpleEstimator implements MotionEstimator {
     public boolean isFrozen() {
         return frozen;
     }
+    
+    @Override
+    public void reset() {
+        Log.i(TAG, "Resetting SimpleEstimator state");
+        origin = null;
+        lastUpdate = null;
+        p = new Vector3();
+        v = new Vector3();
+        a = new Vector3();
+        positionDelta = null;
+        wseParams = new WSEParams(0.01, 0.01, 0.0);
+        frozen = false;
+    }
 
     /**
      * Converts GPS lat/lon/alt to ENU coordinates relative to the origin

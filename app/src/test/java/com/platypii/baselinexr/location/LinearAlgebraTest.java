@@ -339,12 +339,12 @@ public class LinearAlgebraTest {
         
         double[][] F = LinearAlgebra.calculateJacobian(dt);
         
-        // Should be 12x12 identity matrix with specific modifications
-        assertEquals(12, F.length);
-        assertEquals(12, F[0].length);
+        // Should be 18x18 identity matrix with specific modifications (18D state with wind)
+        assertEquals(18, F.length);
+        assertEquals(18, F[0].length);
         
         // Check identity elements
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i < 18; i++) {
             assertEquals(1.0, F[i][i], EPSILON);
         }
         
@@ -359,8 +359,8 @@ public class LinearAlgebraTest {
         assertEquals(dt, F[5][8], EPSILON); // dvz/daz
         
         // Check that all other off-diagonal elements are zero
-        for (int i = 0; i < 12; i++) {
-            for (int j = 0; j < 12; j++) {
+        for (int i = 0; i < 18; i++) {
+            for (int j = 0; j < 18; j++) {
                 if (i == j) continue; // Skip diagonal
                 if ((i < 3 && j == i + 3) || (i >= 3 && i < 6 && j == i + 3)) {
                     continue; // Skip the dp/dv and dv/da elements we already checked
@@ -374,9 +374,9 @@ public class LinearAlgebraTest {
     public void testCalculateJacobianZeroTime() {
         double[][] F = LinearAlgebra.calculateJacobian(0.0);
         
-        // With dt=0, should just be identity matrix
-        for (int i = 0; i < 12; i++) {
-            for (int j = 0; j < 12; j++) {
+        // With dt=0, should just be 18x18 identity matrix
+        for (int i = 0; i < 18; i++) {
+            for (int j = 0; j < 18; j++) {
                 if (i == j) {
                     assertEquals(1.0, F[i][j], EPSILON);
                 } else {

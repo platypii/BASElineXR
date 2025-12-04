@@ -298,7 +298,7 @@ def generate_vroptions_code(config):
     room_movement = 'false'
     show_direction = 'true'
     show_wingsuit = 'true'
-    show_target = 'false'
+    show_target = 'true'  # Show target reticle on landing zone
     show_speed_chart = 'true'
     portal_location = 'null'
     

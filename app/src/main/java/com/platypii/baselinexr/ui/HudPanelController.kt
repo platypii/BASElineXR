@@ -623,7 +623,7 @@ class HudPanelController(private val activity: BaselineActivity) {
                 }
             }
             MenuState.CLOSED -> {
-                menuContainer?.visibility = View.GONE
+                closeAllMenus()
                 return
             }
         }
@@ -730,12 +730,49 @@ class HudPanelController(private val activity: BaselineActivity) {
     /**
      * Update the seekbar position during playback.
      * Call this periodically (e.g., from frame update loop) when menu is visible.
+     * 
+     * Position calculation:
+     * - If GPS is playing: use GPS time directly
+     * - If GPS not playing but video is: calculate timeline position from video position
+     * - This handles the case where video starts before GPS (positive offset)
      */
+    private var lastSeekbarLogTime = 0L
     fun updateSeekBarPosition() {
         // Update play controls popup (if visible)
         if (playControlsVisible && playControlsController != null) {
-            val mockProvider = Services.location?.getMockLocationProvider() ?: return
-            val currentGpsTimeMs = mockProvider.getCurrentGpsTimeMs()
+            var currentGpsTimeMs: Long = 0
+            var source = "none"
+            
+            // Try to get position from GPS first, but ONLY if GPS is actually started AND not completed
+            // When GPS completes, getCurrentGpsTimeMs() returns trackStartTime which would cause cursor to jump back
+            val mockProvider = Services.location?.getMockLocationProvider()
+            if (mockProvider != null && mockProvider.isStarted && !mockProvider.isCompleted) {
+                currentGpsTimeMs = mockProvider.getCurrentGpsTimeMs()
+                if (currentGpsTimeMs > 0) source = "gps"
+            }
+            
+            // If GPS is not started yet OR GPS has completed, calculate position from video
+            if (currentGpsTimeMs <= 0 && PlaybackTimeline.isInitialized && PlaybackTimeline.hasVideo) {
+                val videoController = replayController?.videoController
+                val videoPositionMs = videoController?.getCurrentPosition()?.toLong() ?: 0
+                if (videoPositionMs > 0) {
+                    // Convert video position to GPS timeline time
+                    currentGpsTimeMs = PlaybackTimeline.videoTimeToGpsTime(videoPositionMs)
+                    source = "video($videoPositionMs)"
+                }
+            }
+            
+            // Log periodically (every 1 second for debugging)
+            val now = System.currentTimeMillis()
+            if (now - lastSeekbarLogTime > 1000) {
+                lastSeekbarLogTime = now
+                val gpsStarted = mockProvider?.isStarted ?: false
+                val gpsCompleted = mockProvider?.isCompleted ?: false
+                val videoPos = replayController?.videoController?.getCurrentPosition() ?: -1
+                android.util.Log.d("BXRINPUT", "updateSeekBarPosition: source=$source, gpsTime=$currentGpsTimeMs, " +
+                    "gpsStarted=$gpsStarted, gpsCompleted=$gpsCompleted, videoPos=$videoPos")
+            }
+            
             if (currentGpsTimeMs > 0) {
                 playControlsController?.updatePosition(currentGpsTimeMs)
             }
@@ -965,8 +1002,8 @@ class HudPanelController(private val activity: BaselineActivity) {
     private fun setupPlayControls() {
         val popup = playControlsPopupContainer ?: return
         
-        // Get track data
-        val mockProvider = Services.location?.getMockLocationProvider()
+        // Get track data - use getMockLocationProviderIfConfigured to get data before playback starts
+        val mockProvider = Services.location?.getMockLocationProviderIfConfigured()
         val gpsTrackStartMs = mockProvider?.getTrackStartTime() ?: 0L
         val gpsTrackEndMs = gpsTrackStartMs + (mockProvider?.getTrackDuration() ?: 0L)
         
@@ -1023,6 +1060,37 @@ class HudPanelController(private val activity: BaselineActivity) {
             // Update button state to show play icon (since we're stopped)
             playControlsController?.updatePlayPauseButton(true)
             // Don't hide popup - user may want to click play again
+        }
+        
+        // Wire up video prepared callback to reinitialize PlayControls with video data
+        replayController?.videoController?.onVideoPrepared = { newVideoDurationMs ->
+            android.util.Log.i("BXRINPUT", "Video prepared callback: duration=${newVideoDurationMs}ms, reinitializing PlayControls")
+            
+            // Get fresh GPS track data (should be loaded by now via preloadTrackData)
+            val provider = Services.location?.getMockLocationProviderIfConfigured()
+            val freshGpsStartMs = provider?.getTrackStartTime() ?: 0L
+            val freshGpsEndMs = freshGpsStartMs + (provider?.getTrackDuration() ?: 0L)
+            
+            android.util.Log.i("BXRINPUT", "Fresh GPS track: start=$freshGpsStartMs, end=$freshGpsEndMs")
+            
+            if (freshGpsStartMs > 0 && freshGpsEndMs > freshGpsStartMs) {
+                // Reinitialize PlaybackTimeline with video data
+                PlaybackTimeline.initialize(
+                    gpsTrackStartMs = freshGpsStartMs,
+                    gpsTrackEndMs = freshGpsEndMs,
+                    videoDurationMs = newVideoDurationMs
+                )
+                // Reinitialize PlayControlsController with video data on UI thread
+                activity.runOnUiThread {
+                    playControlsController?.initialize(
+                        gpsTrackStartMs = freshGpsStartMs,
+                        gpsTrackEndMs = freshGpsEndMs,
+                        videoDurationMs = newVideoDurationMs
+                    )
+                }
+            } else {
+                android.util.Log.w("BXRINPUT", "GPS track still not loaded in video prepared callback")
+            }
         }
         
         android.util.Log.i("BXRINPUT", "Play controls setup complete")

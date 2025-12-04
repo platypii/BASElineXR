@@ -56,6 +56,27 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
     public MockLocationProvider getMockLocationProvider() {
         return locationMode == LOCATION_MOCK ? locationProviderMock : null;
     }
+    
+    /**
+     * Get the mock location provider if mock mode is configured.
+     * This returns the provider even before start() is called,
+     * useful for reading track data before playback begins.
+     */
+    @Nullable
+    public MockLocationProvider getMockLocationProviderIfConfigured() {
+        return useMock ? locationProviderMock : null;
+    }
+    
+    /**
+     * Preload GPS track data without starting playback.
+     * This allows reading track timing info before start() is called.
+     * Used for initializing PlaybackTimeline early when video is configured.
+     */
+    public void preloadTrackData(@NonNull Context context) {
+        if (useMock) {
+            locationProviderMock.preloadTrackData(context);
+        }
+    }
 
     public LocationService(@NonNull BluetoothService bluetooth) {
         this.bluetooth = bluetooth;
@@ -113,6 +134,35 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
         TemperatureEstimator.INSTANCE.logDailyTemperatureProfile(originalLoc);
     }
 
+    /**
+     * Override updateLocation to skip duplicate detection.
+     * MockLocationProvider already does duplicate detection, so we don't need to do it again.
+     * Doing it here causes problems because of async message delivery - old messages
+     * from before a seek/restart can arrive after lastLoc is cleared, setting lastLoc
+     * to an old value and causing new messages to be incorrectly flagged as duplicates.
+     */
+    @Override
+    void updateLocation(@NonNull MLocation loc) {
+        // Skip duplicate check - MockLocationProvider already handles this
+        // Just do the bookkeeping and notify listeners
+        
+        // Check for negative time delta between locations (for debugging)
+        if (lastLoc != null && loc.millis < lastLoc.millis) {
+            Log.e(providerName(), "Non-monotonic time delta: " + loc.millis + " - " + lastLoc.millis + " = " + (loc.millis - lastLoc.millis) + " ms");
+        }
+
+        // Store location
+        lastLoc = loc;
+
+        // Update gps time offset
+        TimeOffset.update(providerName(), lastLoc.millis);
+
+        refreshRate.addSample(lastLoc.millis);
+
+        // Notify listeners (async so the service never blocks!)
+        locationUpdates.postAsync(lastLoc);
+    }
+
     @NonNull
     @Override
     protected String providerName() {
@@ -149,6 +199,15 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
                 !ReplayManager.INSTANCE.isReadyToRestart()) {
                 // GPS playback is in progress or was manually stopped - don't interfere
                 Log.i(TAG, "Replay in progress or stopped, skipping auto GPS start");
+                return;
+            }
+            
+            // If video is configured, don't auto-start GPS here.
+            // Video360Controller.onPreparedListener will coordinate GPS start
+            // with proper timeline delays after video duration is known.
+            if (VROptions.current.has360Video()) {
+                Log.i(TAG, "Video configured - deferring GPS start to Video360Controller");
+                locationMode = LOCATION_MOCK;  // Set mode so startMockPlaybackWithDelay works
                 return;
             }
             
@@ -312,7 +371,19 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
      */
     public void seekMockPlayback(long targetGpsTimeMs, boolean resumeAfterSeek) {
         if (locationMode == LOCATION_MOCK) {
-            Log.i(TAG, "Seeking mock GPS playback to " + targetGpsTimeMs);
+            Log.i(TAG, "Seeking mock GPS playback to " + targetGpsTimeMs + " (resumeAfterSeek=" + resumeAfterSeek + ")");
+            // Clear lastLoc to prevent duplicate detection issues after seek.
+            // The seek will emit a new position with potentially different timestamp
+            // than the pre-seek position, so we shouldn't compare against old lastLoc.
+            lastLoc = null;
+            
+            // If resuming after seek, ensure we're subscribed to location updates.
+            // This handles the case where GPS was never started (e.g., video starts first
+            // and user seeks into GPS range before scheduled GPS start).
+            if (resumeAfterSeek) {
+                locationProviderMock.locationUpdates.subscribe(this);
+            }
+            
             locationProviderMock.seekTo(targetGpsTimeMs, resumeAfterSeek);
             // TODO: Seek sensor data to match GPS time
         }
@@ -324,9 +395,15 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
     public void startMockPlayback(@NonNull Context context) {
         if (useMock) {
             Log.i(TAG, "Starting mock GPS playback, locationMode=" + locationMode);
+            // Clear lastLoc to prevent duplicate detection on restart
+            // Without this, the first points on restart may be rejected as "duplicates"
+            // of the last points from the previous playthrough
+            lastLoc = null;
             if (locationMode == LOCATION_MOCK) {
-                // Already in mock mode - restart
+                // Already in mock mode - restart and ensure subscribed
                 locationProviderMock.restart(context);
+                // Subscribe if not already (handles deferred start case)
+                locationProviderMock.locationUpdates.subscribe(this);
                 if (VROptions.current.mockSensor != null) {
                     long trackStartTime = locationProviderMock.getTrackStartTime();
                     sensorProvider.restart(context, trackStartTime);
@@ -356,6 +433,8 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
     public void startMockPlaybackWithDelay(@NonNull Context context, long delayMs) {
         if (useMock) {
             Log.i(TAG, "Starting mock GPS playback with delay: " + delayMs + "ms, locationMode=" + locationMode);
+            // Clear lastLoc to prevent duplicate detection on restart
+            lastLoc = null;
             if (locationMode == LOCATION_MOCK) {
                 // Already in mock mode - restart with delay
                 locationProviderMock.restartWithDelay(context, delayMs);

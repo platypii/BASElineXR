@@ -242,8 +242,8 @@ object PlaybackTimeline {
      * Calculate how long GPS should wait before starting (if video starts first).
      * 
      * On the unified timeline:
-     * - If video starts before GPS (negative offset), GPS should wait
-     * - If GPS starts before video (positive offset), GPS starts immediately
+     * - If video starts before GPS (positive offset), GPS should wait
+     * - If GPS starts before video (negative offset), GPS starts immediately
      * 
      * @return Delay in milliseconds before GPS should start (0 if GPS starts first)
      */
@@ -259,11 +259,30 @@ object PlaybackTimeline {
     }
     
     /**
-     * Calculate the initial video position when playback starts.
+     * Calculate how long video should wait before starting (if GPS starts first).
      * 
      * On the unified timeline:
-     * - If GPS starts before video, video starts at position 0
-     * - If video starts before GPS, video starts at (gpsStart - videoStart)
+     * - If GPS starts before video (negative offset), video should wait
+     * - If video starts before GPS (positive offset), video starts immediately
+     * 
+     * @return Delay in milliseconds before video should start (0 if video starts first)
+     */
+    fun getVideoStartDelayMs(): Long {
+        if (!hasVideo) return 0
+        
+        // Video delay = how far video start is from timeline start
+        // If GPS starts first, this will be positive
+        // If video starts first, this will be 0
+        val delay = videoStartGpsMs - timelineStartMs
+        Log.i(TAG, "Video start delay: ${delay}ms (videoStart=$videoStartGpsMs, timelineStart=$timelineStartMs)")
+        return delay.coerceAtLeast(0)
+    }
+
+    /**
+     * Calculate the initial video position when playback starts.
+     * 
+     * NOTE: This is only used for seeking during playback, not for initial start.
+     * On initial start, video always starts at position 0 (after its delay).
      * 
      * @return Initial video position in milliseconds from video start
      */

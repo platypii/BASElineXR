@@ -161,8 +161,34 @@ public class MLocation extends Measurement implements Comparable<MLocation> {
         return Long.compare(millis, loc.millis);
     }
 
+    /**
+     * Check equality based on timestamp and position data.
+     * Note: This method signature matches the Object.equals() contract but 
+     * compares MLocation-specific fields.
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof MLocation)) return false;
+        MLocation loc = (MLocation) obj;
+        return loc.millis == millis && loc.latitude == latitude && loc.longitude == longitude && loc.vN == vN && loc.vE == vE;
+    }
+
+    /**
+     * Type-safe equality check for MLocation objects.
+     */
     public boolean equals(@NonNull MLocation loc) {
         return loc.millis == millis && loc.latitude == latitude && loc.longitude == longitude && loc.vN == vN && loc.vE == vE;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Long.hashCode(millis);
+        result = 31 * result + Double.hashCode(latitude);
+        result = 31 * result + Double.hashCode(longitude);
+        result = 31 * result + Double.hashCode(vN);
+        result = 31 * result + Double.hashCode(vE);
+        return result;
     }
 
     @NonNull

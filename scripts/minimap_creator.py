@@ -197,13 +197,14 @@ def find_track_file(mock_track, mock_sensor):
 
 def parse_track_file(track_file):
     """
-    Parse a GPS track file to find min/max lat/lon/alt values.
+    Parse a GPS track file to find min/max lat/lon/alt values and the last point.
     
     Supports FlySight 2 format: $GNSS,time,lat,lon,hMSL,...
     And FlySight 1 format: time,lat,lon,hMSL,...
     
     Returns:
-        dict with lat_min, lat_max, lon_min, lon_max, alt_min, alt_max
+        dict with lat_min, lat_max, lon_min, lon_max, alt_min, alt_max,
+        and last_lat, last_lon, last_alt for the landing zone
     """
     lat_min = float('inf')
     lat_max = float('-inf')
@@ -211,6 +212,9 @@ def parse_track_file(track_file):
     lon_max = float('-inf')
     alt_min = float('inf')
     alt_max = float('-inf')
+    
+    # Track the last valid point (landing zone)
+    last_lat, last_lon, last_alt = None, None, None
     
     point_count = 0
     
@@ -253,6 +257,8 @@ def parse_track_file(track_file):
                     lon_max = max(lon_max, lon)
                     alt_min = min(alt_min, alt)
                     alt_max = max(alt_max, alt)
+                    # Keep updating - the last valid point becomes the landing zone
+                    last_lat, last_lon, last_alt = lat, lon, alt
                     point_count += 1
         
         if point_count == 0:
@@ -263,6 +269,7 @@ def parse_track_file(track_file):
         print(f"  Latitude:  {lat_min:.6f} to {lat_max:.6f}")
         print(f"  Longitude: {lon_min:.6f} to {lon_max:.6f}")
         print(f"  Altitude:  {alt_min:.1f} to {alt_max:.1f} meters")
+        print(f"  Last point (landing zone): {last_lat:.6f}, {last_lon:.6f}, {last_alt:.1f}m")
         
         return {
             'lat_min': lat_min,
@@ -270,7 +277,10 @@ def parse_track_file(track_file):
             'lon_min': lon_min,
             'lon_max': lon_max,
             'alt_min': alt_min,
-            'alt_max': alt_max
+            'alt_max': alt_max,
+            'last_lat': last_lat,
+            'last_lon': last_lon,
+            'last_alt': last_alt
         }
         
     except Exception as e:
@@ -552,6 +562,72 @@ def update_autoselect_minimap():
         return False
 
 
+def update_dropzone(last_lat, last_lon, last_alt):
+    """
+    Update the dropzone in VROptions.java with the last GPS point from the track.
+    
+    This sets the target landing zone to the end of the flight track.
+    """
+    try:
+        with open(VROPTIONS_PATH, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Find and replace the dropzone definition
+        # Pattern: public static LatLngAlt dropzone = new LatLngAlt(...);
+        dropzone_pattern = r'public static LatLngAlt dropzone\s*=\s*new LatLngAlt\s*\([^)]+\)\s*;'
+        
+        new_dropzone = f'public static LatLngAlt dropzone = new LatLngAlt({last_lat:.6f}, {last_lon:.6f}, {last_alt:.0f});'
+        
+        if not re.search(dropzone_pattern, content):
+            print("ERROR: Could not find dropzone definition in VROptions.java")
+            return False
+        
+        content = re.sub(dropzone_pattern, new_dropzone, content)
+        
+        # Write the updated content
+        with open(VROPTIONS_PATH, 'w', encoding='utf-8') as f:
+            f.write(content)
+        
+        print(f"Updated dropzone to: {last_lat:.6f}, {last_lon:.6f}, {last_alt:.0f}m")
+        return True
+        
+    except Exception as e:
+        print(f"ERROR: Failed to update dropzone in VROptions.java: {e}")
+        return False
+
+
+def update_default_minimap():
+    """
+    Set the default minimap to MM_CURRENT in VROptions.java.
+    """
+    try:
+        with open(VROPTIONS_PATH, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Find and replace the minimap definition
+        # Pattern: public static MiniMapOptions minimap = VROptionsList.MM_XXXX;
+        minimap_pattern = r'public static MiniMapOptions minimap\s*=\s*VROptionsList\.\w+\s*;'
+        
+        new_minimap = 'public static MiniMapOptions minimap = VROptionsList.MM_CURRENT;'
+        
+        if not re.search(minimap_pattern, content):
+            print("ERROR: Could not find minimap definition in VROptions.java")
+            return False
+        
+        content = re.sub(minimap_pattern, new_minimap, content)
+        
+        # Write the updated content
+        with open(VROPTIONS_PATH, 'w', encoding='utf-8') as f:
+            f.write(content)
+        
+        print("Set default minimap to MM_CURRENT")
+        return True
+        
+    except Exception as e:
+        print(f"ERROR: Failed to update default minimap in VROptions.java: {e}")
+        return False
+
+
 def main():
     print("=" * 60)
     print("BASElineXR Minimap Configuration Creator")
@@ -619,6 +695,18 @@ def main():
         return 1
     print()
     
+    # Step 9: Update dropzone with last GPS point (landing zone)
+    print("Step 9: Updating dropzone (target landing zone)...")
+    if not update_dropzone(bounds['last_lat'], bounds['last_lon'], bounds['last_alt']):
+        return 1
+    print()
+    
+    # Step 10: Set default minimap to MM_CURRENT
+    print("Step 10: Setting default minimap to MM_CURRENT...")
+    if not update_default_minimap():
+        return 1
+    print()
+    
     # Summary
     print("=" * 60)
     print("SUCCESS! Minimap configuration complete.")
@@ -631,8 +719,9 @@ def main():
     print(f"  - {VROPTIONS_LIST_PATH}")
     print(f"  - {VROPTIONS_PATH}")
     print()
-    print("MM_CURRENT is now in the autoSelectMinimap() array and will be")
-    print("automatically selected when GPS coordinates fall within its bounds.")
+    print("MM_CURRENT is now the default minimap and is in the autoSelectMinimap() array.")
+    print()
+    print(f"Dropzone target set to: {bounds['last_lat']:.6f}, {bounds['last_lon']:.6f}")
     print()
     
     return 0

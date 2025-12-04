@@ -107,6 +107,31 @@ public class MockLocationProvider extends LocationProvider {
     }
     
     /**
+     * Preload track data without starting playback.
+     * This allows reading track timing info before start() is called.
+     * Used by Video360Controller to initialize PlaybackTimeline early.
+     */
+    public void preloadTrackData(@NonNull Context context) {
+        if (trackData != null && !trackData.isEmpty()) {
+            Log.d(TAG, "Track data already loaded");
+            return;
+        }
+        
+        Log.i(TAG, "Preloading track data...");
+        cachedContext = context;
+        trackData = loadData(context);
+        
+        if (trackData != null && !trackData.isEmpty()) {
+            trackStartTime = trackData.get(0).millis;
+            trackEndTime = trackData.get(trackData.size() - 1).millis;
+            Log.i(TAG, String.format("Track preloaded: %d points, %d seconds, start=%d, end=%d", 
+                trackData.size(), (trackEndTime - trackStartTime) / 1000, trackStartTime, trackEndTime));
+        } else {
+            Log.e(TAG, "Failed to preload track data");
+        }
+    }
+    
+    /**
      * Pause playback - can resume later
      */
     public void pause() {
@@ -150,6 +175,9 @@ public class MockLocationProvider extends LocationProvider {
      * Seek to a specific GPS timestamp in the track.
      * Works whether playing, paused, or stopped.
      * 
+     * If GPS was stopped (e.g., by seeking to video-only zone), this will restart
+     * the emitter thread from the seek position if resumeAfterSeek is true.
+     * 
      * @param targetGpsTimeMs The original GPS timestamp to seek to
      * @param resumeAfterSeek If true, start/resume playback after seeking
      */
@@ -162,7 +190,7 @@ public class MockLocationProvider extends LocationProvider {
         // Clamp to track bounds
         targetGpsTimeMs = Math.max(trackStartTime, Math.min(trackEndTime, targetGpsTimeMs));
         
-        Log.i(TAG, "Seeking to GPS time: " + targetGpsTimeMs + " (resumeAfterSeek=" + resumeAfterSeek + ")");
+        Log.i(TAG, "Seeking to GPS time: " + targetGpsTimeMs + " (resumeAfterSeek=" + resumeAfterSeek + ", started=" + started + ")");
         
         // Find the index of the closest point at or before target time
         int targetIndex = findIndexForTime(targetGpsTimeMs);
@@ -190,14 +218,46 @@ public class MockLocationProvider extends LocationProvider {
             if (completed) {
                 completed = false;
             }
+            
+            // Clear lastLoc to prevent duplicate detection rejecting the seek position.
+            // The seek jumps to a new position which may have different timestamp than
+            // the pre-seek position, so we shouldn't compare against old lastLoc.
+            lastLoc = null;
+            
+            // Reset lastEmittedIndex to allow emitting the seek position.
+            // Without this, seeking to the same index twice would be blocked.
+            lastEmittedIndex = -1;
         }
         
         // Emit the target location immediately
         emitLocationAtIndex(currentIndex);
         
+        // NOTE: Do NOT call onGpsStarted() here - seek is just positioning, not starting playback.
+        // The motion estimator should stay frozen during seeks. The caller (ReplayController)
+        // is responsible for managing the motion estimator state based on whether playback resumes.
+        
         // Handle resume after seek
-        if (resumeAfterSeek && paused) {
-            resume();
+        if (resumeAfterSeek) {
+            // Check if we need to restart the emitter thread.
+            // This can happen in two scenarios:
+            // 1. GPS was stopped (started=false) - e.g., by seeking to video-only zone before GPS
+            // 2. GPS track completed (completed was true) and we're seeking back - thread has exited
+            boolean threadNeedsRestart = !started || (emitterThread == null || !emitterThread.isAlive());
+            
+            if (threadNeedsRestart) {
+                // We need to restart the emitter thread from the current position
+                Log.i(TAG, "Seek with resume requested but emitter thread not running - restarting from index " + (currentIndex + 1));
+                startEmitterFromIndex(currentIndex + 1);  // +1 because we already emitted currentIndex
+            } else if (paused) {
+                // GPS is started but paused - just resume
+                // Increment currentIndex so we don't re-emit the seek position when thread resumes
+                currentIndex++;
+                resume();
+            } else {
+                // Thread is running - increment currentIndex so thread doesn't re-emit the seek position
+                // (we already emitted it above in emitLocationAtIndex)
+                currentIndex++;
+            }
         }
         
         Log.i(TAG, "Seek complete to index " + targetIndex + " (time=" + trackData.get(targetIndex).millis + ")");
@@ -229,9 +289,18 @@ public class MockLocationProvider extends LocationProvider {
     /**
      * Emit a location at the given track index.
      * Used for immediate updates during seek.
+     * Skips emission if we already emitted this exact index (prevents duplicates during rapid seeking).
      */
+    private int lastEmittedIndex = -1;
+    
     private void emitLocationAtIndex(int index) {
         if (trackData == null || index < 0 || index >= trackData.size()) return;
+        
+        // Skip if we already emitted this index (prevents duplicates during rapid seek drags)
+        if (index == lastEmittedIndex) {
+            return;
+        }
+        lastEmittedIndex = index;
         
         MLocation loc = trackData.get(index);
         long timeDelta = systemStartTime - trackStartTime;
@@ -250,22 +319,39 @@ public class MockLocationProvider extends LocationProvider {
     
     /**
      * Get current playback position as elapsed milliseconds from track start.
+     * Returns the last position if track has completed.
      */
     public long getCurrentElapsedMs() {
-        if (trackData == null || currentIndex < 0 || currentIndex >= trackData.size()) {
+        if (trackData == null || currentIndex < 0) {
             return 0;
+        }
+        // If track completed (index at or past end), return last point's elapsed time
+        if (currentIndex >= trackData.size()) {
+            return trackData.get(trackData.size() - 1).millis - trackStartTime;
         }
         return trackData.get(currentIndex).millis - trackStartTime;
     }
     
     /**
      * Get the current GPS timestamp being played.
+     * Returns the last timestamp if track has completed.
      */
     public long getCurrentGpsTimeMs() {
-        if (trackData == null || currentIndex < 0 || currentIndex >= trackData.size()) {
+        if (trackData == null || currentIndex < 0) {
             return trackStartTime;
         }
+        // If track completed (index at or past end), return last point's timestamp
+        if (currentIndex >= trackData.size()) {
+            return trackData.get(trackData.size() - 1).millis;
+        }
         return trackData.get(currentIndex).millis;
+    }
+    
+    /**
+     * Check if playback has been started (GPS points are being emitted)
+     */
+    public boolean isStarted() {
+        return started;
     }
     
     /**
@@ -300,6 +386,12 @@ public class MockLocationProvider extends LocationProvider {
         pauseElapsedTime = 0;
         pauseSystemTime = 0;
         totalPauseDuration = 0;  // Reset cumulative pause time
+        currentIndex = 0;  // Reset to beginning of track
+        lastEmittedIndex = -1;  // Reset to allow emitting from beginning
+        
+        // Clear lastLoc to prevent non-monotonic time warnings on restart
+        // Without this, the first point on restart would have timestamp < lastLoc from previous run
+        lastLoc = null;
         
         // Cache context for later use
         cachedContext = context;
@@ -337,6 +429,9 @@ public class MockLocationProvider extends LocationProvider {
             pauseElapsedTime = 0;
             pauseSystemTime = 0;
             totalPauseDuration = 0;
+            currentIndex = 0;  // Reset to beginning of track
+            lastEmittedIndex = -1;  // Reset to allow emitting from beginning
+            lastLoc = null;  // Clear to prevent non-monotonic time warnings
         }
     }
 
@@ -386,6 +481,7 @@ public class MockLocationProvider extends LocationProvider {
 
         // Initialize current index
         currentIndex = 0;
+        lastEmittedIndex = -1;  // Reset to allow emitting from beginning
 
         // Emit first point immediately (synchronously) so HUD updates right away
         MLocation firstLoc = all.get(0);
@@ -464,12 +560,133 @@ public class MockLocationProvider extends LocationProvider {
                 );
                 
                 updateLocation(adjustedLoc);
-                currentIndex++;
+                
+                // Only increment if we weren't seeked during updateLocation.
+                // If a seek happened, it already set currentIndex to the correct position.
+                synchronized (seekLock) {
+                    if (currentIndex == idx) {
+                        currentIndex++;
+                    }
+                }
             }
-            Log.i(TAG, "Finished emitting mock locations");
+            Log.i("BXRINPUT", "Finished emitting mock locations, currentIndex=" + currentIndex + ", trackSize=" + trackList.size());
             // Signal playback has completed
             if (started && currentIndex >= trackList.size()) {
                 completed = true;
+                Log.i("BXRINPUT", "GPS TRACK COMPLETED - setting completed=true, calling onGpsCompleted()");
+                ReplayManager.INSTANCE.onGpsCompleted();
+            }
+        }, "GPS-Emitter");
+        emitterThread.start();
+    }
+    
+    /**
+     * Start the emitter thread from a specific index.
+     * Used when GPS was stopped (e.g., by seeking to video-only zone) and needs to restart
+     * from the middle of the track instead of the beginning.
+     * 
+     * This sets started=true, clears pause/completed flags, and starts the emitter thread.
+     * The caller should have already set currentIndex, systemStartTime, and emitted the
+     * point at the starting index.
+     * 
+     * @param startIndex The track index to start emitting from (usually currentIndex + 1)
+     */
+    private void startEmitterFromIndex(int startIndex) {
+        if (trackData == null || trackData.isEmpty()) {
+            Log.e(TAG, "Cannot start emitter - no track data");
+            return;
+        }
+        
+        // Set state to running
+        started = true;
+        completed = false;
+        paused = false;
+        
+        // Clear lastLoc to prevent duplicate detection from previous playthrough
+        lastLoc = null;
+        
+        // Notify that GPS playback is starting
+        ReplayManager.INSTANCE.onGpsStarted();
+        
+        // Start the emitter thread
+        final List<MLocation> trackList = trackData;
+        final int initialIndex = startIndex;
+        emitterThread = new Thread(() -> {
+            Log.i(TAG, String.format("GPS emitter thread started from index %d (of %d)", initialIndex, trackList.size()));
+            
+            // Start from the specified index
+            currentIndex = initialIndex;
+            
+            while (started && currentIndex < trackList.size()) {
+                // Check for pause state
+                synchronized (pauseLock) {
+                    while (paused && started) {
+                        try {
+                            pauseLock.wait();
+                        } catch (InterruptedException e) {
+                            Log.e(TAG, "Interrupted while paused", e);
+                        }
+                    }
+                }
+                if (!started) break;
+                
+                // Get current location (may have changed due to seek)
+                int idx = currentIndex;
+                if (idx >= trackList.size()) break;
+                
+                MLocation loc = trackList.get(idx);
+                
+                // Wait until it's time to emit this point
+                final long elapsed = System.currentTimeMillis() - systemStartTime;
+                final long locElapsed = loc.millis - trackStartTime;
+                if (locElapsed > elapsed) {
+                    try {
+                        // Sleep in small increments to allow seek interrupts
+                        long sleepTime = Math.min(locElapsed - elapsed, 50);
+                        Thread.sleep(sleepTime);
+                        // Check if we were seeked while sleeping
+                        if (currentIndex != idx) {
+                            continue; // Index changed, re-check
+                        }
+                        // Still need to wait more?
+                        if (locElapsed > System.currentTimeMillis() - systemStartTime) {
+                            continue; // Keep waiting
+                        }
+                    } catch (InterruptedException e) {
+                        Log.e(TAG, "Mock location thread interrupted", e);
+                    }
+                }
+                if (!started) break;
+                
+                // Check again in case of seek during sleep
+                if (currentIndex != idx) continue;
+                
+                // Calculate time delta (may have changed due to seek)
+                final long currentTimeDelta = systemStartTime - trackStartTime;
+                final long adjustedTime = loc.millis + currentTimeDelta - phoneSkew;
+                MLocation adjustedLoc = new MLocation(
+                    adjustedTime,
+                    loc.latitude, loc.longitude, loc.altitude_gps,
+                    loc.climb, loc.vN, loc.vE,
+                    loc.hAcc, loc.pdop, loc.hdop, loc.vdop,
+                    loc.satellitesUsed, loc.satellitesInView
+                );
+                
+                updateLocation(adjustedLoc);
+                
+                // Only increment if we weren't seeked during updateLocation.
+                // If a seek happened, it already set currentIndex to the correct position.
+                synchronized (seekLock) {
+                    if (currentIndex == idx) {
+                        currentIndex++;
+                    }
+                }
+            }
+            Log.i("BXRINPUT", "Finished emitting mock locations (from mid-track), currentIndex=" + currentIndex + ", trackSize=" + trackList.size());
+            // Signal playback has completed
+            if (started && currentIndex >= trackList.size()) {
+                completed = true;
+                Log.i("BXRINPUT", "GPS TRACK COMPLETED - setting completed=true, calling onGpsCompleted()");
                 ReplayManager.INSTANCE.onGpsCompleted();
             }
         }, "GPS-Emitter");
@@ -518,9 +735,12 @@ public class MockLocationProvider extends LocationProvider {
 
     @Override
     public void stop() {
-        Log.i(TAG, "stop() called, started=" + started);
+        Log.i(TAG, "stop() called, started=" + started + ", completed=" + completed);
         // Stop thread
         started = false;
+        // Clear completed flag - stopping means we're no longer in "completed" state
+        // This is important for the time between Stop and the next Play, so HUD shows correct state
+        completed = false;
         // Wake up paused thread so it can exit
         synchronized (pauseLock) {
             paused = false;
@@ -615,6 +835,7 @@ public class MockLocationProvider extends LocationProvider {
 
         // Initialize current index - start from 0, thread will emit all points after delay
         currentIndex = 0;
+        lastEmittedIndex = -1;  // Reset to allow emitting from beginning
         
         // Notify that GPS playback is starting
         ReplayManager.INSTANCE.onGpsStarted();
@@ -669,7 +890,14 @@ public class MockLocationProvider extends LocationProvider {
                 );
                 
                 updateLocation(adjustedLoc);
-                currentIndex++;
+                
+                // Only increment if we weren't seeked during updateLocation.
+                // If a seek happened, it already set currentIndex to the correct position.
+                synchronized (seekLock) {
+                    if (currentIndex == idx) {
+                        currentIndex++;
+                    }
+                }
             }
             Log.i(TAG, "Finished emitting mock locations");
             if (started && currentIndex >= trackList.size()) {

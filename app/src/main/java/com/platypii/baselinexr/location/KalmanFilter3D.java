@@ -409,17 +409,78 @@ public final class KalmanFilter3D implements MotionEstimator {
     
     @Override
     public void freeze() {
+        Log.i(TAG, "Freezing motion estimator");
         frozen = true;
     }
     
     @Override
     public void unfreeze() {
+        Log.i(TAG, "Unfreezing motion estimator");
         frozen = false;
     }
     
     @Override
     public boolean isFrozen() {
         return frozen;
+    }
+    
+    /**
+     * Soft reset for seek operations - clears cached predictions but preserves filter state.
+     * The filter will naturally converge when it receives new GPS points.
+     */
+    public void softReset() {
+        Log.i(TAG, "Soft reset for seek - clearing cached predictions, filter will recover naturally");
+        cachedPredictedState = null;
+        cachedPredictionTime = 0;
+        cachedDelta = null;
+        cachedDeltaTime = 0;
+        
+        // Unfreeze so we can start processing again
+        frozen = false;
+    }
+    
+    @Override
+    public void reset() {
+        Log.i(TAG, "Full reset - clearing all state for fresh start");
+        // Clear cached predictions
+        cachedPredictedState = null;
+        cachedPredictionTime = 0;
+        cachedDelta = null;
+        cachedDeltaTime = 0;
+        
+        // Clear GPS reference state - critical for correct timing on restart
+        // Without this, on 2nd playthrough the filter uses stale timing from 1st run
+        lastGps = null;
+        origin = null;
+        
+        // Reset state vector to initial values
+        for (int i = 0; i < x.length; i++) x[i] = 0.0;
+        x[9]  = 0.01; // kl
+        x[10] = 0.01; // kd
+        x[11] = 0.0;  // roll
+        x[12] = 0.0;  // wvx (east wind)
+        x[13] = 0.0;  // wvy (up wind)
+        x[14] = 0.0;  // wvz (north wind)
+        x[15] = 0.01; // klwind
+        x[16] = 0.01; // kdwind
+        x[17] = 0.0;  // rollwind
+        
+        // Reset covariance to high uncertainty
+        P = LinearAlgebra.identity(18);
+        for (int i = 0; i < 9; i++) P[i][i] = 1000.0;
+        for (int i = 9; i < 12; i++) P[i][i] = 10.0;
+        for (int i = 12; i < 15; i++) P[i][i] = 100.0;  // Wind velocity uncertainty
+        for (int i = 15; i < 18; i++) P[i][i] = 10.0;   // Wind params uncertainty
+        
+        // Reset wind filter if present
+        if (windFilter != null) {
+            windFilter.reset();
+        }
+        
+        // Unfreeze so we can start processing again
+        frozen = false;
+        
+        Log.i(TAG, "Reset complete - ready for fresh playback");
     }
     
     // Implement MotionEstimator interface method

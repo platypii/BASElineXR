@@ -27,7 +27,14 @@ class Video360Controller(private val context: Context) {
     private var pausePosition = 0  // Position when paused for sleep
     private var isStopped = true  // Track if we're in stopped state (don't restore positions)
     private var pendingPlayAfterSeek = false  // Track if we should start playing after seek completes
-    private var syncDisabledUntil: Long = 0  // Timestamp until which GPS sync is disabled (allows fresh start without being overridden)
+    var syncDisabledUntil: Long = 0  // Timestamp until which GPS sync is disabled (allows fresh start without being overridden)
+    private var onSeekCompleteCallback: (() -> Unit)? = null  // Callback when seek completes
+    
+    /** Callback when video is prepared (duration known). Used by HudPanelController to reinitialize PlayControls. */
+    var onVideoPrepared: ((Long) -> Unit)? = null
+    
+    /** Callback to request playback start. Called after video is prepared. */
+    var onRequestPlay: (() -> Unit)? = null
 
     /**
      * Initialize 360 video system with given VR options
@@ -86,60 +93,23 @@ class Video360Controller(private val context: Context) {
                     Log.d(TAG, "Video prepared. Duration: ${mp.duration}ms")
                     videoDurationMs = mp.duration.toLong()
                     
-                    // Try to initialize PlaybackTimeline, but don't block video start
+                    // Initialize PlaybackTimeline so we can calculate delays
                     try {
                         initializePlaybackTimeline(videoDurationMs)
                     } catch (e: Exception) {
                         Log.e(TAG, "Failed to initialize PlaybackTimeline", e)
                     }
                     
-                    // Calculate initial video position to sync with GPS
-                    // GPS has a 4-second startup delay from when location.start() was called
-                    // We need to know how much of that delay has already elapsed
-                    val now = System.currentTimeMillis()
-                    val gpsStartRequestTime = Services.locationStartRequestedMs
-                    val elapsedSinceGpsRequested = if (gpsStartRequestTime > 0) now - gpsStartRequestTime else 0L
-                    val timeUntilGpsStarts = (GPS_STARTUP_DELAY_MS - elapsedSinceGpsRequested).coerceAtLeast(0)
+                    // Notify listeners that video is prepared (for PlayControls reinitialization)
+                    onVideoPrepared?.invoke(videoDurationMs)
                     
-                    // Positive offset means video is behind GPS, so we need to seek forward
-                    val effectiveOffset = currentOptions?.videoGpsOffsetMs?.toLong() ?: videoGpsOffsetMs
+                    // Seek video to position 0 (ready to play full video)
+                    mp.seekTo(0)
                     
-                    // The video should be at position (effectiveOffset) when GPS first data arrives
-                    // If GPS will arrive in timeUntilGpsStarts, and video plays in real-time,
-                    // then we need to start video NOW at position (effectiveOffset - timeUntilGpsStarts)
-                    // BUT if that's negative, we need to wait before starting
-                    val rawStartPosition = effectiveOffset - timeUntilGpsStarts
-                    
-                    Log.i(TAG, "INITIAL SYNC: gpsStartRequestTime=$gpsStartRequestTime, now=$now, elapsed=$elapsedSinceGpsRequested, timeUntilGps=$timeUntilGpsStarts, offset=$effectiveOffset, rawStartPosition=$rawStartPosition")
-                    
-                    if (rawStartPosition >= 0) {
-                        // Video is ready after GPS delay (or close) - seek to correct position and start
-                        // Apply buffer here to account for seek latency
-                        val seekPosition = (rawStartPosition - INITIAL_SYNC_BUFFER_MS).coerceAtLeast(0)
-                        Log.i(TAG, "INITIAL SYNC: Seeking video to ${seekPosition}ms (raw=$rawStartPosition, buffer=$INITIAL_SYNC_BUFFER_MS)")
-                        if (seekPosition > 0 && seekPosition < videoDurationMs) {
-                            mp.seekTo(seekPosition.toInt())
-                            pendingPlayAfterSeek = true
-                        } else {
-                            mp.start()
-                        }
-                        // Disable sync briefly to prevent sync loop from overriding
-                        syncDisabledUntil = System.currentTimeMillis() + 500
-                    } else {
-                        // Video is ready before GPS starts - wait until GPS catches up
-                        // Apply buffer here to make video start slightly later
-                        val delayMs = ((-rawStartPosition) + INITIAL_SYNC_BUFFER_MS).coerceAtMost(GPS_STARTUP_DELAY_MS + 1000)
-                        Log.i(TAG, "INITIAL SYNC: Video ready early. Delaying start by ${delayMs}ms (raw=$rawStartPosition, buffer=$INITIAL_SYNC_BUFFER_MS)")
-                        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                            Log.i(TAG, "INITIAL SYNC: Delayed start executing now")
-                            mp.start()
-                        }, delayMs)
-                        // Disable sync until after the delay
-                        syncDisabledUntil = System.currentTimeMillis() + delayMs + 500
-                    }
-                    
-                    // Signal to ReplayManager that video has started
-                    ReplayManager.onVideoStarted()
+                    // Auto-start playback via callback to ensure proper state tracking
+                    // This coordinates video + GPS with the correct timing offsets
+                    Log.i(TAG, "Video prepared - requesting playback start")
+                    onRequestPlay?.invoke()
                 }
 
                 setOnErrorListener { _, what, extra ->
@@ -159,6 +129,11 @@ class Video360Controller(private val context: Context) {
                         pendingPlayAfterSeek = false
                         mp.start()
                         Log.d(TAG, "Started playback after seek complete")
+                    }
+                    // Call the callback if set
+                    onSeekCompleteCallback?.let { callback ->
+                        onSeekCompleteCallback = null  // Clear after use
+                        callback()
                     }
                 }
 
@@ -314,10 +289,29 @@ class Video360Controller(private val context: Context) {
      */
     fun seekTo(positionMs: Int) {
         pendingPlayAfterSeek = false
+        onSeekCompleteCallback = null
         mediaPlayer?.seekTo(positionMs)
         Log.d(TAG, "Video seeking to ${positionMs}ms")
     }
     
+    /**
+     * Seek to a specific position and call callback when seek completes.
+     * This is useful for coordinating video with GPS - the callback can
+     * start both video and GPS playback simultaneously.
+     * 
+     * @param positionMs Position to seek to
+     * @param onComplete Callback invoked when seek is complete
+     */
+    fun seekWithCallback(positionMs: Int, onComplete: () -> Unit) {
+        isStopped = false  // Clear stopped state since we're preparing for playback
+        pendingPlayAfterSeek = false
+        onSeekCompleteCallback = onComplete
+        // Disable sync to prevent GPS from overriding our position
+        syncDisabledUntil = System.currentTimeMillis() + 3000
+        mediaPlayer?.seekTo(positionMs)
+        Log.d(TAG, "Video seeking to ${positionMs}ms with callback")
+    }
+
     /**
      * Seek to a specific position and start playing when seek completes.
      * This ensures video starts from the correct position rather than
@@ -378,27 +372,36 @@ class Video360Controller(private val context: Context) {
     /**
      * Initialize PlaybackTimeline when video is prepared.
      * This ensures the timeline is ready before video starts playing.
+     * Will reinitialize if previously initialized without video data.
      */
     private fun initializePlaybackTimeline(videoDurationMs: Long) {
-        if (PlaybackTimeline.isInitialized) {
-            Log.d(TAG, "PlaybackTimeline already initialized")
+        Log.i(TAG, "initializePlaybackTimeline called with videoDuration=${videoDurationMs}ms")
+        
+        // Allow re-initialization if we now have video data and previously didn't
+        if (PlaybackTimeline.isInitialized && PlaybackTimeline.hasVideo) {
+            Log.d(TAG, "PlaybackTimeline already initialized with video data")
             return
         }
         
-        val mockProvider = Services.location.getMockLocationProvider()
+        // Use getMockLocationProviderIfConfigured to get track data before playback starts
+        val mockProvider = Services.location.getMockLocationProviderIfConfigured()
         if (mockProvider == null) {
-            Log.w(TAG, "Cannot initialize PlaybackTimeline - no mock provider")
+            Log.w(TAG, "Cannot initialize PlaybackTimeline - no mock provider configured (useMock not set?)")
             return
         }
         
         val gpsTrackStartMs = mockProvider.getTrackStartTime()
-        val gpsTrackEndMs = gpsTrackStartMs + mockProvider.getTrackDuration()
+        val gpsTrackDuration = mockProvider.getTrackDuration()
+        val gpsTrackEndMs = gpsTrackStartMs + gpsTrackDuration
+        
+        Log.i(TAG, "GPS track data: start=$gpsTrackStartMs, duration=$gpsTrackDuration, end=$gpsTrackEndMs")
         
         if (gpsTrackStartMs <= 0 || gpsTrackEndMs <= gpsTrackStartMs) {
-            Log.w(TAG, "Cannot initialize PlaybackTimeline - no valid GPS track")
+            Log.w(TAG, "Cannot initialize PlaybackTimeline - no valid GPS track (start=$gpsTrackStartMs, end=$gpsTrackEndMs)")
             return
         }
         
+        Log.i(TAG, "Reinitializing PlaybackTimeline with video data (duration=${videoDurationMs}ms)")
         PlaybackTimeline.initialize(
             gpsTrackStartMs = gpsTrackStartMs,
             gpsTrackEndMs = gpsTrackEndMs,
@@ -422,16 +425,5 @@ class Video360Controller(private val context: Context) {
 
     companion object {
         private const val TAG = "Video360Controller"
-        
-        // GPS has a hardcoded 4-second startup delay in LocationService.start()
-        // Video needs to account for this when auto-starting
-        private const val GPS_STARTUP_DELAY_MS = 4000L
-        
-        // Additional latency buffer to account for:
-        // - MediaPlayer seek latency
-        // - Surface/rendering pipeline latency  
-        // - Any other timing differences
-        // Positive = GPS appears behind video, so delay video start more
-        private const val INITIAL_SYNC_BUFFER_MS = 500L
     }
 }

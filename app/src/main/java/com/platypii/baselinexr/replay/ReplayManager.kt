@@ -64,6 +64,8 @@ object ReplayManager {
         android.util.Log.i(TAG, "GPS playback started")
         hasStarted = true
         gpsCompleted = false
+        // Unfreeze motion estimator when GPS starts - allows extrapolation
+        com.platypii.baselinexr.Services.location.motionEstimator.unfreeze()
         onGpsStartedCallback?.invoke()
     }
     
@@ -71,8 +73,10 @@ object ReplayManager {
      * Mark GPS playback as completed
      */
     fun onGpsCompleted() {
-        android.util.Log.i(TAG, "GPS playback completed")
+        android.util.Log.i("BXRINPUT", "GPS playback completed - gpsCompleted=true, videoCompleted=$videoCompleted, hasVideo=$hasVideo")
         gpsCompleted = true
+        // Freeze motion estimator when GPS ends - prevents extrapolation while video continues
+        com.platypii.baselinexr.Services.location.motionEstimator.freeze()
         checkReadyToRestart()
     }
     
@@ -80,7 +84,7 @@ object ReplayManager {
      * Mark video playback as started
      */
     fun onVideoStarted() {
-        android.util.Log.i(TAG, "Video playback started")
+        android.util.Log.i("BXRINPUT", "Video playback started")
         videoCompleted = false
     }
     
@@ -88,7 +92,7 @@ object ReplayManager {
      * Mark video playback as completed
      */
     fun onVideoCompleted() {
-        android.util.Log.i(TAG, "Video playback completed")
+        android.util.Log.i("BXRINPUT", "Video playback completed - gpsCompleted=$gpsCompleted, videoCompleted=true")
         videoCompleted = true
         checkReadyToRestart()
     }
@@ -97,7 +101,9 @@ object ReplayManager {
      * Check if both components are done and notify listener
      */
     private fun checkReadyToRestart() {
-        if (isReadyToRestart()) {
+        val ready = isReadyToRestart()
+        android.util.Log.i("BXRINPUT", "checkReadyToRestart: ready=$ready, gpsCompleted=$gpsCompleted, videoCompleted=$videoCompleted, hasVideo=$hasVideo")
+        if (ready) {
             android.util.Log.i(TAG, "Both GPS and video completed - auto-stopping and resetting")
             onPlaybackCompletedCallback?.invoke()
         }

@@ -121,6 +121,12 @@ class BaselineActivity : AppSystemActivity() {
         replayController?.videoController = video360Controller
         hudPanelController?.replayController = replayController
         
+        // Wire up video auto-start callback to go through ReplayController for proper state tracking
+        video360Controller?.onRequestPlay = {
+            android.util.Log.i(TAG, "Video prepared - auto-starting playback via ReplayController")
+            replayController?.play()
+        }
+        
         // Connect ReplayManager callbacks to ReplayController
         ReplayManager.onGpsStartedCallback = {
             replayController?.onGpsStarted()
@@ -481,6 +487,12 @@ class BaselineActivity : AppSystemActivity() {
         // Get elapsed time from GPS provider (ms from track start)
         // This is the true track position, independent of wall-clock adjustments
         val mockProvider = Services.location.getMockLocationProvider() ?: return
+        
+        // Don't sync video after GPS completes - let video continue on its own
+        if (mockProvider.isCompleted) {
+            return
+        }
+        
         val gpsElapsedMs = mockProvider.getCurrentElapsedMs()
         
         // Convert elapsed time to original GPS timestamp for PlaybackTimeline

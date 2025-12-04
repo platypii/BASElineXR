@@ -87,6 +87,13 @@ public class Services {
                 bluetooth.start(activity);
             }
 
+            // Preload GPS track data early if video is configured
+            // This allows PlaybackTimeline to be initialized before video prepares
+            if (VROptions.current.has360Video()) {
+                Log.i(TAG, "Preloading GPS track data for video sync");
+                location.preloadTrackData(appContext);
+            }
+
             Log.i(TAG, "Starting location service");
             locationStartRequestedMs = System.currentTimeMillis();
             location.start(appContext);

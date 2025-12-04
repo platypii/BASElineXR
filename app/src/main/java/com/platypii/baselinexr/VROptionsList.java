@@ -362,7 +362,7 @@ public class VROptionsList {
             1440,
             1650,
             "Clouds.mp4", // video360File (filename only, in Movies folder)
-            6000                        // videoGpsOffsetMs (adjust as needed for sync)
+            5300                        // videoGpsOffsetMs (adjust as needed for sync)
     );
 
     public static final VROptions TOOELE_SKYDIVE = new VROptions(
@@ -482,14 +482,14 @@ public class VROptionsList {
             false,
             true,
             true,
-            false,
+            true,
             true,
             new LatLngAlt(46.57835, 7.984, 2670.5),
             null,
             null,
             null,
             "TEEWINOTT360.mp4",
-            35800
+            31800
     );
 
     public static final VROptions ROCK_WHOPPER = new VROptions(
@@ -505,10 +505,10 @@ public class VROptionsList {
             true,
             null,
             "rock_whopper",
-            732,
-            800,
+            300,
+            412,
             "rockwhopper.mp4",
-            -9000
+            -2000
     );
 
     public static final MiniMapOptions MM_KPOW = new MiniMapOptions(
@@ -532,10 +532,10 @@ public class VROptionsList {
             R.drawable.minimap_tooele
     );
     public static final MiniMapOptions MM_CURRENT = new MiniMapOptions(
-            43.713129,    // latMin
-            43.777762,   // latMax
-            -110.797739,  // lngMin
-            -110.729075, // lngMax
+            27.373864,    // latMin
+            27.426456,   // latMax
+            103.196311,  // lngMin
+            103.264976, // lngMax
             R.drawable.minimap_current
     );
 
