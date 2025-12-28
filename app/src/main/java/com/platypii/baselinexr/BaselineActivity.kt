@@ -72,6 +72,9 @@ class BaselineActivity : AppSystemActivity() {
         // Load saved adjustments
         Adjustments.loadAdjustments(this)
 
+        // Load saved VR mode
+        VROptions.loadCurrentMode(this)
+
         // Initialize panel controllers
         hudPanelController = HudPanelController(this)
 

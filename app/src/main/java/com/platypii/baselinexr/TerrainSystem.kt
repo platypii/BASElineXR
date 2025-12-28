@@ -179,4 +179,18 @@ class TerrainSystem(
         terrainTiles.clear()
         isInitialized = false
     }
+
+    fun reload() {
+        // Destroy existing terrain tile entities
+        terrainTiles.forEach { tile ->
+            tile.highLODEntity.destroy()
+            tile.lowLODEntity?.destroy()
+        }
+        terrainTiles.clear()
+        isInitialized = false
+        terrainConfig = null
+        TerrainConfigLoader.clearCache()
+        // Reinitialize with new VROptions.current
+        initialize()
+    }
 }

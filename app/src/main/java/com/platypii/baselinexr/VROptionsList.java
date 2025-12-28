@@ -184,4 +184,27 @@ public class VROptionsList {
             new LatLngAlt(46.57835, 7.984, 2670.5)
     );
 
+    // All modes for cycling
+    public static final VROptions[] ALL_MODES = {
+            LIVE_SEB, LIVE_SEB_GODZ, LIVE, LIVE_KPOW_7500, LIVE_EAST,
+            EIGER_BASE, EIGER_SKYDIVE, SEB_SKYDIVE, EIGER_SKYDIVE_LAKE,
+            KPOW_SKYDIVE_LANDING, KPOW_GROUND_LEVEL, GOING_IN_SIMULATOR, PORTAL_RUN
+    };
+
+    public static VROptions getByName(String name) {
+        for (VROptions mode : ALL_MODES) {
+            if (mode.name.equals(name)) return mode;
+        }
+        return LIVE_SEB_GODZ; // default
+    }
+
+    public static VROptions getNextMode(VROptions current) {
+        for (int i = 0; i < ALL_MODES.length; i++) {
+            if (ALL_MODES[i] == current) {
+                return ALL_MODES[(i + 1) % ALL_MODES.length];
+            }
+        }
+        return ALL_MODES[0];
+    }
+
 }

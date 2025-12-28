@@ -7,6 +7,7 @@ import com.platypii.baselinexr.Adjustments
 import com.platypii.baselinexr.BaselineActivity
 import com.platypii.baselinexr.R
 import com.platypii.baselinexr.VROptions
+import com.platypii.baselinexr.VROptionsList
 
 class HudPanelController(private val activity: BaselineActivity) {
     
@@ -15,6 +16,31 @@ class HudPanelController(private val activity: BaselineActivity) {
         exitButton?.setOnClickListener({
             activity.finish()
         })
+
+        // Config button toggles configControls visibility
+        val configButton = rootView?.findViewById<Button>(R.id.config_button)
+        val configControls = rootView?.findViewById<android.widget.GridLayout>(R.id.configControls)
+        configButton?.setOnClickListener {
+            configControls?.let { controls ->
+                if (controls.visibility == View.VISIBLE) {
+                    controls.visibility = View.GONE
+                    activity.hudSystem?.setExtraControlsVisible(false)
+                } else {
+                    controls.visibility = View.VISIBLE
+                    activity.hudSystem?.setExtraControlsVisible(true)
+                }
+            }
+        }
+
+        // Mode button cycles through VROptions modes
+        val modeButton = rootView?.findViewById<Button>(R.id.mode_button)
+        modeButton?.text = VROptions.current.name  // Show current mode on startup
+        modeButton?.setOnClickListener {
+            VROptions.current = VROptionsList.getNextMode(VROptions.current)
+            VROptions.saveCurrentMode(activity)
+            modeButton.text = VROptions.current.name
+            activity.terrainSystem?.reload()
+        }
 
         // Add click listener to hudPanel to toggle extraControls visibility
         val hudPanel = rootView?.findViewById<android.widget.LinearLayout>(R.id.hudPanel)

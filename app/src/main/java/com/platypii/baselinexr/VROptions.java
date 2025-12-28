@@ -1,5 +1,8 @@
 package com.platypii.baselinexr;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+
 import com.meta.spatial.core.Vector3;
 import com.platypii.baselinexr.measurements.LatLngAlt;
 
@@ -88,5 +91,18 @@ public class VROptions {
         // Apply north/east adjustments
         return GeoUtils.applyOffset(destination,
                 new Vector3(Adjustments.eastAdjustment, 0, Adjustments.northAdjustment));
+    }
+
+    // Load saved mode from SharedPreferences
+    public static void loadCurrentMode(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("BASElineXRPrefs", Context.MODE_PRIVATE);
+        String modeName = prefs.getString("vrOptionsMode", "Live Seb Godz");
+        current = VROptionsList.getByName(modeName);
+    }
+
+    // Save current mode to SharedPreferences
+    public static void saveCurrentMode(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("BASElineXRPrefs", Context.MODE_PRIVATE);
+        prefs.edit().putString("vrOptionsMode", current.name).apply();
     }
 }
