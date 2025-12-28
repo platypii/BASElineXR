@@ -70,6 +70,19 @@ class TerrainSystem(
             )
 
             terrainTiles.add(TerrainTileEntity(config, highLODEntity, null))
+        } else if (VROptions.current.shader == VROptions.ShaderType.FOG_SHADER) {
+            // For FOG_SHADER: single model with fog shader
+            val highLODEntity = Entity.create(
+                Mesh(config.model.toUri()),
+                Visible(false),
+                Transform(Pose())
+            )
+
+            val highMesh = highLODEntity.getComponent<Mesh>()
+            highMesh.defaultShaderOverride = "data/shaders/terrain_fog"
+            highLODEntity.setComponent(highMesh)
+
+            terrainTiles.add(TerrainTileEntity(config, highLODEntity, null))
         } else {
             // For LOD_SHADER: use current code with 2 LOD models
             // Create high LOD entity with high LOD shader

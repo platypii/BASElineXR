@@ -14,7 +14,8 @@ public class VROptions {
 
     public enum ShaderType {
         DEFAULT_SHADER,
-        LOD_SHADER
+        LOD_SHADER,
+        FOG_SHADER
     }
 
     // Configuration name (displayed in HUD)

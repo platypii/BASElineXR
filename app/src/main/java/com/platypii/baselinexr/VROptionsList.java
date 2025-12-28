@@ -26,7 +26,7 @@ public class VROptionsList {
             "seb_godz",
             // copy destination from target landing zone
             new LatLngAlt(VROptions.dropzone.lat, VROptions.dropzone.lng, 0),
-            VROptions.ShaderType.DEFAULT_SHADER,
+            VROptions.ShaderType.FOG_SHADER,
             false,
             true,
             true,
