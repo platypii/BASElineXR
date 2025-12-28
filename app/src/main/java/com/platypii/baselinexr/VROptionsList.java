@@ -4,6 +4,36 @@ import com.platypii.baselinexr.measurements.LatLngAlt;
 
 public class VROptionsList {
 
+    public static final VROptions LIVE_SEB = new VROptions(
+            "Live Seb",
+            null,
+            "branded",
+            // summit over the water tower:
+//            new LatLngAlt(47.238, -123.156, 3800.0),
+            // copy destination from target landing zone
+            new LatLngAlt(VROptions.dropzone.lat, VROptions.dropzone.lng, 3800),
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            true,
+            false,
+            new LatLngAlt(46.5785, 7.99, 3040.0)
+    );
+
+    public static final VROptions LIVE_SEB_GODZ = new VROptions(
+            "Live Seb Godz",
+            null,
+            "seb_godz",
+            // copy destination from target landing zone
+            new LatLngAlt(VROptions.dropzone.lat, VROptions.dropzone.lng, 0),
+            VROptions.ShaderType.DEFAULT_SHADER,
+            false,
+            true,
+            true,
+            false,
+            null
+    );
+
     // THIS IS THE VROPTIONS TO USE IN LIVE FLIGHT!!
     public static final VROptions LIVE = new VROptions(
             "Live",
@@ -19,6 +49,19 @@ public class VROptionsList {
             true,
             false,
             new LatLngAlt(46.5785, 7.99, 3040.0)
+    );
+
+    public static final VROptions LIVE_KPOW_7500 = new VROptions(
+            "Live kpow + 7500",
+            null,
+            "kpow",
+            new LatLngAlt(47.2375, -123.1458, 2584.0), // kpow + 7500
+            VROptions.ShaderType.LOD_SHADER,
+            false,
+            true,
+            true,
+            true,
+            null
     );
 
     // Same as live but with the eiger more eastward toward island lake
@@ -60,6 +103,20 @@ public class VROptionsList {
             true,
             false,
             new LatLngAlt(46.5785, 7.99, 3050.0)
+    );
+
+    public static final VROptions SEB_SKYDIVE = new VROptions(
+            "Seb Skydive",
+            "seb_ff.csv",
+            "seb_godz",
+            new LatLngAlt(VROptions.dropzone.lat, VROptions.dropzone.lng, 10),
+//            new LatLngAlt( 27.814, -80.512, 3800.0), // west of seb
+            VROptions.ShaderType.DEFAULT_SHADER,
+            false,
+            true,
+            true,
+            false,
+            null
     );
 
     public static final VROptions EIGER_SKYDIVE_LAKE = new VROptions(

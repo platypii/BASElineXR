@@ -1,0 +1,23 @@
+{
+  "tiles": [
+    {
+      "model": "terrain/big_godz.glb",
+      "tileOrigin": {
+        "lat": 27.8165,
+        "lng": -80.48,
+        "alt": 0
+      },
+      "rotation": 90
+    }
+  ],
+  "terrainOrigin": {
+    "lat": 27.8165,
+    "lng": -80.499,
+    "alt": 0
+  },
+  "pointOfInterest": {
+    "lat": 27.8165,
+    "lng": -80.499,
+    "alt": 0
+  }
+}
