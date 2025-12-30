@@ -24,8 +24,8 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
     private static final int LOCATION_MOCK = 3;
     private int locationMode = LOCATION_NONE;
 
-    // Mock location provider will replay an existing track
-    private static final boolean useMock = VROptions.current.mockTrack != null;
+    // Context for restart functionality
+    private Context appContext;
 
     @NonNull
     private final BluetoothService bluetooth;
@@ -80,9 +80,12 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
 
     @Override
     public void start(@NonNull Context context) {
+        this.appContext = context;
         if (locationMode != LOCATION_NONE) {
             Log.e(TAG, "Location service already started");
         }
+        // Check if mock mode should be used (evaluated dynamically based on current VROptions)
+        final boolean useMock = VROptions.current.mockTrack != null;
         // MOCK LOCATION
         if (useMock) {
             locationMode = LOCATION_MOCK;
@@ -90,8 +93,10 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
             new Thread(() -> {
                 try {
                     Thread.sleep(4000);
-                    locationProviderMock.start(context);
-                    locationProviderMock.locationUpdates.subscribe(this);
+                    if (locationMode == LOCATION_MOCK) {
+                        locationProviderMock.start(context);
+                        locationProviderMock.locationUpdates.subscribe(this);
+                    }
                 } catch (InterruptedException ignored) {
                 }
             }).start();
@@ -138,11 +143,28 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
             locationProviderBluetooth.locationUpdates.unsubscribe(this);
             locationProviderBluetooth.stop();
         } else if (locationMode == LOCATION_MOCK) {
-            locationProviderMock.locationUpdates.unsubscribe(this);
+            // Only unsubscribe if mock was actually started (it has a 4s delay)
+            if (locationProviderMock.started) {
+                locationProviderMock.locationUpdates.unsubscribe(this);
+            }
             locationProviderMock.stop();
         }
         locationMode = LOCATION_NONE;
         super.stop();
+    }
+
+    /**
+     * Restart the location service with the current VROptions.
+     * This is useful when switching between Live and Replay modes.
+     */
+    public void restart() {
+        if (appContext == null) {
+            Log.e(TAG, "Cannot restart: no context available");
+            return;
+        }
+        Log.i(TAG, "Restarting location service");
+        stop();
+        start(appContext);
     }
 
 }

@@ -215,6 +215,8 @@ class BaselineActivity : AppSystemActivity() {
                     val blueDot = rootView?.findViewById<android.view.View>(R.id.blue_dot)
                     val greenDot = rootView?.findViewById<android.view.View>(R.id.green_dot)
                     miniMapPanel?.setViews(minimapImage, redDot, blueDot, greenDot)
+                    // Update minimap image to match loaded dropzone from SharedPreferences
+                    miniMapPanel?.updateMinimapImage()
                 }
             },
             PanelRegistration(R.layout.speed_chart) {

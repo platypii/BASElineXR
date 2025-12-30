@@ -18,10 +18,8 @@ import java.util.List;
 public class MockLocationProvider extends LocationProvider {
     private static final String TAG = "MockLocationProvider";
 
-    private static final String filename = VROptions.current.mockTrack;
-
     public static long systemStartTime = System.currentTimeMillis();
-    private boolean started = false;
+    boolean started = false;
 
     // Introduce a fake phone/gps time skew for testing
     private static final long phoneSkew = 0;
@@ -78,6 +76,12 @@ public class MockLocationProvider extends LocationProvider {
     }
 
     public static List<MLocation> loadData(Context context) {
+        // Get filename dynamically from current VROptions
+        final String filename = VROptions.current.mockTrack;
+        if (filename == null) {
+            Log.e(TAG, "No mock track configured");
+            return List.of();
+        }
         try (BufferedReader br = new BufferedReader(new InputStreamReader(context.getAssets().open(filename), StandardCharsets.UTF_8))) {
             return TrackFileReader.parse(br);
         } catch (IOException e) {

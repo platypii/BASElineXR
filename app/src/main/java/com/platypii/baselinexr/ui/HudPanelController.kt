@@ -8,6 +8,7 @@ import com.platypii.baselinexr.BaselineActivity
 import com.platypii.baselinexr.DropzoneOptions
 import com.platypii.baselinexr.DropzoneOptionsList
 import com.platypii.baselinexr.R
+import com.platypii.baselinexr.Services
 import com.platypii.baselinexr.VROptions
 import com.platypii.baselinexr.VROptionsList
 
@@ -44,6 +45,8 @@ class HudPanelController(private val activity: BaselineActivity) {
             VROptions.saveCurrentMode(activity)
             modeButton.text = VROptions.current.name
             activity.terrainSystem?.reload()
+            // Restart location service to switch between Live and Replay modes
+            Services.location.restart()
         }
 
         // Dropzone button cycles through dropzone options
