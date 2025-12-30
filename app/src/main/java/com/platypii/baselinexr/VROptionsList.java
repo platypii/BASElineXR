@@ -51,33 +51,18 @@ public class VROptionsList {
             new LatLngAlt(46.5785, 7.99, 3040.0)
     );
 
-    public static final VROptions LIVE_KPOW_7500 = new VROptions(
-            "Live kpow + 7500",
-            null,
-            "kpow",
-            new LatLngAlt(47.2375, -123.1458, 2584.0), // kpow + 7500
-            VROptions.ShaderType.LOD_SHADER,
-            false,
-            true,
-            true,
-            true,
-            null
-    );
-
-    // Same as live but with the eiger more eastward toward island lake
-    public static final VROptions LIVE_EAST = new VROptions(
-            "Live East",
-            null,
-            "branded",
-            // ideal for a kpow east jump run:
-            new LatLngAlt(47.236, -123.132, 3710.0),
-            VROptions.ShaderType.LOD_SHADER,
-            false,
-            true,
-            true,
-            false,
-            null
-    );
+//    public static final VROptions LIVE_KPOW_7500 = new VROptions(
+//            "Live kpow + 7500",
+//            null,
+//            "kpow",
+//            new LatLngAlt(47.2375, -123.1458, 2584.0), // kpow + 7500
+//            VROptions.ShaderType.LOD_SHADER,
+//            false,
+//            true,
+//            true,
+//            true,
+//            null
+//    );
 
     public static final VROptions EIGER_BASE = new VROptions(
             "Eiger Base",
@@ -119,45 +104,6 @@ public class VROptionsList {
             null
     );
 
-    public static final VROptions EIGER_SKYDIVE_LAKE = new VROptions(
-            "Eiger Skydive",
-            "kpow.csv",
-            "eiger",
-            new LatLngAlt(47.25203, -123.107976, 3060.0), // island lake
-            VROptions.ShaderType.LOD_SHADER,
-            false,
-            true,
-            true,
-            false,
-            null
-    );
-
-    public static final VROptions KPOW_SKYDIVE_LANDING = new VROptions(
-            "Kpow Landing",
-            "kpow-landing.csv",
-            "kpow",
-            new LatLngAlt(47.2375, -123.1458, 84.0), // kpow
-            VROptions.ShaderType.LOD_SHADER,
-            false,
-            true,
-            true,
-            false,
-            null
-    );
-
-    public static final VROptions KPOW_GROUND_LEVEL = new VROptions(
-            "Kpow Ground",
-            "kpow-student.csv",
-            "kpow",
-            new LatLngAlt(47.2375, -123.1458, 84.0), // kpow
-            VROptions.ShaderType.LOD_SHADER,
-            false,
-            true,
-            true,
-            false,
-            null
-    );
-
     public static final VROptions GOING_IN_SIMULATOR = new VROptions(
             "Going-In",
             "kpow-impact.csv",
@@ -186,9 +132,9 @@ public class VROptionsList {
 
     // All modes for cycling
     public static final VROptions[] ALL_MODES = {
-            LIVE_SEB, LIVE_SEB_GODZ, LIVE, LIVE_KPOW_7500, LIVE_EAST,
-            EIGER_BASE, EIGER_SKYDIVE, SEB_SKYDIVE, EIGER_SKYDIVE_LAKE,
-            KPOW_SKYDIVE_LANDING, KPOW_GROUND_LEVEL, GOING_IN_SIMULATOR, PORTAL_RUN
+            LIVE_SEB, LIVE_SEB_GODZ, LIVE,
+            EIGER_BASE, EIGER_SKYDIVE, SEB_SKYDIVE,
+            GOING_IN_SIMULATOR, PORTAL_RUN
     };
 
     public static VROptions getByName(String name) {

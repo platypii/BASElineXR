@@ -182,10 +182,11 @@ class SpaceSystem(
     private fun updateTrenchPosition() {
         val terrainConfig = TerrainConfigLoader.loadConfig(activity) ?: return
         val rootEntity = spaceSceneEntity ?: return
+        val portalLocation = VROptions.current.portalLocation ?: return
 
         try {
             // Calculate trench offset from terrain origin to portal location
-            val terrainToPortal = GeoUtils.calculateOffset(terrainConfig.pointOfInterest, VROptions.current.portalLocation)
+            val terrainToPortal = GeoUtils.calculateOffset(terrainConfig.pointOfInterest, portalLocation)
 
             // Apply offsets to destination to get trench position in user's reference frame
             val trenchLocation = GeoUtils.applyOffset(VROptions.current.destination, terrainToPortal)

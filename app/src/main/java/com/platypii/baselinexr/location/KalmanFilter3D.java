@@ -54,6 +54,7 @@ public final class KalmanFilter3D implements MotionEstimator {
     // Constants
     private static final double MAX_STEP = 0.1; // seconds
     private static final double accelerationLimit = 3.0; // g's
+    private static final double RESET_THRESHOLD = 5000.0; // meters - reset if measurement is this far from expected
     // Try to detect ground mode? Or always in flight mode?
     private static final boolean groundModeEnabled = true;
 
@@ -122,6 +123,17 @@ public final class KalmanFilter3D implements MotionEstimator {
 
         // Predict to now
         if (dt > 0.0) predict(dt);
+
+        // Check if measurement is wildly different from expected - reset if so
+        final double dx = pMeas.x - x[0];
+        final double dy = pMeas.y - x[1];
+        final double dz = pMeas.z - x[2];
+        final double positionErrorSq = dx * dx + dy * dy + dz * dz;
+        if (positionErrorSq > RESET_THRESHOLD * RESET_THRESHOLD) {
+            Log.w(TAG, "Measurement " + Math.sqrt(positionErrorSq) + "m from expected, resetting filter");
+            resetState(gps);
+            return;
+        }
 
         // --- Measurement update (position + velocity) ---
         // H: 6x12 maps [p,v] to measurement
@@ -290,6 +302,29 @@ public final class KalmanFilter3D implements MotionEstimator {
         return out;
     }
 
+
+    /** Reset filter state to a new GPS measurement (called when measurement is wildly different). */
+    private void resetState(MLocation gps) {
+        origin = gps;
+        // State: p=0, v from GPS, a=0, params preserved
+        x[0] = 0; x[1] = 0; x[2] = 0;
+        x[3] = gps.vE; x[4] = gps.climb; x[5] = gps.vN;
+        x[6] = 0; x[7] = 0; x[8] = 0;
+        // Keep x[9], x[10], x[11] (kl, kd, roll) unchanged
+
+        // Reset covariance to initial values
+        for (int i = 0; i < 12; i++) {
+            for (int j = 0; j < 12; j++) {
+                P[i][j] = 0.0;
+            }
+        }
+        for (int i = 0; i < 9; i++) P[i][i] = 1000.0;
+        P[9][9]   = 0.1;
+        P[10][10] = 0.1;
+        P[11][11] = 0.005;
+
+        lastGps = gps;
+    }
 
     /** Update wingsuit parameters from current Kalman v,a (skip at very low speed). */
     private void updateWingsuitParameters() {
