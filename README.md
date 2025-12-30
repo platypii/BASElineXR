@@ -6,6 +6,17 @@ Uses the Meta Quest 3 headset to overlay a 3D terrain model over the real world.
 Location comes from a FlySight2 bluetooth GPS unit.
 Orientation comes from the Quest headset.
 
+## Installation
+
+In order to install development apps on the quest, you must:
+
+ - Install Meta Quest Developer Hub on your computer
+ - Install Android Studio on your computer
+ - Enable developer mode on the quest
+ - Connect Quest to computer
+ - Open Quest Developer Hub, click "Device Manager", click "Set Up New Device"
+ - Open Android Studio, open BASElineXR project, click "Run"
+
 ## Ground Setup
 
 1. Pair FlySight with Quest:

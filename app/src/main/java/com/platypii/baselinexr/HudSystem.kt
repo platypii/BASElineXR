@@ -69,6 +69,7 @@ class HudSystem : SystemBase() {
   }
 
   fun setExtraControlsVisible(visible: Boolean) {
+    if (extraControlsVisible == visible) return  // Don't move if state hasn't changed
     extraControlsVisible = visible
     val offset = if (visible) Vector3(0.2f, -1.4f, -2f) else Vector3(-0.2f, 1.4f, 2f)
     grabbablePanel?.moveByOffset(offset)

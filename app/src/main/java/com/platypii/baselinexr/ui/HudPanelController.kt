@@ -5,6 +5,8 @@ import android.widget.Button
 import android.widget.TextView
 import com.platypii.baselinexr.Adjustments
 import com.platypii.baselinexr.BaselineActivity
+import com.platypii.baselinexr.DropzoneOptions
+import com.platypii.baselinexr.DropzoneOptionsList
 import com.platypii.baselinexr.R
 import com.platypii.baselinexr.VROptions
 import com.platypii.baselinexr.VROptionsList
@@ -20,6 +22,7 @@ class HudPanelController(private val activity: BaselineActivity) {
         // Config button toggles configControls visibility
         val configButton = rootView?.findViewById<Button>(R.id.config_button)
         val configControls = rootView?.findViewById<android.widget.GridLayout>(R.id.configControls)
+        val extraControls = rootView?.findViewById<android.widget.GridLayout>(R.id.extraControls)
         configButton?.setOnClickListener {
             configControls?.let { controls ->
                 if (controls.visibility == View.VISIBLE) {
@@ -27,6 +30,7 @@ class HudPanelController(private val activity: BaselineActivity) {
                     activity.hudSystem?.setExtraControlsVisible(false)
                 } else {
                     controls.visibility = View.VISIBLE
+                    extraControls?.visibility = View.GONE
                     activity.hudSystem?.setExtraControlsVisible(true)
                 }
             }
@@ -42,9 +46,18 @@ class HudPanelController(private val activity: BaselineActivity) {
             activity.terrainSystem?.reload()
         }
 
+        // Dropzone button cycles through dropzone options
+        val dropzoneButton = rootView?.findViewById<Button>(R.id.dropzone_button)
+        dropzoneButton?.text = DropzoneOptions.current.name
+        dropzoneButton?.setOnClickListener {
+            DropzoneOptions.current = DropzoneOptionsList.getNextDropzone(DropzoneOptions.current)
+            DropzoneOptions.saveCurrentDropzone(activity)
+            dropzoneButton.text = DropzoneOptions.current.name
+            activity.miniMapPanel?.updateMinimapImage()
+        }
+
         // Add click listener to hudPanel to toggle extraControls visibility
         val hudPanel = rootView?.findViewById<android.widget.LinearLayout>(R.id.hudPanel)
-        val extraControls = rootView?.findViewById<android.widget.GridLayout>(R.id.extraControls)
         hudPanel?.setOnClickListener({
             extraControls?.let { controls ->
                 if (controls.visibility == View.VISIBLE) {
@@ -52,6 +65,7 @@ class HudPanelController(private val activity: BaselineActivity) {
                     activity.hudSystem?.setExtraControlsVisible(false)
                 } else {
                     controls.visibility = View.VISIBLE
+                    configControls?.visibility = View.GONE
                     activity.hudSystem?.setExtraControlsVisible(true)
                 }
             }

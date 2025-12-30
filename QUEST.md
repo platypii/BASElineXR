@@ -20,7 +20,6 @@ adb shell pm query-receivers --user 0 --components -a android.intent.action.BOOT
 Disable unnecessary services for slightly faster boot time:
 
 ```
-adb shell pm disable-user --user 0 com.facebook.orca
 adb shell pm disable-user --user 0 com.google.android.apps.youtube.vr.oculus
 adb shell pm disable-user --user 0 com.oculus.assistant
 adb shell pm disable-user --user 0 com.oculus.avatareditor
@@ -29,7 +28,7 @@ adb shell pm disable-user --user 0 com.oculus.igvr
 adb shell pm disable-user --user 0 com.oculus.panelapp.library
 adb shell pm disable-user --user 0 com.oculus.store
 adb shell pm disable-user --user 0 com.oculus.tv
-adb shell pm disable-user --user 0 com.whatsapp
+adb shell pm disable-user -0 com.oculus.nux.ota
 Package com.oculus.socialplatform new state: disabled-user
 ```
 

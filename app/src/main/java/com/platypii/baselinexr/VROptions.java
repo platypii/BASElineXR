@@ -8,10 +8,6 @@ import com.platypii.baselinexr.measurements.LatLngAlt;
 
 public class VROptions {
 
-    // Target landing zone in the real world
-//    public static LatLngAlt dropzone = new LatLngAlt(47.2375, -123.1458, 84);
-    public static LatLngAlt dropzone = new LatLngAlt(27.8165, -80.499, 5); // seb
-
     // Current active configuration
     public static VROptions current = VROptionsList.LIVE_SEB_GODZ;
 
@@ -54,23 +50,6 @@ public class VROptions {
         this.portalLocation = portalLocation;
         this.shader = shader;
     }
-
-    // Minimap configuration (Kapowsin)
-//    public static final MiniMapOptions minimap = new MiniMapOptions(
-//        47.214,    // latMin
-//        47.2637,   // latMax
-//        -123.2033, // lngMin
-//        -123.0856, // lngMax
-//        R.drawable.minimap_kpow
-//    );
-    // Minimap configuration (Sebastian)
-    public static final MiniMapOptions minimap = new MiniMapOptions(
-            27.7957,    // latMin
-            27.8315,   // latMax
-            -80.5334, // lngMin
-            -80.4552, // lngMax
-            R.drawable.minimap_sebastian
-    );
 
     // Offset distance when clicking NSEW
     public static float offsetDistance = 300; // meters

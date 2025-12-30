@@ -54,7 +54,7 @@ class FlightStatsSystem : SystemBase() {
 
         if (loc != null) {
             // Altitude
-            altitudeLabel?.text = Convert.distance(loc.altitude_gps - VROptions.dropzone.alt)
+            altitudeLabel?.text = Convert.distance(loc.altitude_gps - DropzoneOptions.current.landingZone.alt)
 
             // Combine other stats into single string
             val groundSpeed = loc.groundSpeed()

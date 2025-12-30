@@ -10,8 +10,8 @@ public class VROptionsList {
             "branded",
             // summit over the water tower:
 //            new LatLngAlt(47.238, -123.156, 3800.0),
-            // copy destination from target landing zone
-            new LatLngAlt(VROptions.dropzone.lat, VROptions.dropzone.lng, 3800),
+            // copy destination from target landing zone (Sebastian)
+            new LatLngAlt(DropzoneOptionsList.SEBASTIAN.landingZone.lat, DropzoneOptionsList.SEBASTIAN.landingZone.lng, 3800),
             VROptions.ShaderType.LOD_SHADER,
             false,
             true,
@@ -24,8 +24,8 @@ public class VROptionsList {
             "Live Seb Godz",
             null,
             "seb_godz",
-            // copy destination from target landing zone
-            new LatLngAlt(VROptions.dropzone.lat, VROptions.dropzone.lng, 0),
+            // copy destination from target landing zone (Sebastian)
+            new LatLngAlt(DropzoneOptionsList.SEBASTIAN.landingZone.lat, DropzoneOptionsList.SEBASTIAN.landingZone.lng, 0),
             VROptions.ShaderType.FOG_SHADER,
             false,
             true,
@@ -41,8 +41,8 @@ public class VROptionsList {
             "branded",
             // summit over the water tower:
 //            new LatLngAlt(47.238, -123.156, 3800.0),
-            // copy destination from target landing zone
-            new LatLngAlt(VROptions.dropzone.lat, VROptions.dropzone.lng, 3800),
+            // copy destination from target landing zone (Sebastian)
+            new LatLngAlt(DropzoneOptionsList.SEBASTIAN.landingZone.lat, DropzoneOptionsList.SEBASTIAN.landingZone.lng, 3800),
             VROptions.ShaderType.LOD_SHADER,
             false,
             true,
@@ -109,7 +109,7 @@ public class VROptionsList {
             "Seb Skydive",
             "seb_ff.csv",
             "seb_godz",
-            new LatLngAlt(VROptions.dropzone.lat, VROptions.dropzone.lng, 10),
+            new LatLngAlt(DropzoneOptionsList.SEBASTIAN.landingZone.lat, DropzoneOptionsList.SEBASTIAN.landingZone.lng, 10),
 //            new LatLngAlt( 27.814, -80.512, 3800.0), // west of seb
             VROptions.ShaderType.DEFAULT_SHADER,
             false,

@@ -38,7 +38,7 @@ class BaselineActivity : AppSystemActivity() {
     private var speedChartSystem: SpeedChartSystem? = null
     private var targetPanelSystem: TargetPanel? = null
     private var portalSystem: PortalSystem? = null
-    private var miniMapPanel: MiniMapPanel? = null
+    var miniMapPanel: MiniMapPanel? = null
     private val gpsTransform = GpsToWorldTransform()
     private var locationSubscriber: ((MLocation) -> Unit)? = null
     private var hudPanelController: HudPanelController? = null
@@ -74,6 +74,9 @@ class BaselineActivity : AppSystemActivity() {
 
         // Load saved VR mode
         VROptions.loadCurrentMode(this)
+
+        // Load saved dropzone
+        DropzoneOptions.loadCurrentDropzone(this)
 
         // Initialize panel controllers
         hudPanelController = HudPanelController(this)

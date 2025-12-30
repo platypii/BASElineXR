@@ -190,14 +190,14 @@
                 android:textSize="16sp" />
 
             <Button
+                android:id="@+id/dropzone_button"
                 android:layout_width="100dp"
                 android:layout_height="100dp"
                 android:layout_margin="2dp"
                 android:background="@drawable/button_bg"
-                android:text=""
-                android:textColor="#888888"
-                android:enabled="false"
-                android:textSize="22sp" />
+                android:text="DZ"
+                android:textColor="#ffffff"
+                android:textSize="16sp" />
 
             <Button
                 android:layout_width="100dp"
