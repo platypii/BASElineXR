@@ -20,6 +20,7 @@ public class MockLocationProvider extends LocationProvider {
 
     public static long systemStartTime = System.currentTimeMillis();
     boolean started = false;
+    private int generation = 0; // Incremented on each start to detect stale threads
 
     // Introduce a fake phone/gps time skew for testing
     private static final long phoneSkew = 0;
@@ -44,6 +45,8 @@ public class MockLocationProvider extends LocationProvider {
     @Override
     public void start(@NonNull Context context) throws SecurityException {
         Log.i(TAG, "Starting mock location service");
+        generation++;
+        final int myGeneration = generation;
         started = true;
         // Load track from csv
         List<MLocation> all = loadData(context);
@@ -57,7 +60,7 @@ public class MockLocationProvider extends LocationProvider {
 
         new Thread(() -> {
             for (MLocation loc : all) {
-                if (!started) break;
+                if (!started || generation != myGeneration) break;
                 final long elapsed = System.currentTimeMillis() - systemStartTime;
                 final long locElapsed = loc.millis - trackStartTime; // Time since first fix
                 if (locElapsed > elapsed) {
@@ -71,7 +74,11 @@ public class MockLocationProvider extends LocationProvider {
                 loc.millis = loc.millis + timeDelta - phoneSkew;
                 updateLocation(loc);
             }
-            Log.i(TAG, "Finished emitting mock locations");
+            if (generation != myGeneration) {
+                Log.i(TAG, "Mock location thread superseded by newer generation");
+            } else {
+                Log.i(TAG, "Finished emitting mock locations");
+            }
         }).start();
     }
 

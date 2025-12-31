@@ -96,7 +96,7 @@ public class VROptionsList {
             "seb_godz",
             new LatLngAlt(DropzoneOptionsList.SEBASTIAN.landingZone.lat, DropzoneOptionsList.SEBASTIAN.landingZone.lng, 10),
 //            new LatLngAlt( 27.814, -80.512, 3800.0), // west of seb
-            VROptions.ShaderType.DEFAULT_SHADER,
+            VROptions.ShaderType.FOG_SHADER,
             false,
             true,
             true,

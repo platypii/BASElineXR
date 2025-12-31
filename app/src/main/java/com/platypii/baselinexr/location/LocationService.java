@@ -24,6 +24,9 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
     private static final int LOCATION_MOCK = 3;
     private int locationMode = LOCATION_NONE;
 
+    // Generation counter to detect stale delayed threads
+    private int startGeneration = 0;
+
     // Context for restart functionality
     private Context appContext;
 
@@ -84,6 +87,8 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
         if (locationMode != LOCATION_NONE) {
             Log.e(TAG, "Location service already started");
         }
+        startGeneration++;
+        final int myGeneration = startGeneration;
         // Check if mock mode should be used (evaluated dynamically based on current VROptions)
         final boolean useMock = VROptions.current.mockTrack != null;
         // MOCK LOCATION
@@ -93,7 +98,7 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
             new Thread(() -> {
                 try {
                     Thread.sleep(4000);
-                    if (locationMode == LOCATION_MOCK) {
+                    if (locationMode == LOCATION_MOCK && startGeneration == myGeneration) {
                         locationProviderMock.start(context);
                         locationProviderMock.locationUpdates.subscribe(this);
                     }
