@@ -25,6 +25,7 @@ import com.meta.spatial.toolkit.Transform
 import com.platypii.baselinexr.location.LocationStatus
 import com.platypii.baselinexr.measurements.MLocation
 import com.platypii.baselinexr.ui.HudPanelController
+import com.platypii.baselinexr.util.PubSub
 
 class BaselineActivity : AppSystemActivity() {
 
@@ -40,7 +41,7 @@ class BaselineActivity : AppSystemActivity() {
     private var portalSystem: PortalSystem? = null
     var miniMapPanel: MiniMapPanel? = null
     private val gpsTransform = GpsToWorldTransform()
-    private var locationSubscriber: ((MLocation) -> Unit)? = null
+    private var locationSubscriber: PubSub.Subscriber<MLocation>? = null
     private var hudPanelController: HudPanelController? = null
 
     override fun registerFeatures(): List<SpatialFeature> {
@@ -99,8 +100,6 @@ class BaselineActivity : AppSystemActivity() {
         systemManager.registerSystem(portalSystem!!)
         systemManager.registerSystem(miniMapPanel!!)
 
-        // Set up centralized location updates
-        setupLocationUpdates()
 //    val flightPathSystem = FlightPathTrailSystem(this, gpsTransform)
 //    systemManager.registerSystem(flightPathSystem)
 
@@ -121,21 +120,22 @@ class BaselineActivity : AppSystemActivity() {
     override fun onStart() {
         super.onStart()
         Services.start(this)
+        // Set up centralized location updates
+        setupLocationUpdates()
     }
 
     override fun onStop() {
         Log.i(TAG, "Stopping...")
-        super.onStop()
-        Services.stop()
-    }
-
-    override fun onDestroy() {
         // Clean up location subscription
         locationSubscriber?.let { subscriber ->
             Services.location.locationUpdates.unsubscribeMain(subscriber)
             locationSubscriber = null
         }
+        super.onStop()
+        Services.stop()
+    }
 
+    override fun onDestroy() {
         // Clean up all systems that have cleanup methods
         hudSystem?.cleanup()
         flightStatsSystem?.cleanup()
@@ -277,7 +277,8 @@ class BaselineActivity : AppSystemActivity() {
     }
 
     private fun setupLocationUpdates() {
-        locationSubscriber = { loc ->
+        // Use explicit Subscriber type to avoid Kotlin SAM adapter identity issues
+        locationSubscriber = PubSub.Subscriber { loc ->
             Log.d(TAG, "Location: $loc")
 
             // Update GPS transform origin
