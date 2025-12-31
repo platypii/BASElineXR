@@ -9,7 +9,7 @@ import com.platypii.baselinexr.measurements.LatLngAlt;
 public class VROptions {
 
     // Current active configuration
-    public static VROptions current = VROptionsList.LIVE_SEB_GODZ;
+    public static VROptions current = VROptionsList.LIVE_GODZ;
 
     public enum ShaderType {
         DEFAULT_SHADER,

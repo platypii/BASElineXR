@@ -4,14 +4,13 @@ import com.platypii.baselinexr.measurements.LatLngAlt;
 
 public class VROptionsList {
 
-    public static final VROptions LIVE_SEB = new VROptions(
-            "Live Seb",
+    // THIS IS THE VROPTIONS TO USE IN LIVE FLIGHT!!
+    public static final VROptions LIVE = new VROptions(
+            "Live Eiger",
             null,
             "branded",
-            // summit over the water tower:
-//            new LatLngAlt(47.238, -123.156, 3800.0),
-            // copy destination from target landing zone (Sebastian)
-            new LatLngAlt(DropzoneOptionsList.SEBASTIAN.landingZone.lat, DropzoneOptionsList.SEBASTIAN.landingZone.lng, 3800),
+            // copy destination from target landing zone
+            new LatLngAlt(DropzoneOptions.current.landingZone.lat, DropzoneOptions.current.landingZone.lng, 3800),
             VROptions.ShaderType.LOD_SHADER,
             false,
             true,
@@ -20,35 +19,18 @@ public class VROptionsList {
             new LatLngAlt(46.5785, 7.99, 3040.0)
     );
 
-    public static final VROptions LIVE_SEB_GODZ = new VROptions(
-            "Live Seb Godz",
+    public static final VROptions LIVE_GODZ = new VROptions(
+            "Live Godz",
             null,
             "seb_godz",
             // copy destination from target landing zone (Sebastian)
-            new LatLngAlt(DropzoneOptionsList.SEBASTIAN.landingZone.lat, DropzoneOptionsList.SEBASTIAN.landingZone.lng, 0),
+            new LatLngAlt(DropzoneOptions.current.landingZone.lat, DropzoneOptions.current.landingZone.lng, 0),
             VROptions.ShaderType.FOG_SHADER,
             false,
             true,
             true,
             false,
             null
-    );
-
-    // THIS IS THE VROPTIONS TO USE IN LIVE FLIGHT!!
-    public static final VROptions LIVE = new VROptions(
-            "Live",
-            null,
-            "branded",
-            // summit over the water tower:
-//            new LatLngAlt(47.238, -123.156, 3800.0),
-            // copy destination from target landing zone (Sebastian)
-            new LatLngAlt(DropzoneOptionsList.SEBASTIAN.landingZone.lat, DropzoneOptionsList.SEBASTIAN.landingZone.lng, 3800),
-            VROptions.ShaderType.LOD_SHADER,
-            false,
-            true,
-            true,
-            false,
-            new LatLngAlt(46.5785, 7.99, 3040.0)
     );
 
 //    public static final VROptions LIVE_KPOW_7500 = new VROptions(
@@ -132,7 +114,7 @@ public class VROptionsList {
 
     // All modes for cycling
     public static final VROptions[] ALL_MODES = {
-            LIVE_SEB, LIVE_SEB_GODZ, LIVE,
+            LIVE, LIVE_GODZ,
             EIGER_BASE, EIGER_SKYDIVE, SEB_SKYDIVE,
             GOING_IN_SIMULATOR, PORTAL_RUN
     };
@@ -141,7 +123,7 @@ public class VROptionsList {
         for (VROptions mode : ALL_MODES) {
             if (mode.name.equals(name)) return mode;
         }
-        return LIVE_SEB_GODZ; // default
+        return LIVE_GODZ; // default
     }
 
     public static VROptions getNextMode(VROptions current) {
