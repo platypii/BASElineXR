@@ -36,7 +36,7 @@ class BaselineActivity : AppSystemActivity() {
     var directionArrowSystem: DirectionArrowSystem? = null
     var hudSystem: HudSystem? = null
     private var flightStatsSystem: FlightStatsSystem? = null
-    private var speedChartSystem: SpeedChartSystem? = null
+    var speedChartSystem: SpeedChartSystem? = null
     private var targetPanelSystem: TargetPanel? = null
     private var portalSystem: PortalSystem? = null
     var miniMapPanel: MiniMapPanel? = null
@@ -78,6 +78,9 @@ class BaselineActivity : AppSystemActivity() {
 
         // Load saved dropzone
         DropzoneOptions.loadCurrentDropzone(this)
+
+        // Load saved HUD options
+        HudOptions.loadHudOptions(this)
 
         // Initialize panel controllers
         hudPanelController = HudPanelController(this)

@@ -31,14 +31,12 @@ public class VROptions {
     public final boolean showDirectionArrow;
     // Show target reticle on the dropzone location?
     public final boolean showTarget;
-    // Show speed chart panel?
-    public final boolean showSpeedChart;
     public final LatLngAlt portalLocation;
     // Render options: DEFAULT_SHADER, LOD_SHADER
     public final ShaderType shader;
 
     public VROptions(String name, String mockTrack, String sourceModel, LatLngAlt destination, ShaderType shader,
-                     boolean roomMovement, boolean showDirectionArrow, boolean showTarget, boolean showSpeedChart, LatLngAlt portalLocation) {
+                     boolean roomMovement, boolean showDirectionArrow, boolean showTarget, LatLngAlt portalLocation) {
         this.name = name;
         this.mockTrack = mockTrack;
         this.sourceModel = sourceModel;
@@ -46,7 +44,6 @@ public class VROptions {
         this.roomMovement = roomMovement;
         this.showDirectionArrow = showDirectionArrow;
         this.showTarget = showTarget;
-        this.showSpeedChart = showSpeedChart;
         this.portalLocation = portalLocation;
         this.shader = shader;
     }

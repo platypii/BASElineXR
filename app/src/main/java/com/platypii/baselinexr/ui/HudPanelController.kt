@@ -7,6 +7,7 @@ import com.platypii.baselinexr.Adjustments
 import com.platypii.baselinexr.BaselineActivity
 import com.platypii.baselinexr.DropzoneOptions
 import com.platypii.baselinexr.DropzoneOptionsList
+import com.platypii.baselinexr.HudOptions
 import com.platypii.baselinexr.R
 import com.platypii.baselinexr.Services
 import com.platypii.baselinexr.VROptions
@@ -57,6 +58,16 @@ class HudPanelController(private val activity: BaselineActivity) {
             DropzoneOptions.saveCurrentDropzone(activity)
             dropzoneButton.text = DropzoneOptions.current.name
             activity.miniMapPanel?.updateMinimapImage()
+        }
+
+        // Speed chart button toggles speed chart visibility
+        val speedChartButton = rootView?.findViewById<Button>(R.id.speed_chart_button)
+        speedChartButton?.isSelected = HudOptions.showSpeedChart
+        speedChartButton?.setOnClickListener {
+            HudOptions.showSpeedChart = !HudOptions.showSpeedChart
+            HudOptions.saveHudOptions(activity)
+            speedChartButton.isSelected = HudOptions.showSpeedChart
+            activity.speedChartSystem?.updateVisibility()
         }
 
         // Add click listener to hudPanel to toggle extraControls visibility
