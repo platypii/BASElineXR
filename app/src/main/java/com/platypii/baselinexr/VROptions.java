@@ -19,8 +19,6 @@ public class VROptions {
 
     // Configuration name (displayed in HUD)
     public final String name;
-    // Replay pre-recorded GPS track. null = live gps data from flysight
-    public final String mockTrack;
     // 3D terrain model, options: eiger, kpow, branded (with BASElineXR logo on summit)
     public final String sourceModel;
     // Place the source point-of-interest (summit) at the destination location
@@ -35,10 +33,9 @@ public class VROptions {
     // Render options: DEFAULT_SHADER, LOD_SHADER
     public final ShaderType shader;
 
-    public VROptions(String name, String mockTrack, String sourceModel, LatLngAlt destination, ShaderType shader,
+    public VROptions(String name, String sourceModel, LatLngAlt destination, ShaderType shader,
                      boolean roomMovement, boolean showDirectionArrow, boolean showTarget, LatLngAlt portalLocation) {
         this.name = name;
-        this.mockTrack = mockTrack;
         this.sourceModel = sourceModel;
         this.destination = destination;
         this.roomMovement = roomMovement;

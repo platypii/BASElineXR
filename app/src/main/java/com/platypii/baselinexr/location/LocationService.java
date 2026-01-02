@@ -6,7 +6,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.platypii.baselinexr.VROptions;
+import com.platypii.baselinexr.MockTrackOptions;
 import com.platypii.baselinexr.bluetooth.BluetoothService;
 import com.platypii.baselinexr.measurements.MLocation;
 import com.platypii.baselinexr.util.PubSub.Subscriber;
@@ -89,8 +89,8 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
         }
         startGeneration++;
         final int myGeneration = startGeneration;
-        // Check if mock mode should be used (evaluated dynamically based on current VROptions)
-        final boolean useMock = VROptions.current.mockTrack != null;
+        // Check if mock mode should be used (evaluated dynamically based on current MockTrackOptions)
+        final boolean useMock = MockTrackOptions.current != null;
         // MOCK LOCATION
         if (useMock) {
             locationMode = LOCATION_MOCK;

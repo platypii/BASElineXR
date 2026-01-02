@@ -8,6 +8,7 @@ import com.platypii.baselinexr.BaselineActivity
 import com.platypii.baselinexr.DropzoneOptions
 import com.platypii.baselinexr.DropzoneOptionsList
 import com.platypii.baselinexr.HudOptions
+import com.platypii.baselinexr.MockTrackOptions
 import com.platypii.baselinexr.R
 import com.platypii.baselinexr.Services
 import com.platypii.baselinexr.VROptions
@@ -68,6 +69,15 @@ class HudPanelController(private val activity: BaselineActivity) {
             HudOptions.saveHudOptions(activity)
             speedChartButton.isSelected = HudOptions.showSpeedChart
             activity.speedChartSystem?.updateVisibility()
+        }
+
+        // Track button cycles through mock tracks
+        val trackButton = rootView?.findViewById<Button>(R.id.track_button)
+        trackButton?.text = MockTrackOptions.getCurrentDisplayName()
+        trackButton?.setOnClickListener {
+            MockTrackOptions.cycleToNext()
+            trackButton.text = MockTrackOptions.getCurrentDisplayName()
+            Services.location.restart()
         }
 
         // Add click listener to hudPanel to toggle extraControls visibility

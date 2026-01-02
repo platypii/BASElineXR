@@ -5,7 +5,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.platypii.baselinexr.VROptions;
+import com.platypii.baselinexr.MockTrackOptions;
 import com.platypii.baselinexr.measurements.MLocation;
 import com.platypii.baselinexr.tracks.TrackFileReader;
 
@@ -83,8 +83,8 @@ public class MockLocationProvider extends LocationProvider {
     }
 
     public static List<MLocation> loadData(Context context) {
-        // Get filename dynamically from current VROptions
-        final String filename = VROptions.current.mockTrack;
+        // Get filename dynamically from current MockTrackOptions
+        final String filename = MockTrackOptions.current;
         if (filename == null) {
             Log.e(TAG, "No mock track configured");
             return List.of();

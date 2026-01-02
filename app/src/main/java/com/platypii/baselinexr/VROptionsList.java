@@ -7,7 +7,6 @@ public class VROptionsList {
     // THIS IS THE VROPTIONS TO USE IN LIVE FLIGHT!!
     public static final VROptions LIVE = new VROptions(
             "Live Eiger",
-            null,
             "branded",
             null, // current dz
             VROptions.ShaderType.LOD_SHADER,
@@ -19,7 +18,6 @@ public class VROptionsList {
 
     public static final VROptions LIVE_ZILLA = new VROptions(
             "Live Zilla",
-            null,
             "seb_godz",
             null, // current dz
             VROptions.ShaderType.FOG_SHADER,
@@ -44,7 +42,6 @@ public class VROptionsList {
 
     public static final VROptions EIGER_BASE = new VROptions(
             "Eiger Base",
-            "eiger.csv",
             "eiger",
             new LatLngAlt(46.57731, 8.0053, 3973.0), // eiger
             VROptions.ShaderType.LOD_SHADER,
@@ -56,7 +53,6 @@ public class VROptionsList {
 
     public static final VROptions EIGER_SKYDIVE = new VROptions(
             "Eiger Skydive",
-            "kpow-prison.csv",
             "branded",
             new LatLngAlt(47.2338, -123.167, 3800.0), // kpow prison
             VROptions.ShaderType.LOD_SHADER,
@@ -68,7 +64,6 @@ public class VROptionsList {
 
     public static final VROptions SEB_SKYDIVE = new VROptions(
             "Seb Skydive",
-            "seb_ff.csv",
             "seb_godz",
             new LatLngAlt(DropzoneOptionsList.SEBASTIAN.landingZone.lat, DropzoneOptionsList.SEBASTIAN.landingZone.lng, 10),
 //            new LatLngAlt( 27.814, -80.512, 3800.0), // west of seb
@@ -81,7 +76,6 @@ public class VROptionsList {
 
     public static final VROptions GOING_IN_SIMULATOR = new VROptions(
             "Going-In",
-            "kpow-impact.csv",
             "kpow",
             new LatLngAlt(47.2375, -123.1458, 1584.0), // kpow + 4500
             VROptions.ShaderType.LOD_SHADER,
@@ -93,7 +87,6 @@ public class VROptionsList {
 
     public static final VROptions PORTAL_RUN = new VROptions(
             "Portal Run",
-            "portal-run.csv",
             "eiger",
             new LatLngAlt(47.2288, -123.112, 3710.0), // kpow portal run
             VROptions.ShaderType.LOD_SHADER,
