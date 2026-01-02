@@ -24,8 +24,28 @@ public class DropzoneOptionsList {
             R.drawable.minimap_kpow
     );
 
+    public static final DropzoneOptions OGDEN = new DropzoneOptions(
+            "Ogden",
+            new LatLngAlt(41.1999, -112.0018, 1340),
+            41.186030,   // latMin
+            41.213530,   // latMax
+            -112.020010, // lngMin
+            -111.983510, // lngMax
+            R.drawable.minimap_ogden
+    );
+
+    public static final DropzoneOptions TOOELE = new DropzoneOptions(
+            "Tooele",
+            new LatLngAlt(40.6109, -112.3481, 1378),
+            40.5447,    // latMin
+            40.6771,    // latMax
+            -112.4505,  // lngMin
+            -112.2456,  // lngMax
+            R.drawable.minimap_tooele
+    );
+
     public static final DropzoneOptions[] ALL_DROPZONES = {
-            SEBASTIAN, KAPOWSIN
+            KAPOWSIN, SEBASTIAN, OGDEN, TOOELE
     };
 
     public static DropzoneOptions getByName(String name) {
