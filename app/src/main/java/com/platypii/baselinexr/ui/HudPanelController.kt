@@ -50,13 +50,13 @@ class HudPanelController(private val activity: BaselineActivity) {
             Services.location.restart()
         }
 
-        // Dropzone button cycles through dropzone options
+        // Dropzone button cycles through dropzone options (null = Auto)
         val dropzoneButton = rootView?.findViewById<Button>(R.id.dropzone_button)
-        dropzoneButton?.text = DropzoneOptions.current.name
+        dropzoneButton?.text = DropzoneOptions.getCurrentName()
         dropzoneButton?.setOnClickListener {
             DropzoneOptions.current = DropzoneOptionsList.getNextDropzone(DropzoneOptions.current)
             DropzoneOptions.saveCurrentDropzone(activity)
-            dropzoneButton.text = DropzoneOptions.current.name
+            dropzoneButton.text = DropzoneOptions.getCurrentName()
             activity.miniMapPanel?.updateMinimapImage()
         }
 

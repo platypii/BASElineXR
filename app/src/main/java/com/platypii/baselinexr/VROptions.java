@@ -9,7 +9,7 @@ import com.platypii.baselinexr.measurements.LatLngAlt;
 public class VROptions {
 
     // Current active configuration
-    public static VROptions current = VROptionsList.LIVE_GODZ;
+    public static VROptions current = VROptionsList.LIVE_ZILLA;
 
     public enum ShaderType {
         DEFAULT_SHADER,
@@ -62,10 +62,21 @@ public class VROptions {
         return "terrain/" + sourceModel + "_tile.json";
     }
 
-    // Get the offset-adjusted destination for the eiger
+    /**
+     * Get the offset-adjusted destination for terrain placement.
+     * If destination is null, uses the current dropzone's landing zone.
+     * Returns null if both are unavailable (waiting for GPS auto-detect).
+     */
     public LatLngAlt getDestination() {
+        LatLngAlt dest = destination;
+        if (dest == null && DropzoneOptions.current != null) {
+            dest = DropzoneOptions.current.landingZone;
+        }
+        if (dest == null) {
+            return null;
+        }
         // Apply north/east adjustments
-        return GeoUtils.applyOffset(destination,
+        return GeoUtils.applyOffset(dest,
                 new Vector3(Adjustments.eastAdjustment, 0, Adjustments.northAdjustment));
     }
 

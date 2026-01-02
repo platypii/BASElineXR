@@ -289,6 +289,12 @@ class BaselineActivity : AppSystemActivity() {
 
             // Update LocationStatus helper
             LocationStatus.updateStatus(this)
+
+            // Auto-detect dropzone from GPS (only if set to Auto)
+            if (DropzoneOptions.autoDetect(loc.latitude, loc.longitude)) {
+                Log.i(TAG, "Auto-detected dropzone: ${DropzoneOptions.current?.name}")
+                miniMapPanel?.updateMinimapImage()
+            }
         }
         Services.location.locationUpdates.subscribeMain(locationSubscriber!!)
     }

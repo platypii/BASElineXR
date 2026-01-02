@@ -9,8 +9,7 @@ public class VROptionsList {
             "Live Eiger",
             null,
             "branded",
-            // copy destination from target landing zone
-            new LatLngAlt(DropzoneOptions.current.landingZone.lat, DropzoneOptions.current.landingZone.lng, 3800),
+            null, // current dz
             VROptions.ShaderType.LOD_SHADER,
             false,
             true,
@@ -18,12 +17,11 @@ public class VROptionsList {
             new LatLngAlt(46.5785, 7.99, 3040.0)
     );
 
-    public static final VROptions LIVE_GODZ = new VROptions(
-            "Live Godz",
+    public static final VROptions LIVE_ZILLA = new VROptions(
+            "Live Zilla",
             null,
             "seb_godz",
-            // copy destination from target landing zone (Sebastian)
-            new LatLngAlt(DropzoneOptions.current.landingZone.lat, DropzoneOptions.current.landingZone.lng, 0),
+            null, // current dz
             VROptions.ShaderType.FOG_SHADER,
             false,
             true,
@@ -107,7 +105,7 @@ public class VROptionsList {
 
     // All modes for cycling
     public static final VROptions[] ALL_MODES = {
-            LIVE, LIVE_GODZ,
+            LIVE, LIVE_ZILLA,
             EIGER_BASE, EIGER_SKYDIVE, SEB_SKYDIVE,
             GOING_IN_SIMULATOR, PORTAL_RUN
     };
@@ -116,7 +114,7 @@ public class VROptionsList {
         for (VROptions mode : ALL_MODES) {
             if (mode.name.equals(name)) return mode;
         }
-        return LIVE_GODZ; // default
+        return LIVE_ZILLA; // default
     }
 
     public static VROptions getNextMode(VROptions current) {

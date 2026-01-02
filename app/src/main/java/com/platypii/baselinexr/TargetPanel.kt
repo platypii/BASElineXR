@@ -58,7 +58,7 @@ class TargetPanel(private val gpsTransform: GpsToWorldTransform) : SystemBase() 
 
         // Convert target GPS coordinates to world space
         val currentTime = System.currentTimeMillis()
-        val dest = DropzoneOptions.current.landingZone
+        val dest = DropzoneOptions.current?.landingZone ?: return
         val targetWorldPos = gpsTransform.toWorldCoordinates(
             dest.lat, dest.lng, dest.alt, currentTime, Services.location.motionEstimator
         )
@@ -105,9 +105,9 @@ class TargetPanel(private val gpsTransform: GpsToWorldTransform) : SystemBase() 
             return
         }
 
-        if (currentLocation != null && distanceTextView != null) {
+        if (currentLocation != null && distanceTextView != null && DropzoneOptions.current != null) {
             try {
-                val target = DropzoneOptions.current.landingZone
+                val target = DropzoneOptions.current!!.landingZone
                 val targetLatLng = LatLng(target.lat, target.lng)
                 
                 // Calculate distance in meters

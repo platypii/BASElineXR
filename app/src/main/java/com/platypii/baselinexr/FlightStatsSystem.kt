@@ -53,8 +53,9 @@ class FlightStatsSystem : SystemBase() {
         val millisecondsSinceLastFix = Services.location.lastFixDuration()
 
         if (loc != null) {
-            // Altitude
-            altitudeLabel?.text = Convert.distance(loc.altitude_gps - DropzoneOptions.current.landingZone.alt)
+            // Altitude (relative to landing zone, or raw GPS if no dropzone)
+            val groundAlt = DropzoneOptions.current?.landingZone?.alt ?: 0.0
+            altitudeLabel?.text = Convert.distance(loc.altitude_gps - groundAlt)
 
             // Combine other stats into single string
             val groundSpeed = loc.groundSpeed()

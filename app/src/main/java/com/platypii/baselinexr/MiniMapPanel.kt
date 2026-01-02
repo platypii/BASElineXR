@@ -86,23 +86,21 @@ class MiniMapPanel : SystemBase() {
     }
 
     fun updateMinimapImage() {
-        minimapImage?.setImageResource(DropzoneOptions.current.drawableResource)
+        DropzoneOptions.current?.let { dz ->
+            minimapImage?.setImageResource(dz.drawableResource)
+        }
     }
 
     private fun translateLatLngToMinimapPixels(lat: Double, lng: Double): Pair<Int, Int>? {
+        val dz = DropzoneOptions.current ?: return null
         minimapImage?.let { image ->
             val imageWidth = image.width
             val imageHeight = image.height
 
             if (imageWidth > 0 && imageHeight > 0) {
-                val latMin = DropzoneOptions.current.latMin
-                val latMax = DropzoneOptions.current.latMax
-                val lngMin = DropzoneOptions.current.lngMin
-                val lngMax = DropzoneOptions.current.lngMax
-
                 // Calculate position relative to minimap bounds
-                val latNormalized = (lat - latMin) / (latMax - latMin)
-                val lngNormalized = (lng - lngMin) / (lngMax - lngMin)
+                val latNormalized = (lat - dz.latMin) / (dz.latMax - dz.latMin)
+                val lngNormalized = (lng - dz.lngMin) / (dz.lngMax - dz.lngMin)
 
                 // Clamp to [0, 1] range
                 val clampedLat = latNormalized.coerceIn(0.0, 1.0)
@@ -179,7 +177,7 @@ class MiniMapPanel : SystemBase() {
     }
 
     private fun updateGreenDotPosition() {
-        val target = DropzoneOptions.current.landingZone
+        val target = DropzoneOptions.current?.landingZone ?: return
 
         greenDot?.visibility = View.VISIBLE
 

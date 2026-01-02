@@ -7,8 +7,8 @@ import com.platypii.baselinexr.measurements.LatLngAlt;
 
 public class DropzoneOptions {
 
-    // Current active dropzone
-    public static DropzoneOptions current = DropzoneOptionsList.SEBASTIAN;
+    // Current active dropzone (null means auto-detect)
+    public static DropzoneOptions current = null;
 
     // Dropzone name (displayed in HUD)
     public final String name;
@@ -37,13 +37,39 @@ public class DropzoneOptions {
     // Load saved dropzone from SharedPreferences
     public static void loadCurrentDropzone(Context context) {
         SharedPreferences prefs = context.getSharedPreferences("BASElineXRPrefs", Context.MODE_PRIVATE);
-        String dropzoneName = prefs.getString("dropzoneOptions", "Sebastian");
-        current = DropzoneOptionsList.getByName(dropzoneName);
+        String dropzoneName = prefs.getString("dropzoneOptions", "Auto");
+        if ("Auto".equals(dropzoneName)) {
+            current = null;
+        } else {
+            current = DropzoneOptionsList.getByName(dropzoneName);
+        }
     }
 
     // Save current dropzone to SharedPreferences
     public static void saveCurrentDropzone(Context context) {
         SharedPreferences prefs = context.getSharedPreferences("BASElineXRPrefs", Context.MODE_PRIVATE);
-        prefs.edit().putString("dropzoneOptions", current.name).apply();
+        String name = current == null ? "Auto" : current.name;
+        prefs.edit().putString("dropzoneOptions", name).apply();
+    }
+
+    /**
+     * Get display name for current dropzone
+     */
+    public static String getCurrentName() {
+        return current == null ? "Auto" : current.name;
+    }
+
+    /**
+     * Auto-detect dropzone from GPS location (only if current is null/auto)
+     * @return true if dropzone was detected
+     */
+    public static boolean autoDetect(double lat, double lng) {
+        if (current != null) return false;
+        DropzoneOptions detected = DropzoneOptionsList.findByLocation(lat, lng);
+        if (detected != null) {
+            current = detected;
+            return true;
+        }
+        return false;
     }
 }
