@@ -24,5 +24,7 @@ public class MockTrackOptions {
      */
     public static void cycleToNext() {
         current = MockTrackList.getNextTrack(current);
+        // Clear dropzone so it auto-detects for new track
+        DropzoneOptions.current = null;
     }
 }

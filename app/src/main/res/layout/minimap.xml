@@ -9,7 +9,7 @@
         android:layout_width="500dp"
         android:layout_height="340dp"
         android:scaleType="centerCrop"
-        android:src="@drawable/minimap_sebastian"
+        android:src="@drawable/minimap_kpow"
         android:background="#00000000" />
 
     <!-- Blue dot for summit -->

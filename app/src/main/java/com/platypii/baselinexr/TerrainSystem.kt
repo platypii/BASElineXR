@@ -120,7 +120,7 @@ class TerrainSystem(
         val motionEstimator = Services.location.motionEstimator
 
         // Get destination position in world coordinates
-        val dest = VROptions.current.destination
+        val dest = VROptions.current.destination ?: return
 
         // Calculate the offset from terrainOrigin to pointOfInterest using geographic math
         val terrainToPoiOffset = GeoUtils.calculateOffset(terrainConfig!!.pointOfInterest, terrainConfig!!.terrainOrigin)

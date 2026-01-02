@@ -56,7 +56,7 @@ public class DropzoneOptions {
      * Get display name for current dropzone
      */
     public static String getCurrentName() {
-        return current == null ? "Auto" : current.name;
+        return current == null ? "DZ Auto" : current.name;
     }
 
     /**

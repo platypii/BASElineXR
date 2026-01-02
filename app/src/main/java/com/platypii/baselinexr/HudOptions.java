@@ -14,7 +14,7 @@ public class HudOptions {
     // Load saved HUD options from SharedPreferences
     public static void loadHudOptions(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
-        showSpeedChart = prefs.getBoolean(KEY_SHOW_SPEED_CHART, true);
+        showSpeedChart = prefs.getBoolean(KEY_SHOW_SPEED_CHART, false);
     }
 
     // Save HUD options to SharedPreferences

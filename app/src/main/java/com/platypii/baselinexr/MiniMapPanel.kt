@@ -74,8 +74,8 @@ class MiniMapPanel : SystemBase() {
     private fun updateMiniMapPosition() {
         if (!initialized || miniMapEntity == null) return
 
-        // Make sure the minimap is visible
-        miniMapEntity?.setComponent(Visible(true))
+        // Only show minimap when a dropzone is selected or detected
+        miniMapEntity?.setComponent(Visible(DropzoneOptions.current != null))
     }
 
     fun setViews(minimapImage: ImageView?, redDot: View?, blueDot: View?, greenDot: View?) {
