@@ -167,7 +167,7 @@ class WingsuitCanopySystem : SystemBase() {
 
     companion object {
         private const val TAG = "WingsuitCanopySystem"
-        private const val WINGSUIT_SCALE = 0.05f
+        private const val WINGSUIT_SCALE = 0.5f
         private const val AIRPLANE_SCALE = 0.05f
         private const val CANOPY_SCALE = 0.08f
         private const val PC_SCALE = 2.0f

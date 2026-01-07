@@ -295,7 +295,7 @@ public class VROptionsList {
             "Squaw 360",
             null,
             "eiger",
-            new LatLngAlt(40.2709309,-111.620655,2146.342),
+            new LatLngAlt(40.271096, -111.616975, 2394),
             VROptions.ShaderType.LOD_SHADER,
             false,
             true,
@@ -307,7 +307,7 @@ public class VROptionsList {
             850,                     // mockTrackStartSec
             962,                     // mockTrackEndSec
             "360squawbaselinexr.mp4", // video360File (filename only, in Movies folder)
-            1000                        // videoGpsOffsetMs (adjust as needed for sync)
+            800                        // videoGpsOffsetMs (adjust as needed for sync)
     );
 
     public static final VROptions CHINA_SENSORS_CLIP = new VROptions(
@@ -340,10 +340,10 @@ public class VROptionsList {
             true,
             new LatLngAlt(46.57835, 7.984, 2670.5),
             "china050425",
-            580,
+            550,
             730,
             "platformflyby360.mp4", // video360File (filename only, in Movies folder)
-            1100                        // videoGpsOffsetMs bigger= delay video more from start of gps(adjust as needed for sync)
+            -28000                        // videoGpsOffsetMs bigger= delay video more from start of gps(adjust as needed for sync)
     );
 
     public static final VROptions CHINA_CLOUDS_360VIDEO = new VROptions(
@@ -532,10 +532,10 @@ public class VROptionsList {
             R.drawable.minimap_tooele
     );
     public static final MiniMapOptions MM_CURRENT = new MiniMapOptions(
-            27.373864,    // latMin
-            27.426456,   // latMax
-            103.196311,  // lngMin
-            103.264976, // lngMax
+            40.256486,    // latMin
+            40.287083,   // latMax
+            -111.643775,  // lngMin
+            -111.609443, // lngMax
             R.drawable.minimap_current
     );
 

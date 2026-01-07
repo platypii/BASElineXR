@@ -472,6 +472,9 @@ class ReplayController(private val context: Context) {
         // Reset motion estimator completely for fresh start - clears accumulated Kalman state
         Services.location.motionEstimator.reset()
         
+        // Reset enhanced flight mode state for fresh start
+        Services.flightComputer?.enhancedFlightMode?.reset()
+        
         // Reset video sync state in BaselineActivity so PlaybackTimeline position is reset
         (context as? BaselineActivity)?.resetVideoSyncState()
         

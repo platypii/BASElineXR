@@ -9,11 +9,11 @@ public class VROptions {
     // Ogden 41.199716, -112.001832, 2086 m 1353M 41.213346, -111.984535, 2420
     // kpow 47.2375, -123.1458, 84
     // tooele 40.6109180, -112.3480495, 1314
-    public static LatLngAlt dropzone = new LatLngAlt(27.391157, 103.222719, 966);
-    //public static LatLngAlt dropzone = new LatLngAlt(27.391157, 103.222719, 966);
+    public static LatLngAlt dropzone = new LatLngAlt(40.267331, -111.635911, 1509);
+    //public static LatLngAlt dropzone = new LatLngAlt(40.267331, -111.635911, 1509);
 
     // Current active configuration
-    public static VROptions current = VROptionsList.CHINA_CLOUDS_360VIDEO;
+    public static VROptions current = VROptionsList.EIGER_SKYDIVE_LAKE;
     public enum ShaderType {
         DEFAULT_SHADER,
         LOD_SHADER

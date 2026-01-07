@@ -362,9 +362,17 @@ def calculate_actual_bounds(center_lat, center_lon, zoom, map_width, map_height)
     This reverses the zoom calculation to get the actual boundaries
     that will be covered by the downloaded map.
     
+    NOTE: Google Static Maps adds a footer (~22 pixels) at the bottom with
+    attribution. This shifts the actual map content upward in the image.
+    We account for this by adjusting the bounds - the map content is
+    effectively shifted north relative to the requested center.
+    
     Returns:
         dict with lat_min, lat_max, lon_min, lon_max
     """
+    # Google footer height in pixels (attribution bar at bottom)
+    GOOGLE_FOOTER_HEIGHT = 22
+    
     # World width in pixels at this zoom level
     world_size = 256 * (2 ** zoom)
     
@@ -381,13 +389,21 @@ def calculate_actual_bounds(center_lat, center_lon, zoom, map_width, map_height)
     else:
         lat_span = map_height * 360 / world_size
     
-    # Calculate bounds
-    lat_min = center_lat - lat_span / 2
-    lat_max = center_lat + lat_span / 2
+    # Calculate the latitude offset due to Google footer
+    # The footer takes up space at the bottom, effectively shifting
+    # the map content north (up) by half the footer height worth of latitude
+    # Actually, the center stays the same in the image, but the bottom
+    # is cut off by the footer, so the effective lat_min is higher (more north)
+    footer_lat_offset = (GOOGLE_FOOTER_HEIGHT / map_height) * lat_span
+    
+    # Calculate bounds with footer adjustment
+    # The map content's effective center is shifted north by half the footer
+    lat_min = center_lat - lat_span / 2 + footer_lat_offset
+    lat_max = center_lat + lat_span / 2 + footer_lat_offset
     lon_min = center_lon - lon_span / 2
     lon_max = center_lon + lon_span / 2
     
-    print(f"Actual map bounds:")
+    print(f"Actual map bounds (adjusted for {GOOGLE_FOOTER_HEIGHT}px Google footer):")
     print(f"  Latitude:  {lat_min:.6f} to {lat_max:.6f}")
     print(f"  Longitude: {lon_min:.6f} to {lon_max:.6f}")
     

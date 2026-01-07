@@ -65,6 +65,10 @@ public class EnhancedFlightMode {
     // Last update time for 1Hz processing
     private long lastSlowUpdate = 0;
 
+    // Grace period after reset to prevent spurious deploy/canopy detection
+    private long resetTime = 0;
+    private static final long RESET_GRACE_PERIOD_MS = 3000; // 3 seconds
+
     /**
      * Update flight mode with new location data.
      * Called at GPS rate (~5-10Hz).
@@ -107,7 +111,13 @@ public class EnhancedFlightMode {
         }
 
         // Deploy detection based on current mode
-        if (currentMode == MODE_WINGSUIT) {
+        // Skip deploy detection during grace period after reset
+        boolean inGracePeriod = (System.currentTimeMillis() - resetTime) < RESET_GRACE_PERIOD_MS;
+        if (inGracePeriod) {
+            deployConfidence = 0.0;
+            deployDetected = false;
+            wingsuitEstablished = false;
+        } else if (currentMode == MODE_WINGSUIT) {
             // Check if wingsuit mode is established (vxs has been >19)
             if (vxs > 19) {
                 wingsuitEstablished = true;
@@ -390,5 +400,6 @@ public class EnhancedFlightMode {
         resetJumpState();
         slowModeConfidence = 0.0;
         lastSlowUpdate = 0;
+        resetTime = System.currentTimeMillis(); // Start grace period
     }
 }

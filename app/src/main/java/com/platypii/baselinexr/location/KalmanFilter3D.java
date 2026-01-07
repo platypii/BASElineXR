@@ -110,119 +110,213 @@ public final class KalmanFilter3D implements MotionEstimator {
         P[16][16] = 0.1;   // kdwind
         P[17][17] = 0.005; // rollwind
 
-        // Process noise
+        // vr-accuracy- measured-tuned  extremely low covariances
+// Process noise
         Q = LinearAlgebra.identity(18);
-        // pos
-        Q[0][0] = 0.04; Q[1][1] =0.04; Q[2][2] = 0.04;
-        // vel
-        Q[3][3] = 0.4226; Q[4][4] = 0.4226; Q[5][5] = 0.4226;
-        // accel (higher)
-        Q[6][6] = 68.5; Q[7][7] = 68.5; Q[8][8] = 68.5;
-        // wingsuit params (slow)
+// pos (x, y, z) - y is vertical
+        Q[0][0] = 0.057156; Q[1][1] = 0.037577; Q[2][2] = 0.057156;
+// vel (x, y, z) - y is vertical
+        Q[3][3] = 0.101507; Q[4][4] = 0.204315; Q[5][5] = 0.101507;
+// accel (x, y, z) - y is vertical
+        Q[6][6] = 25.160586; Q[7][7] = 10.292260; Q[8][8] = 25.160586;
+// wingsuit params (slow)
         Q[9][9]   = 0.01;
         Q[10][10] = 0.01;
         Q[11][11] = 0.001;
-        // wind velocity (moderate)
+// wind velocity (moderate)
         Q[12][12] = 0.1; Q[13][13] = 0.1; Q[14][14] = 0.1;
-        // wind-based wingsuit params (slow)
+// wind-based wingsuit params (slow)
         Q[15][15] = 0.01;
         Q[16][16] = 0.01;
         Q[17][17] = 0.001;
 
-        // Measurement noise (position+velocity)
+// Measurement noise (position+velocity)
         R = LinearAlgebra.identity(6);
-        // Position (GPS)
-        R[0][0] = 1.2; R[1][1] = 1.2; R[2][2] = 1.2;
-        // Velocity (GPS)
-        R[3][3] = 2.25;  R[4][4] = 2.25;  R[5][5] = 2.25;
+// Position (GPS) - (x, y, z) - y is vertical
+        R[0][0] = 0.011438; R[1][1] = 0.017651; R[2][2] = 0.011438;
+// Velocity (GPS) - (x, y, z) - y is vertical
+        R[3][3] = 0.021221; R[4][4] = 0.012535; R[5][5] = 0.021221;
 
-        //smooth20hz
-        // Process noise
-        Q = LinearAlgebra.identity(18);
-        // pos
-        Q[0][0] = 1.0; Q[1][1] =1.0; Q[2][2] = 1.0;
-        // vel
-        Q[3][3] = 0.4226; Q[4][4] = 0.4226; Q[5][5] = 0.4226;
-        // accel (higher)
-        Q[6][6] = 5; Q[7][7] = 5; Q[8][8] = 5;
-        // accel (higher)
-        //Q[6][6] = 68.5; Q[7][7] = 68.5; Q[8][8] = 68.5;
-        // wingsuit params (slow)
-        Q[9][9]   = 0.01;
-        Q[10][10] = 0.01;
-        Q[11][11] = 0.001;
-        // wind velocity (moderate)
-        Q[12][12] = 0.1; Q[13][13] = 0.1; Q[14][14] = 0.1;
-        // wind-based wingsuit params (slow)
-        Q[15][15] = 0.01;
-        Q[16][16] = 0.01;
-        Q[17][17] = 0.001;
 
-        // Measurement noise (position+velocity)
-        R = LinearAlgebra.identity(6);
-        // Position (GPS)
-        R[0][0] = 1.21; R[1][1] = 1.21; R[2][2] = 1.21;
-        // Velocity (GPS)
-        R[3][3] = 2.25;  R[4][4] = 2.25;  R[5][5] = 2.25;
-/*
-// 5 hz settings
-        // Process noise
-        Q = LinearAlgebra.identity(18);
-        // pos
-        Q[0][0] = 0.12; Q[1][1] =0.12; Q[2][2] = 0.12;
-        // vel
-        Q[3][3] = 9.4226; Q[4][4] = 9.4226; Q[5][5] = 9.4226;
-        // accel (higher)
-        Q[6][6] = 470; Q[7][7] = 470; Q[8][8] = 470;
-        // wingsuit params (slow)
-        Q[9][9]   = 0.01;
-        Q[10][10] = 0.01;
-        Q[11][11] = 0.001;
-        // wind velocity (moderate)
-        Q[12][12] = 0.1; Q[13][13] = 0.1; Q[14][14] = 0.1;
-        // wind-based wingsuit params (slow)
-        Q[15][15] = 0.01;
-        Q[16][16] = 0.01;
-        Q[17][17] = 0.001;
+//// Measurement noise (position+velocity)
+//        R = LinearAlgebra.identity(6);
+//// Position (GPS) - (x, y, z) - y is vertical
+//        R[0][0] = 0.001094; R[1][1] = 0.001203; R[2][2] = 0.001094;
+//// Velocity (GPS) - (x, y, z) - y is vertical
+//        R[3][3] = 0.022516; R[4][4] = 0.037292; R[5][5] = 0.022516;
+//
+//
+//        // vr-accuracy mid
+//// Process noise
+//        Q = LinearAlgebra.identity(18);
+//// pos (x, y, z) - y is vertical
+//        Q[0][0] = 0.133100; Q[1][1] = 0.048000; Q[2][2] = 0.133100;
+//// vel (x, y, z) - y is vertical
+//        Q[3][3] = 0.040715; Q[4][4] = 0.010000; Q[5][5] = 0.040715;
+//// accel (x, y, z) - y is vertical
+//        Q[6][6] = 57.096000; Q[7][7] = 32.113704; Q[8][8] = 57.096000;
+//// wingsuit params (slow)
+//        Q[9][9]   = 0.01;
+//        Q[10][10] = 0.01;
+//        Q[11][11] = 0.001;
+//// wind velocity (moderate)
+//        Q[12][12] = 0.1; Q[13][13] = 0.1; Q[14][14] = 0.1;
+//// wind-based wingsuit params (slow)
+//        Q[15][15] = 0.01;
+//        Q[16][16] = 0.01;
+//        Q[17][17] = 0.001;
+//
+//// Measurement noise (position+velocity)
+//        R = LinearAlgebra.identity(6);
+//// Position (GPS) - (x, y, z) - y is vertical
+//        R[0][0] = 0.043698; R[1][1] = 0.005144; R[2][2] = 0.043698;
+//// Velocity (GPS) - (x, y, z) - y is vertical
+//        R[3][3] = 0.620092; R[4][4] = 0.340904; R[5][5] = 0.620092;
 
-        // Measurement noise (position+velocity)
-        R = LinearAlgebra.identity(6);
-        // Position (GPS)
-        R[0][0] = 8.7; R[1][1] = 8.7; R[2][2] = 8.7;
-        // Velocity (GPS)
-        R[3][3] = 2.25;  R[4][4] = 2.25;  R[5][5] = 2.25;
+//
+//        // vr-sustained settings
+//// Process noise
+//        Q = LinearAlgebra.identity(18);
+//// pos (x, y, z) - y is vertical
+//        Q[0][0] = 3.000000; Q[1][1] = 1.800000; Q[2][2] = 3.000000;
+//// vel (x, y, z) - y is vertical
+//        Q[3][3] = 0.001173; Q[4][4] = 0.010988; Q[5][5] = 0.001173;
+//// accel (x, y, z) - y is vertical
+//        Q[6][6] = 2.523663; Q[7][7] = 3.627984; Q[8][8] = 2.523663;
+//// wingsuit params (slow)
+//        Q[9][9]   = 0.01;
+//        Q[10][10] = 0.01;
+//        Q[11][11] = 0.001;
+//// wind velocity (moderate)
+//        Q[12][12] = 0.1; Q[13][13] = 0.1; Q[14][14] = 0.1;
+//// wind-based wingsuit params (slow)
+//        Q[15][15] = 0.01;
+//        Q[16][16] = 0.01;
+//        Q[17][17] = 0.001;
+//
+//// Measurement noise (position+velocity)
+//        R = LinearAlgebra.identity(6);
+//// Position (GPS) - (x, y, z) - y is vertical
+//        R[0][0] = 0.640891; R[1][1] = 0.960876; R[2][2] = 0.640891;
+//// Velocity (GPS) - (x, y, z) - y is vertical
+//        R[3][3] = 0.120914; R[4][4] = 0.200911; R[5][5] = 0.120914;
 
-// other5 hz settings
-        // Process noise
-        Q = LinearAlgebra.identity(18);
-        // pos
-        Q[0][0] = 0.12; Q[1][1] =0.12; Q[2][2] = 0.12;
-        // vel
-        Q[3][3] = 7.8401; Q[4][4] = 7.8401; Q[5][5] = 7.8401;
-        // accel (higher)
-        Q[6][6] = 26.4501; Q[7][7] = 26.4501; Q[8][8] = 26.4501;
-        // wingsuit params (slow)
-        Q[9][9]   = 0.01;
-        Q[10][10] = 0.01;
-        Q[11][11] = 0.001;
-        // wind velocity (moderate)
-        Q[12][12] = 0.1; Q[13][13] = 0.1; Q[14][14] = 0.1;
-        // wind-based wingsuit params (slow)
-        Q[15][15] = 0.01;
-        Q[16][16] = 0.01;
-        Q[17][17] = 0.001;
 
-        // Measurement noise (position+velocity)
-        R = LinearAlgebra.identity(6);
-        // Position (GPS)
-        R[0][0] = 4.7; R[1][1] = 4.7; R[2][2] = 4.7;
-        // Velocity (GPS)
-        R[3][3] = 2.25;  R[4][4] = 2.25;  R[5][5] = 2.25;
-*/
+
+        // other settings
+//        // Process noise
+//        Q = LinearAlgebra.identity(18);
+//        // pos
+//        Q[0][0] = 0.04; Q[1][1] =0.04; Q[2][2] = 0.04;
+//        // vel
+//        Q[3][3] = 0.4226; Q[4][4] = 0.4226; Q[5][5] = 0.4226;
+//        // accel (higher)
+//        Q[6][6] = 68.5; Q[7][7] = 68.5; Q[8][8] = 68.5;
+//        // wingsuit params (slow)
+//        Q[9][9]   = 0.01;
+//        Q[10][10] = 0.01;
+//        Q[11][11] = 0.001;
+//        // wind velocity (moderate)
+//        Q[12][12] = 0.1; Q[13][13] = 0.1; Q[14][14] = 0.1;
+//        // wind-based wingsuit params (slow)
+//        Q[15][15] = 0.01;
+//        Q[16][16] = 0.01;
+//        Q[17][17] = 0.001;
+//
+//        // Measurement noise (position+velocity)
+//        R = LinearAlgebra.identity(6);
+//        // Position (GPS)
+//        R[0][0] = 1.2; R[1][1] = 1.2; R[2][2] = 1.2;
+//        // Velocity (GPS)
+//        R[3][3] = 2.25;  R[4][4] = 2.25;  R[5][5] = 2.25;
+//
+//        //smooth20hz
+//        // Process noise
+//        Q = LinearAlgebra.identity(18);
+//        // pos
+//        Q[0][0] = 1.0; Q[1][1] =1.0; Q[2][2] = 1.0;
+//        // vel
+//        Q[3][3] = 0.4226; Q[4][4] = 0.4226; Q[5][5] = 0.4226;
+//        // accel (higher)
+//        Q[6][6] = 5; Q[7][7] = 5; Q[8][8] = 5;
+//        // accel (higher)
+//        //Q[6][6] = 68.5; Q[7][7] = 68.5; Q[8][8] = 68.5;
+//        // wingsuit params (slow)
+//        Q[9][9]   = 0.01;
+//        Q[10][10] = 0.01;
+//        Q[11][11] = 0.001;
+//        // wind velocity (moderate)
+//        Q[12][12] = 0.1; Q[13][13] = 0.1; Q[14][14] = 0.1;
+//        // wind-based wingsuit params (slow)
+//        Q[15][15] = 0.01;
+//        Q[16][16] = 0.01;
+//        Q[17][17] = 0.001;
+//
+//        // Measurement noise (position+velocity)
+//        R = LinearAlgebra.identity(6);
+//        // Position (GPS)
+//        R[0][0] = 1.21; R[1][1] = 1.21; R[2][2] = 1.21;
+//        // Velocity (GPS)
+//        R[3][3] = 2.25;  R[4][4] = 2.25;  R[5][5] = 2.25;
+
+//// 5 hz settings
+//        // Process noise
+//        Q = LinearAlgebra.identity(18);
+//        // pos
+//        Q[0][0] = 0.12; Q[1][1] =0.12; Q[2][2] = 0.12;
+//        // vel
+//        Q[3][3] = 9.4226; Q[4][4] = 9.4226; Q[5][5] = 9.4226;
+//        // accel (higher)
+//        Q[6][6] = 470; Q[7][7] = 470; Q[8][8] = 470;
+//        // wingsuit params (slow)
+//        Q[9][9]   = 0.01;
+//        Q[10][10] = 0.01;
+//        Q[11][11] = 0.001;
+//        // wind velocity (moderate)
+//        Q[12][12] = 0.1; Q[13][13] = 0.1; Q[14][14] = 0.1;
+//        // wind-based wingsuit params (slow)
+//        Q[15][15] = 0.01;
+//        Q[16][16] = 0.01;
+//        Q[17][17] = 0.001;
+//
+//        // Measurement noise (position+velocity)
+//        R = LinearAlgebra.identity(6);
+//        // Position (GPS)
+//        R[0][0] = 8.7; R[1][1] = 8.7; R[2][2] = 8.7;
+//        // Velocity (GPS)
+//        R[3][3] = 2.25;  R[4][4] = 2.25;  R[5][5] = 2.25;
+//
+//// other5 hz settings
+//        // Process noise
+//        Q = LinearAlgebra.identity(18);
+//        // pos
+//        Q[0][0] = 0.12; Q[1][1] =0.12; Q[2][2] = 0.12;
+//        // vel
+//        Q[3][3] = 7.8401; Q[4][4] = 7.8401; Q[5][5] = 7.8401;
+//        // accel (higher)
+//        Q[6][6] = 26.4501; Q[7][7] = 26.4501; Q[8][8] = 26.4501;
+//        // wingsuit params (slow)
+//        Q[9][9]   = 0.01;
+//        Q[10][10] = 0.01;
+//        Q[11][11] = 0.001;
+//        // wind velocity (moderate)
+//        Q[12][12] = 0.1; Q[13][13] = 0.1; Q[14][14] = 0.1;
+//        // wind-based wingsuit params (slow)
+//        Q[15][15] = 0.01;
+//        Q[16][16] = 0.01;
+//        Q[17][17] = 0.001;
+//
+//        // Measurement noise (position+velocity)
+//        R = LinearAlgebra.identity(6);
+//        // Position (GPS)
+//        R[0][0] = 4.7; R[1][1] = 4.7; R[2][2] = 4.7;
+//        // Velocity (GPS)
+//        R[3][3] = 2.25;  R[4][4] = 2.25;  R[5][5] = 2.25;
+
 
         // Initialize wind filter
-        windFilter = new WindKalmanFilter();
-        windFilter.setPolar(polar);
+      //  windFilter = new WindKalmanFilter();
+     //   windFilter.setPolar(polar);
     }
 
     /** Initialize on first fix, then run predict+update on subsequent fixes. */

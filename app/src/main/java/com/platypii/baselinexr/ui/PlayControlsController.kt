@@ -237,6 +237,9 @@ class PlayControlsController(
         // Perform final seek
         onSeek?.invoke(gpsTimeMs, videoTimeMs)
         
+        // Reset enhanced flight mode after seek completes
+        Services.flightComputer?.enhancedFlightMode?.reset()
+        
         // Restore playback state
         if (preSeekWasPlaying) {
             // Use post to let the seek complete first
