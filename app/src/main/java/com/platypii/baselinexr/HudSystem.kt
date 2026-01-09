@@ -324,6 +324,9 @@ class HudSystem : SystemBase() {
         // Enlarge DirectionArrow when extra controls are visible
         val activity = SpatialActivityManager.getVrActivity<BaselineActivity>()
         activity.directionArrowSystem?.setEnlarged(visible)
+        
+        // Show head model for heading calibration when menu is visible
+        activity.headModelSystem?.setEnlarged(visible)
     }
 
     fun cleanup() {

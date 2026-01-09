@@ -11,9 +11,6 @@ import com.meta.spatial.toolkit.Mesh
 import com.meta.spatial.toolkit.Scale
 import com.meta.spatial.toolkit.Transform
 import com.meta.spatial.toolkit.Visible
-import com.platypii.baselinexr.location.KalmanFilter3D
-import com.platypii.baselinexr.location.PolarLibrary
-import com.platypii.baselinexr.location.SimpleEstimator
 import com.platypii.baselinexr.util.FlightAttitude
 import com.platypii.baselinexr.util.HeadPoseUtil
 import com.platypii.baselinexr.util.QuaternionUtil
@@ -34,9 +31,6 @@ class HeadModelSystem : SystemBase() {
         // Full head model scale (relative to model scale)
         private const val HEAD_SCALE = 0.10f
         
-        // Wingsuit model scale (same as WingsuitCanopySystem)
-        private const val WINGSUIT_SCALE = 0.5f
-        
         // Head offset in model's local coordinate space (before rotation)
         // These values position the head on the wingsuit model's head
         // X: left/right, Y: up/down, Z: forward/back
@@ -44,8 +38,12 @@ class HeadModelSystem : SystemBase() {
         private const val HEAD_OFFSET_Y = 0.0f   // up
         private const val HEAD_OFFSET_Z = -0.0f    // left
         
-        // Model position offset (same as WingsuitCanopySystem)
-        private const val MODEL_HEIGHT_OFFSET = -3.0f
+        // Calibration mode settings (when heading menu is open)
+        // Adjust these to position head relative to enlarged compass
+        private const val CALIBRATION_X = 0.0f   // Left/Right (positive = right)
+        private const val CALIBRATION_Y = -3.5f  // Up/Down (negative = down)
+        private const val CALIBRATION_Z = 1.5f   // Forward/Back (negative = toward user)
+        private const val CALIBRATION_SCALE = 0.10f
     }
 
     // Single combined head entity (HMD + helmet + FlySight)
@@ -53,14 +51,16 @@ class HeadModelSystem : SystemBase() {
     
     private var initialized = false
     private var enabled = true
+    private var isEnlarged = false  // True when heading menu is open (calibration mode)
 
     override fun execute() {
         if (!initialized) {
             initializeEntities()
         }
         
-        if (enabled) {
-            //updateHeadOrientation()
+        // When enlarged (heading menu open), show head for calibration
+        if (isEnlarged) {
+            updateHeadOrientationCalibration()
         }
     }
 
@@ -75,118 +75,6 @@ class HeadModelSystem : SystemBase() {
         
         initialized = true
         Log.i(TAG, "HeadModelSystem initialized with fullheadneck.gltf attachment at neck")
-    }
-
-    /**
-     * Independent head orientation update - calculates rotation from GPS/kalman data.
-     * Uses clean GPS conventions: heading (North=0), pitch (negative=down), roll (positive=right).
-     */
-    private fun updateHeadOrientation() {
-        val headEntity = this.headEntity ?: return
-        
-        if (!VROptions.current.showWingsuitCanopy) {
-            headEntity.setComponent(Visible(false))
-            return
-        }
-        
-        // Get current time and motion estimator
-        val currentTime = System.currentTimeMillis()
-        val motionEstimator = Services.location.motionEstimator
-        if (motionEstimator == null) {
-            headEntity.setComponent(Visible(false))
-            return
-        }
-        
-        // Get velocity and roll from motion estimator
-        val (velocity, rollRad) = when (motionEstimator) {
-            is KalmanFilter3D -> {
-                val predictedState = motionEstimator.getCachedPredictedState(currentTime)
-                Pair(predictedState.velocity.plus(predictedState.windVelocity), predictedState.rollwind.toFloat())
-            }
-            is SimpleEstimator -> {
-                Pair(motionEstimator.v, 0f)
-            }
-            else -> {
-                val lastUpdate = motionEstimator.lastUpdate
-                if (lastUpdate != null) {
-                    Pair(com.platypii.baselinexr.util.tensor.Vector3(lastUpdate.vE, lastUpdate.climb, lastUpdate.vN), 0f)
-                } else {
-                    headEntity.setComponent(Visible(false))
-                    return
-                }
-            }
-        }
-        
-        // Extract velocity components in GPS conventions
-        // velocity.x = East, velocity.y = Up, velocity.z = North
-        val vE = velocity.x
-        val vUp = velocity.y
-        val vN = velocity.z
-        
-        // Calculate GPS heading (North=0, East=π/2)
-        val headingRad = QuaternionUtil.headingFromVelocity(vE, vN)
-        
-        // Calculate pitch (negative = descending/nose down)
-        val pitchRad = QuaternionUtil.pitchFromVelocity(vUp, vE, vN)
-        
-        // Calculate AOA from KL/KD coefficients
-        val aoaDeg = when (motionEstimator) {
-            is KalmanFilter3D -> {
-                val predictedState = motionEstimator.getCachedPredictedState(currentTime)
-                val lastUpdate = motionEstimator.lastUpdate
-                if (lastUpdate != null) {
-                    PolarLibrary.convertKlKdToAOA(predictedState.kl, predictedState.kd, lastUpdate.altitude_gps,
-                        PolarLibrary.AURA_FIVE_POLAR)
-                } else {
-                    10.0
-                }
-            }
-            else -> 10.0
-        }
-        val aoaRad = Math.toRadians(aoaDeg).toFloat()
-        
-        // Build rotation from GPS attitude
-        // 1. Flight attitude from velocity (heading, pitch, roll)
-        val attitudeRotation = QuaternionUtil.fromGpsAttitude(headingRad, pitchRad, rollRad)
-        
-        // 2. AOA rotation (composed on top of flight attitude)
-        val aoaRotation = QuaternionUtil.fromAoa(aoaRad)
-        
-        // 3. Model offset if glTF model isn't +Z forward (may need adjustment)
-        val modelOffset = QuaternionUtil.modelOffsetminus90()
-        
-        // Combine: model offset * AOA * attitude
-        // AOA is applied in body frame (after attitude), model offset corrects glTF orientation
-        val rotation = QuaternionUtil.multiply(aoaRotation, attitudeRotation)
-
-        
-        // Calculate position and scale (same as WingsuitCanopySystem)
-        val scale = WINGSUIT_SCALE
-        val position = Vector3(0f, MODEL_HEIGHT_OFFSET, 0f)
-        
-        // Calculate head offset in local coordinates
-        val localHeadOffset = Vector3(
-            HEAD_OFFSET_X * scale,
-            HEAD_OFFSET_Y * scale,
-            HEAD_OFFSET_Z * scale
-        )
-        
-        // Rotate the local offset by the model's rotation to get world offset
-        val worldHeadOffset = QuaternionUtil.rotateVector(localHeadOffset, rotation)
-        
-        // Final head position = model position + rotated offset
-        val headPosition = position + worldHeadOffset
-        
-        // Get HMD rotation for the head
-        val headPose = HeadPoseUtil.getHeadPose(systemManager)
-        val hmdRotation = headPose?.q ?: rotation // Fall back to model rotation if no HMD
-        
-        // Update head entity
-        headEntity.setComponents(
-            Transform(Pose(headPosition, hmdRotation)),
-            Scale(Vector3(HEAD_SCALE * scale)),
-            Visible(true)
-        )
     }
     
     /**
@@ -245,6 +133,41 @@ class HeadModelSystem : SystemBase() {
         headEntity.setComponents(
             Transform(Pose(headFinalPosition, hmdRotation)),
             Scale(Vector3(HEAD_SCALE * modelScale)),
+            Visible(true)
+        )
+    }
+    
+    /**
+     * Set enlarged mode (called when heading menu opens/closes).
+     * When enlarged, shows head model for heading calibration.
+     */
+    fun setEnlarged(enlarged: Boolean) {
+        isEnlarged = enlarged
+        if (!enlarged) {
+            headEntity?.setComponent(Visible(false))
+        }
+        Log.i(TAG, "Head calibration mode ${if (enlarged) "enabled" else "disabled"}")
+    }
+    
+    /**
+     * Update head orientation for calibration mode.
+     * Shows head above the enlarged compass using HMD rotation.
+     * Used during heading menu to help align magnetic north with GPS north.
+     */
+    private fun updateHeadOrientationCalibration() {
+        val headEntity = this.headEntity ?: return
+        
+        // Position: adjust CALIBRATION_X/Y/Z constants to position relative to compass
+        val position = Vector3(CALIBRATION_X, CALIBRATION_Y, CALIBRATION_Z)
+        
+        // Use HMD rotation directly for calibration
+        val headPose = HeadPoseUtil.getHeadPose(systemManager)
+        val rotation = headPose?.q ?: Quaternion()
+        
+        // Update head entity
+        headEntity.setComponents(
+            Transform(Pose(position, rotation)),
+            Scale(Vector3(CALIBRATION_SCALE)),
             Visible(true)
         )
     }
