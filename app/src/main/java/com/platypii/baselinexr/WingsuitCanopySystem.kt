@@ -19,7 +19,9 @@ import com.platypii.baselinexr.location.KalmanFilter3D
 import com.platypii.baselinexr.location.MotionEstimator
 import com.platypii.baselinexr.location.PolarLibrary
 import com.platypii.baselinexr.location.SimpleEstimator
+import com.platypii.baselinexr.util.FlightAttitude
 import com.platypii.baselinexr.util.HeadPoseUtil
+import com.platypii.baselinexr.util.QuaternionUtil
 
 import kotlin.math.*
 
@@ -195,6 +197,9 @@ class WingsuitCanopySystem : SystemBase() {
     private final var isRealCanopyOrientation = true // Flag to control canopy positioning mode
     private var enableWindVectors = true // Flag to control wind vector display - now enabled
     private var enableMagneticVector = false // Flag to control magnetic field vector display
+    
+    // Reference to HeadModelSystem for updating head position/rotation
+    private var headModelSystem: HeadModelSystem? = null
 
     /**
      * Get effective phone time for prediction calculations.
@@ -207,6 +212,11 @@ class WingsuitCanopySystem : SystemBase() {
     override fun execute() {
         if (!initialized) {
             initializeModels()
+        }
+        
+        // Get reference to HeadModelSystem if not already cached
+        if (headModelSystem == null) {
+            headModelSystem = systemManager.tryFindSystem<HeadModelSystem>()
         }
 
         // Update driven by 90Hz GpsToWorldTransform predictDelta() calls
@@ -426,6 +436,7 @@ class WingsuitCanopySystem : SystemBase() {
         canopyEntity?.setComponent(Visible(false))
         pcEntity?.setComponent(Visible(false))
         snivelEntity?.setComponent(Visible(false))
+        headModelSystem?.hide()
     }
 
     /**
@@ -635,6 +646,53 @@ class WingsuitCanopySystem : SystemBase() {
             }
         }
 
+        // === LAYERED ROTATION ARCHITECTURE ===
+        // Extract velocity in GPS conventions (vE=East, vUp=Up, vN=North)
+        val vE = velocity.x
+        val vUp = velocity.y
+        val vN = velocity.z
+        
+        // Calculate heading and pitch using clean helpers
+        val headingRad = QuaternionUtil.headingFromVelocity(vE, vN)
+        val pitchRad = QuaternionUtil.pitchFromVelocity(vUp, vE, vN)
+
+        // Calculate AOA from measured KL/KD coefficients using polar data
+        val aoaDeg = when (motionEstimator) {
+            is KalmanFilter3D -> {
+                val predictedState = motionEstimator.getCachedPredictedState(getEffectiveTime())
+                val lastUpdate = motionEstimator.getLastUpdate()
+                if (lastUpdate != null) {
+                    PolarLibrary.convertKlKdToAOA(predictedState.kl, predictedState.kd, lastUpdate.altitude_gps,
+                        PolarLibrary.AURA_FIVE_POLAR)
+                } else {
+                    10.0 // Default AOA if no GPS data
+                }
+            }
+            else -> 10.0 // Default AOA for other estimators
+        }
+        val aoaRad = Math.toRadians(aoaDeg).toFloat()
+        
+        // === SHARED FLIGHT DATA ===
+        // Package raw values for sharing with other visualization systems
+        val flightAttitude = FlightAttitude(
+            headingRad = headingRad,
+            pitchRad = pitchRad,
+            rollRad = rollRad,
+            aoaRad = aoaRad,
+            yawAdjustment = Adjustments.yawAdjustment.toFloat()
+        )
+        
+        // === WINGSUIT-SPECIFIC ROTATION ===
+        // Apply wingsuit model adjustments: +π to heading, -pitch+π, -AOA
+        val attitudeRotation = QuaternionUtil.fromGpsAttitude(
+            Math.PI.toFloat() + headingRad + Adjustments.yawAdjustment.toFloat(),
+            -pitchRad + Math.PI.toFloat(),
+            rollRad
+        )
+        val aoaRotation = QuaternionUtil.fromAoa(-aoaRad)
+        val rotation = QuaternionUtil.multiply(aoaRotation, attitudeRotation)
+        
+        /* === OLD: Original calculation (commented for reference) ===
         // Calculate pitch (angle from horizontal)
         val horizontalSpeed = sqrt(velocity.x * velocity.x + velocity.z * velocity.z).toFloat()
         val pitchRad = atan2(-velocity.y.toFloat(), horizontalSpeed) // Negative because up is positive
@@ -665,12 +723,9 @@ class WingsuitCanopySystem : SystemBase() {
 
         // 2. Flight attitude
         val attitudeRotation = createQuaternionFromEuler(rollRad, pitchRad, (-flightYaw -Math.PI/2 -  Adjustments.yawAdjustment   ).toFloat())
-        // val controlRotation = createQuaternionFromEuler(0f, aoa.toFloat(), 0f)
-        // Combine rotations: first apply offset, then attitude
-
-        // val wsRotation = multiplyQuaternions(attitudeRotation, controlRotation)
 
         val rotation = multiplyQuaternions(modelRotation, attitudeRotation)
+        === END OLD === */
 
         // Use enlarged scale if enabled
         val scale = if (isEnlarged) WINGSUIT_SCALE * ENLARGEMENT_FACTOR else WINGSUIT_SCALE
@@ -683,6 +738,9 @@ class WingsuitCanopySystem : SystemBase() {
                 Visible(true)
             )
         )
+        
+        // Update head model with shared flight data (not the wingsuit-specific rotation)
+        headModelSystem?.updateFromWingsuit(position, flightAttitude, scale)
 
         // ...removed per-frame debug logging...
     }

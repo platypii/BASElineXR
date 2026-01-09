@@ -48,6 +48,7 @@ class BaselineActivity : AppSystemActivity() {
     var terrainSystem: TerrainSystem? = null
     var directionArrowSystem: DirectionArrowSystem? = null
     var wingsuitCanopySystem: WingsuitCanopySystem? = null
+    var headModelSystem: HeadModelSystem? = null
     var hudSystem: HudSystem? = null
     private var flightStatsSystem: FlightStatsSystem? = null
     private var atmosphericSystem: AtmosphericSystem? = null
@@ -149,6 +150,7 @@ class BaselineActivity : AppSystemActivity() {
         speedChartSystem = SpeedChartSystem()
         directionArrowSystem = DirectionArrowSystem()
         wingsuitCanopySystem = WingsuitCanopySystem()
+        headModelSystem = HeadModelSystem()
 
         // Wind vectors now enabled by default - data collection complete
         // wingsuitCanopySystem?.setWindVectorsEnabled(false)
@@ -164,6 +166,7 @@ class BaselineActivity : AppSystemActivity() {
         systemManager.registerSystem(speedChartSystem!!)
         systemManager.registerSystem(directionArrowSystem!!)
         systemManager.registerSystem(wingsuitCanopySystem!!)
+        systemManager.registerSystem(headModelSystem!!)
         systemManager.registerSystem(targetPanelSystem!!)
         systemManager.registerSystem(portalSystem!!)
         systemManager.registerSystem(miniMapPanel!!)
@@ -250,6 +253,7 @@ class BaselineActivity : AppSystemActivity() {
         terrainSystem?.cleanup()
         directionArrowSystem?.cleanup()
         wingsuitCanopySystem?.cleanup()
+        headModelSystem?.cleanup()
         targetPanelSystem?.cleanup()
         portalSystem?.cleanup()
         miniMapPanel?.cleanup()
