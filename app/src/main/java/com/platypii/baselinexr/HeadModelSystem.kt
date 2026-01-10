@@ -157,12 +157,18 @@ class HeadModelSystem : SystemBase() {
     private fun updateHeadOrientationCalibration() {
         val headEntity = this.headEntity ?: return
         
-        // Position: adjust CALIBRATION_X/Y/Z constants to position relative to compass
-        val position = Vector3(CALIBRATION_X, CALIBRATION_Y, CALIBRATION_Z)
+        // Get head pose for room position (consistent with compass positioning)
+        val headPose = HeadPoseUtil.getHeadPose(systemManager)
+        if (headPose == null || headPose == Pose()) {
+            headEntity.setComponent(Visible(false))
+            return
+        }
+        
+        // Position relative to head pose (room position), offset by calibration constants
+        val position = headPose.t + Vector3(CALIBRATION_X, CALIBRATION_Y, CALIBRATION_Z)
         
         // Use HMD rotation directly for calibration
-        val headPose = HeadPoseUtil.getHeadPose(systemManager)
-        val rotation = headPose?.q ?: Quaternion()
+        val rotation = headPose.q
         
         // Update head entity
         headEntity.setComponents(
