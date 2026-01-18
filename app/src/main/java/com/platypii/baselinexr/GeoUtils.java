@@ -78,6 +78,9 @@ public class GeoUtils {
      * Offsets are in meters (east, up, north)
      */
     public static LatLngAlt applyOffset(LatLngAlt base, Vector3... offsets) {
+        if (base == null) {
+            return null;
+        }
         double totalEast = 0;
         double totalUp = 0;
         double totalNorth = 0;

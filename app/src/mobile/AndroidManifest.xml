@@ -90,9 +90,6 @@
         <category android:name="com.oculus.intent.category.VR"/>
         <category android:name="android.intent.category.LAUNCHER"/>
       </intent-filter>
-        <layout
-            android:defaultHeight="640dp"
-            android:defaultWidth="1024dp" />
 
     </activity>
 

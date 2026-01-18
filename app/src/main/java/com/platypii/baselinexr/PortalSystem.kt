@@ -99,6 +99,10 @@ class PortalSystem(
 
         // Apply offsets to destination to get portal position in user's reference frame
         val offsetDest = GeoUtils.applyOffset(VROptions.current.destination, terrainToPortal)
+        if (offsetDest == null) {
+            portalEntity.setComponent(Visible(false))
+            return
+        }
         val portalLocation = LatLngAlt(offsetDest.lat, offsetDest.lng, offsetDest.alt)
 
         // Convert to world coordinates
