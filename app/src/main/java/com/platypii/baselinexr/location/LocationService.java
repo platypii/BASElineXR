@@ -28,6 +28,10 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
     private static final int LOCATION_MOCK = 3;
     private int locationMode = LOCATION_NONE;
 
+    // Stored context for deferred operations (e.g., starting sensor provider from seekMockPlayback)
+    @Nullable
+    private Context storedContext;
+
     // Mock location provider will replay an existing track
     private static final boolean useMock = VROptions.current.mockTrack != null || VROptions.current.mockSensor != null;
 
@@ -41,9 +45,41 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
     @NonNull
     private final MockLocationProvider locationProviderMock;
     
-    // Sensor data provider (compass, IMU, barometer) - synchronized with GPS
+    // Sensor data providers - use interface type for unified access
+    // mockSensorProvider: for recorded data playback
+    // liveSensorProvider: for real-time BLE streaming
     @NonNull
-    public final MockSensorProvider sensorProvider;
+    private final MockSensorProvider mockSensorProvider;
+    @Nullable
+    private LiveSensorProvider liveSensorProvider;
+    
+    /**
+     * Get the active sensor provider (mock or live, depending on mode).
+     * This is the unified accessor for all sensor data consumers.
+     * 
+     * @return Active SensorProvider, or null if none active
+     */
+    @Nullable
+    public SensorProvider getSensorProvider() {
+        if (useMock && mockSensorProvider.hasSensorData()) {
+            return mockSensorProvider;
+        } else if (liveSensorProvider != null && liveSensorProvider.hasSensorData()) {
+            return liveSensorProvider;
+        } else if (useMock) {
+            // Return mock provider even without data (waiting for load)
+            return mockSensorProvider;
+        }
+        return liveSensorProvider;
+    }
+    
+    /**
+     * Direct access to sensor provider for backwards compatibility.
+     * Consumers should migrate to {@link #getSensorProvider()}.
+     * @deprecated Use {@link #getSensorProvider()} instead
+     */
+    @Deprecated
+    @Nullable
+    public SensorProvider sensorProvider;
 
     // Motion estimator for sophisticated position prediction
     public final MotionEstimator motionEstimator = new KalmanFilter3D();
@@ -83,7 +119,9 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
         locationProviderAndroid = new LocationProviderAndroid();
         locationProviderBluetooth = new LocationProviderBluetooth(bluetooth);
         locationProviderMock = new MockLocationProvider();
-        sensorProvider = new MockSensorProvider();
+        mockSensorProvider = new MockSensorProvider();
+        // Initialize deprecated field for backwards compatibility
+        sensorProvider = mockSensorProvider;
     }
 
 
@@ -186,6 +224,9 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
 
     @Override
     public void start(@NonNull Context context) {
+        // Store context for deferred operations
+        this.storedContext = context;
+        
         if (locationMode != LOCATION_NONE) {
             Log.e(TAG, "Location service already started");
             return;
@@ -208,6 +249,13 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
             if (VROptions.current.has360Video()) {
                 Log.i(TAG, "Video configured - deferring GPS start to Video360Controller");
                 locationMode = LOCATION_MOCK;  // Set mode so startMockPlaybackWithDelay works
+                
+                // Preload sensor data now so it's available for seeking before GPS starts
+                // This handles the case where video starts before GPS data
+                if (VROptions.current.mockSensor != null) {
+                    Log.i(TAG, "SENSOR: Preloading sensor data for deferred playback");
+                    mockSensorProvider.preloadData(context);
+                }
                 return;
             }
             
@@ -225,7 +273,7 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
                     if (VROptions.current.mockSensor != null) {
                         Log.i(TAG, String.format("TIMESYNC: Starting sensor provider at time=%d", System.currentTimeMillis()));
                         long trackStartTime = locationProviderMock.getTrackStartTime();
-                        sensorProvider.start(context, trackStartTime);
+                        mockSensorProvider.start(context, trackStartTime);
                     }
                 } catch (InterruptedException ignored) {
                 }
@@ -235,6 +283,9 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
             locationMode = LOCATION_BLUETOOTH;
             locationProviderBluetooth.start(context);
             locationProviderBluetooth.locationUpdates.subscribe(this);
+            // Start live sensor provider for BLE sensor streaming
+            liveSensorProvider = new LiveSensorProvider();
+            liveSensorProvider.start(bluetooth);
         } else {
             // Start android location service
             locationMode = LOCATION_ANDROID;
@@ -338,7 +389,7 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
         if (locationMode == LOCATION_MOCK) {
             Log.i(TAG, "Pausing mock GPS playback");
             locationProviderMock.pause();
-            sensorProvider.pause();
+            mockSensorProvider.pause();
         }
     }
 
@@ -349,7 +400,7 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
         if (locationMode == LOCATION_MOCK) {
             Log.i(TAG, "Resuming mock GPS playback");
             locationProviderMock.resume();
-            sensorProvider.resume();
+            mockSensorProvider.resume();
         }
     }
     
@@ -360,7 +411,7 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
         if (locationMode == LOCATION_MOCK) {
             Log.i(TAG, "Stopping mock GPS playback");
             locationProviderMock.stop();
-            sensorProvider.stop();
+            mockSensorProvider.stop();
         }
     }
     
@@ -385,7 +436,14 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
             }
             
             locationProviderMock.seekTo(targetGpsTimeMs, resumeAfterSeek);
-            // TODO: Seek sensor data to match GPS time
+            
+            // Ensure sensor provider is started if mockSensor is configured
+            // This handles the deferred start case when video is configured
+            if (VROptions.current.mockSensor != null && !mockSensorProvider.hasSensorData() && storedContext != null) {
+                long trackStartTime = locationProviderMock.getTrackStartTime();
+                Log.i(TAG, "SENSOR: Starting sensor provider from seekMockPlayback with trackStartTime=" + trackStartTime);
+                mockSensorProvider.start(storedContext, trackStartTime);
+            }
         }
     }
     
@@ -394,7 +452,7 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
      */
     public void startMockPlayback(@NonNull Context context) {
         if (useMock) {
-            Log.i(TAG, "Starting mock GPS playback, locationMode=" + locationMode);
+            Log.i(TAG, "Starting mock GPS playback, locationMode=" + locationMode + ", mockSensor=" + VROptions.current.mockSensor);
             // Clear lastLoc to prevent duplicate detection on restart
             // Without this, the first points on restart may be rejected as "duplicates"
             // of the last points from the previous playthrough
@@ -406,7 +464,8 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
                 locationProviderMock.locationUpdates.subscribe(this);
                 if (VROptions.current.mockSensor != null) {
                     long trackStartTime = locationProviderMock.getTrackStartTime();
-                    sensorProvider.restart(context, trackStartTime);
+                    Log.i(TAG, "SENSOR: Restarting sensor provider with trackStartTime=" + trackStartTime);
+                    mockSensorProvider.restart(context, trackStartTime);
                 }
             } else {
                 // Not in mock mode yet - initialize and start
@@ -416,7 +475,8 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
                 locationProviderMock.locationUpdates.subscribe(this);
                 if (VROptions.current.mockSensor != null) {
                     long trackStartTime = locationProviderMock.getTrackStartTime();
-                    sensorProvider.start(context, trackStartTime);
+                    Log.i(TAG, "SENSOR: Starting sensor provider with trackStartTime=" + trackStartTime);
+                    mockSensorProvider.start(context, trackStartTime);
                 }
             }
         }
@@ -440,7 +500,7 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
                 locationProviderMock.restartWithDelay(context, delayMs);
                 if (VROptions.current.mockSensor != null) {
                     long trackStartTime = locationProviderMock.getTrackStartTime();
-                    sensorProvider.restart(context, trackStartTime);
+                    mockSensorProvider.restart(context, trackStartTime);
                 }
             } else {
                 // Not in mock mode yet - initialize and start with delay
@@ -450,7 +510,7 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
                 locationProviderMock.locationUpdates.subscribe(this);
                 if (VROptions.current.mockSensor != null) {
                     long trackStartTime = locationProviderMock.getTrackStartTime();
-                    sensorProvider.start(context, trackStartTime);
+                    mockSensorProvider.start(context, trackStartTime);
                 }
             }
         }
@@ -476,10 +536,15 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
             // Stop bluetooth location service
             locationProviderBluetooth.locationUpdates.unsubscribe(this);
             locationProviderBluetooth.stop();
+            // Stop live sensor provider
+            if (liveSensorProvider != null) {
+                liveSensorProvider.stop();
+                liveSensorProvider = null;
+            }
         } else if (locationMode == LOCATION_MOCK) {
             locationProviderMock.locationUpdates.unsubscribe(this);
             locationProviderMock.stop();
-            sensorProvider.stop();
+            mockSensorProvider.stop();
         }
         locationMode = LOCATION_NONE;
         super.stop();

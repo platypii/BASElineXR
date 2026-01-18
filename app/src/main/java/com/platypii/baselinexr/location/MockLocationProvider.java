@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 
 import com.platypii.baselinexr.VROptions;
 import com.platypii.baselinexr.measurements.MLocation;
+import com.platypii.baselinexr.replay.PlaybackTimeline;
 import com.platypii.baselinexr.replay.ReplayManager;
 import com.platypii.baselinexr.tracks.FlySightDataLoader;
 import com.platypii.baselinexr.tracks.TrackFileReader;
@@ -345,6 +346,56 @@ public class MockLocationProvider extends LocationProvider {
             return trackData.get(trackData.size() - 1).millis;
         }
         return trackData.get(currentIndex).millis;
+    }
+
+    /**
+     * Get the interpolated current GPS timestamp based on wall-clock time.
+     * This provides smooth time progression between GPS point emissions,
+     * useful for high-frequency sensor data lookups.
+     * 
+     * Uses the same timing model as the GPS emitter:
+     * gpsTime = trackStartTime + (System.currentTimeMillis() - systemStartTime)
+     * 
+     * When GPS hasn't started yet (e.g., video is playing before GPS begins),
+     * falls back to PlaybackTimeline for time calculation.
+     * 
+     * @return Interpolated GPS timestamp, clamped to track bounds, or 0 if no data
+     */
+    public long getInterpolatedGpsTimeMs() {
+        if (trackData == null || trackData.isEmpty()) {
+            // No GPS track loaded - try PlaybackTimeline as fallback
+            if (PlaybackTimeline.INSTANCE.isInitialized()) {
+                return PlaybackTimeline.INSTANCE.getCurrentGpsTimeMs();
+            }
+            return 0;
+        }
+        
+        // If not started, check if we can use PlaybackTimeline for video-first scenarios
+        if (!started) {
+            if (PlaybackTimeline.INSTANCE.isInitialized()) {
+                // Use timeline for video-first scenarios where video is playing before GPS starts
+                long timelineGpsTime = PlaybackTimeline.INSTANCE.getCurrentGpsTimeMs();
+                // Clamp to track bounds - return trackStartTime if timeline is before GPS range
+                return Math.max(trackStartTime, Math.min(timelineGpsTime, trackEndTime));
+            }
+            return trackStartTime;
+        }
+        
+        if (completed) {
+            return trackEndTime;
+        }
+        
+        // If paused, return the last emitted GPS time (don't advance)
+        if (paused) {
+            return getCurrentGpsTimeMs();
+        }
+        
+        // Calculate interpolated GPS time based on wall-clock elapsed time
+        long wallClockElapsed = System.currentTimeMillis() - systemStartTime;
+        long interpolatedGpsTime = trackStartTime + wallClockElapsed;
+        
+        // Clamp to track bounds
+        return Math.max(trackStartTime, Math.min(interpolatedGpsTime, trackEndTime));
     }
     
     /**

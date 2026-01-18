@@ -20,7 +20,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.platypii.baselinexr.location.NMEA;
+import com.platypii.baselinexr.measurements.MBaroData;
+import com.platypii.baselinexr.measurements.MHumidityData;
+import com.platypii.baselinexr.measurements.MImuData;
 import com.platypii.baselinexr.measurements.MLocation;
+import com.platypii.baselinexr.measurements.MMagData;
+import com.platypii.baselinexr.measurements.MTimeSync;
 import com.platypii.baselinexr.util.Exceptions;
 import com.platypii.baselinexr.util.PubSub;
 
@@ -34,12 +39,20 @@ import java.util.Set;
 public class BluetoothService {
     private static final String TAG = "Bluetooth";
 
+    // Location/GNSS updates
     public final PubSub<NMEA> nmeaUpdates = new PubSub<>();
     public final PubSub<MLocation> locationUpdates = new PubSub<>();
+    
+    // Sensor updates (from FlySight BLE sensor streaming)
+    public final PubSub<MImuData> imuUpdates = new PubSub<>();
+    public final PubSub<MMagData> magUpdates = new PubSub<>();
+    public final PubSub<MBaroData> baroUpdates = new PubSub<>();
+    public final PubSub<MHumidityData> humidityUpdates = new PubSub<>();
+    public final PubSub<MTimeSync> timeSyncUpdates = new PubSub<>();
 
     // BLE subsystem
     public final BleService ble = new BleService(
-            new Flysight2Protocol(locationUpdates)
+            new Flysight2Protocol(locationUpdates, imuUpdates, magUpdates, baroUpdates, humidityUpdates, timeSyncUpdates)
     );
 
     // Android shared preferences for bluetooth

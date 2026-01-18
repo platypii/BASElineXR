@@ -4,7 +4,13 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.platypii.baselinexr.measurements.MBaroData;
+import com.platypii.baselinexr.measurements.MHumidityData;
+import com.platypii.baselinexr.measurements.MImuData;
+import com.platypii.baselinexr.measurements.MMagData;
 import com.platypii.baselinexr.measurements.MSensorData;
+import com.platypii.baselinexr.measurements.MTimeSync;
+import com.platypii.baselinexr.measurements.SensorDataSet;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -24,54 +30,36 @@ import java.util.List;
  * $BARO,time,pressure,temperature
  * $HUM,time,humidity,temperature
  * $VBAT,time,voltage
+ * 
+ * Each sensor type is parsed into separate lists with independent timestamps,
+ * matching the BLE characteristic structure where each sensor streams independently.
  */
 public class SensorCSVParser {
     private static final String TAG = "SensorCSVParser";
 
-    // GPS time synchronization state
-    private static class TimeSync {
-        double localTime;   // Local sensor time (seconds)
-        double tow;         // GPS Time Of Week (seconds)
-        int week;           // GPS week number
-
-        /**
-         * Convert local sensor time to GPS milliseconds since epoch
-         */
-        long toGpsMillis(double sensorTime) {
-            // GPS epoch is January 6, 1980, 00:00:00 UTC
-            final long GPS_EPOCH_MILLIS = 315964800000L; // Unix time of GPS epoch
-
-            // Calculate time delta from sync point
-            double deltaSeconds = sensorTime - localTime;
-
-            // Apply delta to GPS TOW
-            double gpsSeconds = tow + deltaSeconds;
-
-            // Convert GPS week + TOW to milliseconds since GPS epoch
-            long gpsMillis = (long) (week * 7 * 24 * 3600 * 1000L + gpsSeconds * 1000);
-
-            // Convert to Unix time
-            return GPS_EPOCH_MILLIS + gpsMillis;
-        }
-    }
-
     /**
-     * Parse SENSOR.CSV file and return list of sensor measurements with GPS-synchronized timestamps
+     * Parse SENSOR.CSV file and return SensorDataSet with separate lists for each sensor type.
+     * Each sensor type maintains its own timestamps, matching the BLE streaming model.
      */
     @NonNull
-    public static List<MSensorData> parse(@NonNull BufferedReader br) throws IOException {
-        final List<MSensorData> data = new ArrayList<>();
+    public static SensorDataSet parseToDataSet(@NonNull BufferedReader br) throws IOException {
+        final List<MImuData> imuData = new ArrayList<>();
+        final List<MMagData> magData = new ArrayList<>();
+        final List<MBaroData> baroData = new ArrayList<>();
+        final List<MHumidityData> humidityData = new ArrayList<>();
+        final List<MTimeSync> timeSyncData = new ArrayList<>();
+        final List<MSensorData> combinedData = new ArrayList<>();
 
         // Time synchronization state
-        TimeSync currentSync = null;
+        MTimeSync currentSync = null;
 
-        // Latest sensor values (used to combine data from different sensor types)
-        Float magX = null, magY = null, magZ = null, magTemp = null;
-        Float gyroX = null, gyroY = null, gyroZ = null;
-        Float accelX = null, accelY = null, accelZ = null, imuTemp = null;
-        Float pressure = null, baroTemp = null;
-        Float humidity = null, humidityTemp = null;
-        Float vbat = null;
+        // Latest sensor values (for legacy combined data)
+        Float lastMagX = null, lastMagY = null, lastMagZ = null, lastMagTemp = null;
+        Float lastGyroX = null, lastGyroY = null, lastGyroZ = null;
+        Float lastAccelX = null, lastAccelY = null, lastAccelZ = null, lastImuTemp = null;
+        Float lastPressure = null, lastBaroTemp = null;
+        Float lastHumidity = null, lastHumidityTemp = null;
+        Float lastVbat = null;
 
         // Last known good humidity values (sensor sometimes outputs bad data during startup)
         Float lastGoodHumidity = null;
@@ -102,81 +90,127 @@ public class SensorCSVParser {
                         case "TIME":
                             // $TIME,localTime,tow,week
                             if (parts.length >= 4) {
-                                currentSync = new TimeSync();
-                                currentSync.localTime = parseDouble(parts[1]);
-                                currentSync.tow = parseDouble(parts[2]);
-                                currentSync.week = parseInt(parts[3]);
+                                double localTimeSec = parseDouble(parts[1]);
+                                double towSec = parseDouble(parts[2]);
+                                int week = parseInt(parts[3]);
+                                currentSync = MTimeSync.fromCsvSeconds(localTimeSec, towSec, week);
+                                timeSyncData.add(currentSync);
                                 Log.d(TAG, String.format("GPS time sync: local=%.3f, tow=%.0f, week=%d",
-                                        currentSync.localTime, currentSync.tow, currentSync.week));
+                                        localTimeSec, towSec, week));
+                            }
+                            break;
+
+                        case "IMU":
+                            // $IMU,time,wx,wy,wz,ax,ay,az,temperature
+                            if (parts.length >= 9 && currentSync != null) {
+                                double sensorTimeSec = parseDouble(parts[1]);
+                                long deviceTimeMs = (long) (sensorTimeSec * 1000);
+                                long gpsMillis = currentSync.toUnixMillis(sensorTimeSec);
+                                
+                                float gyroX = parseFloat(parts[2]);
+                                float gyroY = parseFloat(parts[3]);
+                                float gyroZ = parseFloat(parts[4]);
+                                float accelX = parseFloat(parts[5]);
+                                float accelY = parseFloat(parts[6]);
+                                float accelZ = parseFloat(parts[7]);
+                                float imuTemp = parseFloat(parts[8]);
+                                
+                                MImuData imu = new MImuData(gpsMillis, deviceTimeMs,
+                                        gyroX, gyroY, gyroZ, accelX, accelY, accelZ, imuTemp);
+                                imuData.add(imu);
+                                
+                                // Cache for legacy combined data
+                                lastGyroX = gyroX;
+                                lastGyroY = gyroY;
+                                lastGyroZ = gyroZ;
+                                lastAccelX = accelX;
+                                lastAccelY = accelY;
+                                lastAccelZ = accelZ;
+                                lastImuTemp = imuTemp;
                             }
                             break;
 
                         case "MAG":
                             // $MAG,time,x,y,z,temperature
                             if (parts.length >= 6 && currentSync != null) {
-                                double sensorTime = parseDouble(parts[1]);
-                                magX = parseFloat(parts[2]);
-                                magY = parseFloat(parts[3]);
-                                magZ = parseFloat(parts[4]);
-                                magTemp = parseFloat(parts[5]);
-
-                                // Create sensor data entry if we have complete data
-                                long gpsMillis = currentSync.toGpsMillis(sensorTime);
-                                createSensorDataEntry(data, gpsMillis,
-                                        magX, magY, magZ, magTemp,
-                                        gyroX, gyroY, gyroZ, accelX, accelY, accelZ, imuTemp,
-                                        pressure, baroTemp, humidity, humidityTemp, vbat);
-                            }
-                            break;
-
-                        case "IMU":
-                            // $IMU,time,wx,wy,wz,ax,ay,az,temperature
-                            if (parts.length >= 9) {
-                                double sensorTime = parseDouble(parts[1]);
-                                gyroX = parseFloat(parts[2]);
-                                gyroY = parseFloat(parts[3]);
-                                gyroZ = parseFloat(parts[4]);
-                                accelX = parseFloat(parts[5]);
-                                accelY = parseFloat(parts[6]);
-                                accelZ = parseFloat(parts[7]);
-                                imuTemp = parseFloat(parts[8]);
+                                double sensorTimeSec = parseDouble(parts[1]);
+                                long deviceTimeMs = (long) (sensorTimeSec * 1000);
+                                long gpsMillis = currentSync.toUnixMillis(sensorTimeSec);
+                                
+                                float magX = parseFloat(parts[2]);
+                                float magY = parseFloat(parts[3]);
+                                float magZ = parseFloat(parts[4]);
+                                float magTemp = parseFloat(parts[5]);
+                                
+                                MMagData mag = new MMagData(gpsMillis, deviceTimeMs,
+                                        magX, magY, magZ, magTemp);
+                                magData.add(mag);
+                                
+                                // Cache for legacy combined data
+                                lastMagX = magX;
+                                lastMagY = magY;
+                                lastMagZ = magZ;
+                                lastMagTemp = magTemp;
+                                
+                                // Create legacy combined entry on MAG (preserves old behavior)
+                                createCombinedEntry(combinedData, gpsMillis,
+                                        lastMagX, lastMagY, lastMagZ, lastMagTemp,
+                                        lastGyroX, lastGyroY, lastGyroZ, lastAccelX, lastAccelY, lastAccelZ, lastImuTemp,
+                                        lastPressure, lastBaroTemp, lastHumidity, lastHumidityTemp, lastVbat);
                             }
                             break;
 
                         case "BARO":
                             // $BARO,time,pressure,temperature
-                            if (parts.length >= 4) {
-                                double sensorTime = parseDouble(parts[1]);
-                                pressure = parseFloat(parts[2]);
-                                baroTemp = parseFloat(parts[3]);
+                            if (parts.length >= 4 && currentSync != null) {
+                                double sensorTimeSec = parseDouble(parts[1]);
+                                long deviceTimeMs = (long) (sensorTimeSec * 1000);
+                                long gpsMillis = currentSync.toUnixMillis(sensorTimeSec);
+                                
+                                float pressure = parseFloat(parts[2]);
+                                float baroTemp = parseFloat(parts[3]);
+                                
+                                MBaroData baro = new MBaroData(gpsMillis, deviceTimeMs, pressure, baroTemp);
+                                baroData.add(baro);
+                                
+                                // Cache for legacy combined data
+                                lastPressure = pressure;
+                                lastBaroTemp = baroTemp;
                             }
                             break;
 
                         case "HUM":
                             // $HUM,time,humidity,temperature
-                            if (parts.length >= 4) {
-                                double sensorTime = parseDouble(parts[1]);
+                            if (parts.length >= 4 && currentSync != null) {
+                                double sensorTimeSec = parseDouble(parts[1]);
+                                long deviceTimeMs = (long) (sensorTimeSec * 1000);
+                                long gpsMillis = currentSync.toUnixMillis(sensorTimeSec);
+                                
                                 float rawHumidity = parseFloat(parts[2]);
                                 float rawHumidityTemp = parseFloat(parts[3]);
                                 
-                                // Validate humidity: must be 0-100% (sensor sometimes outputs bad data like 6000%)
+                                // Validate humidity: must be 0-100%
                                 if (isValidHumidity(rawHumidity)) {
-                                    humidity = rawHumidity;
-                                    humidityTemp = rawHumidityTemp;
+                                    MHumidityData hum = new MHumidityData(gpsMillis, deviceTimeMs,
+                                            rawHumidity, rawHumidityTemp);
+                                    humidityData.add(hum);
+                                    
+                                    // Cache for legacy combined data
+                                    lastHumidity = rawHumidity;
+                                    lastHumidityTemp = rawHumidityTemp;
                                     lastGoodHumidity = rawHumidity;
                                     lastGoodHumidityTemp = rawHumidityTemp;
                                 } else {
-                                    // Bad reading - use last known good value if available
                                     badHumidityCount++;
                                     if (badHumidityCount <= 5) {
-                                        Log.w(TAG, String.format("Bad humidity value %.1f%% at line %d, using last good value", 
+                                        Log.w(TAG, String.format("Bad humidity value %.1f%% at line %d, skipping", 
                                                 rawHumidity, lineNumber));
                                     }
+                                    // For legacy data, use last good value if available
                                     if (lastGoodHumidity != null) {
-                                        humidity = lastGoodHumidity;
-                                        humidityTemp = lastGoodHumidityTemp;
+                                        lastHumidity = lastGoodHumidity;
+                                        lastHumidityTemp = lastGoodHumidityTemp;
                                     }
-                                    // else humidity stays null/NaN
                                 }
                             }
                             break;
@@ -184,8 +218,7 @@ public class SensorCSVParser {
                         case "VBAT":
                             // $VBAT,time,voltage
                             if (parts.length >= 3) {
-                                double sensorTime = parseDouble(parts[1]);
-                                vbat = parseFloat(parts[2]);
+                                lastVbat = parseFloat(parts[2]);
                             }
                             break;
                     }
@@ -199,20 +232,36 @@ public class SensorCSVParser {
         if (badHumidityCount > 0) {
             Log.w(TAG, String.format("Filtered %d bad humidity readings from SENSOR.CSV", badHumidityCount));
         }
-        Log.i(TAG, String.format("Parsed %d sensor measurements from SENSOR.CSV", data.size()));
-        return data;
+        Log.i(TAG, String.format("Parsed SENSOR.CSV: imu=%d, mag=%d, baro=%d, hum=%d, timeSync=%d, combined=%d",
+                imuData.size(), magData.size(), baroData.size(), humidityData.size(), 
+                timeSyncData.size(), combinedData.size()));
+        
+        return new SensorDataSet(imuData, magData, baroData, humidityData, timeSyncData, combinedData);
+    }
+    
+    /**
+     * Parse SENSOR.CSV file and return legacy list of combined sensor measurements.
+     * This is for backwards compatibility with existing code.
+     * 
+     * @deprecated Use {@link #parseToDataSet(BufferedReader)} for new code
+     */
+    @Deprecated
+    @NonNull
+    public static List<MSensorData> parse(@NonNull BufferedReader br) throws IOException {
+        SensorDataSet dataSet = parseToDataSet(br);
+        return dataSet.combinedData;
     }
 
     /**
-     * Create a sensor data entry if we have magnetometer data (minimum requirement)
+     * Create a legacy combined sensor data entry (preserves old behavior for backwards compatibility)
      */
-    private static void createSensorDataEntry(List<MSensorData> data, long gpsMillis,
-                                              Float magX, Float magY, Float magZ, Float magTemp,
-                                              Float gyroX, Float gyroY, Float gyroZ,
-                                              Float accelX, Float accelY, Float accelZ, Float imuTemp,
-                                              Float pressure, Float baroTemp,
-                                              Float humidity, Float humidityTemp,
-                                              Float vbat) {
+    private static void createCombinedEntry(List<MSensorData> data, long gpsMillis,
+                                            Float magX, Float magY, Float magZ, Float magTemp,
+                                            Float gyroX, Float gyroY, Float gyroZ,
+                                            Float accelX, Float accelY, Float accelZ, Float imuTemp,
+                                            Float pressure, Float baroTemp,
+                                            Float humidity, Float humidityTemp,
+                                            Float vbat) {
         // Only create entry if we have magnetometer data
         if (magX != null && magY != null && magZ != null) {
             MSensorData entry = new MSensorData(

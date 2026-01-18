@@ -580,6 +580,12 @@ class HudPanelController(private val activity: BaselineActivity) {
             menuContainer?.removeView(it)
         }
         currentMenuView = null
+        
+        // Clean up settings controller when switching away from settings menu
+        if (currentMenuState == MenuState.SETTINGS_MENU) {
+            settingsController?.destroy()
+            settingsController = null
+        }
 
         val inflater = LayoutInflater.from(activity)
 
@@ -685,6 +691,12 @@ class HudPanelController(private val activity: BaselineActivity) {
         if (currentMenuState == MenuState.WIND_MENU) {
             windEstimationController.stopCollection()
         }
+        
+        // Clean up settings controller subscriptions
+        if (currentMenuState == MenuState.SETTINGS_MENU) {
+            settingsController?.destroy()
+            settingsController = null
+        }
 
         currentMenuView?.let {
             android.util.Log.d("BXRINPUT", "Removing menu view and hiding container")
@@ -738,6 +750,9 @@ class HudPanelController(private val activity: BaselineActivity) {
      */
     private var lastSeekbarLogTime = 0L
     fun updateSeekBarPosition() {
+        // Update settings controller (for mock sensor display updates)
+        settingsController?.update()
+        
         // Update play controls popup (if visible)
         if (playControlsVisible && playControlsController != null) {
             var currentGpsTimeMs: Long = 0

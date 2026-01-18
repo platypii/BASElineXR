@@ -114,8 +114,10 @@ class AtmosphericSystem : SystemBase() {
     private fun updateDisplay() {
         val loc = Services.location.lastLoc ?: return
 
-        // Try to get sensor data from MockSensorProvider
-        val sensorData: MSensorData? = Services.location.sensorProvider?.getSensorAtTime(System.currentTimeMillis())
+        // Try to get sensor data from sensor provider using GPS time (not system time)
+        // This works correctly for both mock/replay mode (original GPS timestamps) and live mode
+        val gpsTimeMs = loc.millis
+        val sensorData: MSensorData? = Services.location.getSensorProvider()?.getSensorAtTime(gpsTimeMs)
         hasSensorData = sensorData != null && !sensorData.pressure.isNaN() && sensorData.pressure > 0
 
         // Get altitude in feet MSL

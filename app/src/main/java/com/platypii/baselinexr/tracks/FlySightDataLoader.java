@@ -6,8 +6,14 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.platypii.baselinexr.measurements.MBaroData;
+import com.platypii.baselinexr.measurements.MHumidityData;
+import com.platypii.baselinexr.measurements.MImuData;
 import com.platypii.baselinexr.measurements.MLocation;
+import com.platypii.baselinexr.measurements.MMagData;
 import com.platypii.baselinexr.measurements.MSensorData;
+import com.platypii.baselinexr.measurements.Measurement;
+import com.platypii.baselinexr.measurements.SensorDataSet;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -29,12 +35,38 @@ public class FlySightDataLoader {
         @NonNull
         public final List<MLocation> trackData;
 
+        /** 
+         * Separate sensor data by type (new structure)
+         */
+        @NonNull
+        public final SensorDataSet sensorDataSet;
+        
+        /**
+         * Legacy combined sensor data (for backwards compatibility)
+         * @deprecated Use sensorDataSet instead
+         */
+        @Deprecated
         @NonNull
         public final List<MSensorData> sensorData;
 
+        public FlySightData(@NonNull List<MLocation> trackData, @NonNull SensorDataSet sensorDataSet) {
+            this.trackData = trackData;
+            this.sensorDataSet = sensorDataSet;
+            this.sensorData = sensorDataSet.combinedData;
+        }
+        
+        /**
+         * Legacy constructor for backwards compatibility
+         * @deprecated Use constructor with SensorDataSet
+         */
+        @Deprecated
         public FlySightData(@NonNull List<MLocation> trackData, @NonNull List<MSensorData> sensorData) {
             this.trackData = trackData;
             this.sensorData = sensorData;
+            this.sensorDataSet = new SensorDataSet(
+                    new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), 
+                    new ArrayList<>(), new ArrayList<>(), sensorData
+            );
         }
     }
 
@@ -76,13 +108,13 @@ public class FlySightDataLoader {
             Log.e(TAG, "Error reading track data from " + trackPath, e);
         }
 
-        // Load sensor data
+        // Load sensor data using new parser that separates sensor types
         final String sensorPath = folderPath + "/SENSOR.CSV";
-        List<MSensorData> sensorData = new ArrayList<>();
+        SensorDataSet sensorDataSet = new SensorDataSet();
         try (BufferedReader br = new BufferedReader(
                 new InputStreamReader(context.getAssets().open(sensorPath), StandardCharsets.UTF_8))) {
-            sensorData = SensorCSVParser.parse(br);
-            Log.i(TAG, String.format("Loaded %d sensor measurements from %s", sensorData.size(), sensorPath));
+            sensorDataSet = SensorCSVParser.parseToDataSet(br);
+            Log.i(TAG, String.format("Loaded sensor data from %s: %s", sensorPath, sensorDataSet));
         } catch (IOException e) {
             Log.e(TAG, "Error reading sensor data from " + sensorPath, e);
         }
@@ -90,12 +122,12 @@ public class FlySightDataLoader {
         // Apply time windowing if requested
         if (startSec != null || endSec != null) {
             trackData = applyTimeWindow(trackData, startSec, endSec);
-            sensorData = applyTimeWindowSensor(sensorData, startSec, endSec);
-            Log.i(TAG, String.format("After time windowing: %d GPS, %d sensor measurements",
-                    trackData.size(), sensorData.size()));
+            sensorDataSet = applyTimeWindowSensorDataSet(sensorDataSet, startSec, endSec);
+            Log.i(TAG, String.format("After time windowing: %d GPS, %s",
+                    trackData.size(), sensorDataSet));
         }
 
-        return new FlySightData(trackData, sensorData);
+        return new FlySightData(trackData, sensorDataSet);
     }
 
     /**
@@ -122,8 +154,53 @@ public class FlySightDataLoader {
     }
 
     /**
-     * Apply time window to sensor data
+     * Apply time window to SensorDataSet - filters all sensor lists by time range
      */
+    @NonNull
+    private static SensorDataSet applyTimeWindowSensorDataSet(@NonNull SensorDataSet data,
+                                                               @Nullable Integer startSec,
+                                                               @Nullable Integer endSec) {
+        // Find earliest timestamp across all sensor types for reference
+        long[] timeRange = data.getTimeRange();
+        if (timeRange == null) return data;
+        
+        final long firstMillis = timeRange[0];
+        final Long startMillis = startSec != null ? firstMillis + startSec * 1000L : null;
+        final Long endMillis = endSec != null ? firstMillis + endSec * 1000L : null;
+
+        return new SensorDataSet(
+                filterByTime(data.imuData, startMillis, endMillis),
+                filterByTime(data.magData, startMillis, endMillis),
+                filterByTime(data.baroData, startMillis, endMillis),
+                filterByTime(data.humidityData, startMillis, endMillis),
+                data.timeSyncData, // Don't filter time sync entries
+                filterByTime(data.combinedData, startMillis, endMillis)
+        );
+    }
+
+    /**
+     * Generic time filter for any Measurement list
+     */
+    @NonNull
+    private static <T extends Measurement> List<T> filterByTime(@NonNull List<T> data,
+                                                                 @Nullable Long startMillis,
+                                                                 @Nullable Long endMillis) {
+        if (data.isEmpty()) return data;
+        
+        final List<T> windowed = new ArrayList<>();
+        for (T item : data) {
+            if (startMillis != null && item.millis < startMillis) continue;
+            if (endMillis != null && item.millis > endMillis) break;
+            windowed.add(item);
+        }
+        return windowed;
+    }
+
+    /**
+     * Apply time window to legacy sensor data (for backwards compatibility)
+     * @deprecated Use applyTimeWindowSensorDataSet instead
+     */
+    @Deprecated
     @NonNull
     private static List<MSensorData> applyTimeWindowSensor(@NonNull List<MSensorData> data,
                                                            @Nullable Integer startSec,

@@ -1054,7 +1054,7 @@ class WingsuitCanopySystem : SystemBase() {
         }
 
         // Check if sensor provider is available and started
-        val sensorProvider = Services.location.sensorProvider
+        val sensorProvider = Services.location.getSensorProvider()
         if (sensorProvider == null) {
             Log.w(TAG, "MAGVEC: Sensor provider is null!")
             magneticEntity.setComponent(Visible(false))

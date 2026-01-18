@@ -7,7 +7,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.platypii.baselinexr.VROptions;
+import com.platypii.baselinexr.measurements.MBaroData;
+import com.platypii.baselinexr.measurements.MHumidityData;
+import com.platypii.baselinexr.measurements.MImuData;
+import com.platypii.baselinexr.measurements.MMagData;
 import com.platypii.baselinexr.measurements.MSensorData;
+import com.platypii.baselinexr.measurements.SensorDataSet;
 import com.platypii.baselinexr.tracks.FlySightDataLoader;
 
 import java.util.ArrayList;
@@ -16,11 +21,18 @@ import java.util.List;
 /**
  * Provides sensor data (compass, IMU, barometer) synchronized with GPS data.
  * Supports mock/replay mode using FlySight SENSOR.CSV files.
+ * 
+ * Sensor data is now stored separately by type to match the BLE streaming model
+ * where each sensor type has its own characteristic and timestamp.
  */
-public class MockSensorProvider {
+public class MockSensorProvider implements SensorProvider {
     private static final String TAG = "MockSensorProvider";
 
-    // Loaded sensor data
+    // Loaded sensor data - now stored separately by type
+    @NonNull
+    private SensorDataSet sensorDataSet = new SensorDataSet();
+    
+    // Legacy combined sensor data (for backwards compatibility)
     @NonNull
     private List<MSensorData> sensorData = new ArrayList<>();
 
@@ -30,6 +42,38 @@ public class MockSensorProvider {
 
     // Timing
     public static long systemStartTime = System.currentTimeMillis();
+    
+    // Default max age for sensor lookups (ms)
+    private static final long DEFAULT_MAX_AGE_MS = 5000;
+
+    /**
+     * Preload sensor data without starting playback.
+     * This allows sensor data to be available before GPS starts.
+     * Used when video is configured and may start before GPS.
+     */
+    public void preloadData(@NonNull Context context) {
+        if (!sensorDataSet.isEmpty()) {
+            Log.d(TAG, "Sensor data already loaded");
+            return;
+        }
+        loadData(context);
+        if (!sensorDataSet.isEmpty()) {
+            long[] range = sensorDataSet.getTimeRange();
+            if (range != null) {
+                Log.i(TAG, String.format("Sensor data preloaded: %d total measurements, range=[%d, %d]", 
+                    sensorDataSet.getTotalCount(), range[0], range[1]));
+            }
+        }
+    }
+    
+    /**
+     * Get the time range of sensor data.
+     * @return [startMillis, endMillis] or null if no data
+     */
+    @Nullable
+    public long[] getSensorTimeRange() {
+        return sensorDataSet.getTimeRange();
+    }
 
     /**
      * Load sensor data from FlySight folder
@@ -51,11 +95,13 @@ public class MockSensorProvider {
                     VROptions.current.mockTrackEndSec
             );
 
-            sensorData = data.sensorData;
-            Log.i(TAG, String.format("Loaded %d sensor measurements", sensorData.size()));
+            sensorDataSet = data.sensorDataSet;
+            sensorData = data.sensorData; // Legacy combined data
+            Log.i(TAG, String.format("Loaded sensor data: %s", sensorDataSet));
 
         } catch (Exception e) {
             Log.e(TAG, "Error loading sensor data", e);
+            sensorDataSet = new SensorDataSet();
             sensorData = new ArrayList<>();
         }
     }
@@ -71,33 +117,17 @@ public class MockSensorProvider {
         systemStartTime = System.currentTimeMillis();
         loadData(context);
 
-        // Apply time delta to sensor data (same adjustment as GPS data in MockLocationProvider)
-        if (!sensorData.isEmpty()) {
-            final long sensorOriginalStart = sensorData.get(0).millis;
-            final long sensorOriginalEnd = sensorData.get(sensorData.size() - 1).millis;
-
-            // Calculate offset between sensor data and GPS data in the original recording
-            final long sensorGpsOffset = sensorOriginalStart - trackStartTime;
-            Log.i(TAG, String.format("TIMESYNC: Sensor data starts %d ms after GPS track in original recording", sensorGpsOffset));
-
-            // Use GPS track start time as reference for time delta (same as MockLocationProvider)
-            // This preserves the temporal relationship between GPS and sensor data
-            final long timeDelta = systemStartTime - trackStartTime;
-            Log.i(TAG, String.format("TIMESYNC: systemStartTime=%d, trackStartTime=%d, timeDelta=%d ms",
-                    systemStartTime, trackStartTime, timeDelta));
-            Log.i(TAG, String.format("TIMESYNC: Original sensor range: [%d, %d], span=%ds",
-                    sensorOriginalStart, sensorOriginalEnd, (sensorOriginalEnd - sensorOriginalStart) / 1000));
-
-            // Apply same time delta as GPS data - preserves temporal alignment
-            // Sensor data may not be available for first few seconds if TIME sync came later
-            for (MSensorData sensor : sensorData) {
-                sensor.millis = sensor.millis + timeDelta;
-            }
-
-            final long sensorAdjustedStart = sensorData.get(0).millis;
-            final long sensorAdjustedEnd = sensorData.get(sensorData.size() - 1).millis;
-            Log.i(TAG, String.format("TIMESYNC: Adjusted sensor range: [%d, %d], span=%ds (starts %d ms after GPS)",
-                    sensorAdjustedStart, sensorAdjustedEnd, (sensorAdjustedEnd - sensorAdjustedStart) / 1000, sensorGpsOffset));
+        // Log sensor data time range for debugging
+        // Note: We keep sensor data in original GPS timestamps to match PlaybackTimeline coordinates
+        long[] timeRange = sensorDataSet.getTimeRange();
+        if (timeRange != null) {
+            final long sensorStart = timeRange[0];
+            final long sensorEnd = timeRange[1];
+            final long sensorGpsOffset = sensorStart - trackStartTime;
+            Log.i(TAG, String.format("TIMESYNC: Sensor data range: [%d, %d], span=%ds",
+                    sensorStart, sensorEnd, (sensorEnd - sensorStart) / 1000));
+            Log.i(TAG, String.format("TIMESYNC: Sensor starts %d ms after GPS track start (trackStartTime=%d)",
+                    sensorGpsOffset, trackStartTime));
         }
 
         started = true;
@@ -110,6 +140,7 @@ public class MockSensorProvider {
     public void stop() {
         started = false;
         currentIndex = 0;
+        sensorDataSet = new SensorDataSet();
         sensorData = new ArrayList<>();
     }
     
@@ -137,6 +168,66 @@ public class MockSensorProvider {
         stop();
         start(context, trackStartTime);
     }
+    
+    // ========== Type-specific sensor accessors (new API) ==========
+    
+    /**
+     * Get IMU data at or before the given GPS time
+     * 
+     * @param gpsMillis GPS time in milliseconds
+     * @return Most recent IMU data, or null if not available
+     */
+    @Override
+    @Nullable
+    public MImuData getImuAtTime(long gpsMillis) {
+        return sensorDataSet.getImuAtTime(gpsMillis, DEFAULT_MAX_AGE_MS);
+    }
+    
+    /**
+     * Get magnetometer data at or before the given GPS time
+     * 
+     * @param gpsMillis GPS time in milliseconds
+     * @return Most recent magnetometer data, or null if not available
+     */
+    @Override
+    @Nullable
+    public MMagData getMagAtTime(long gpsMillis) {
+        return sensorDataSet.getMagAtTime(gpsMillis, DEFAULT_MAX_AGE_MS);
+    }
+    
+    /**
+     * Get barometer data at or before the given GPS time
+     * 
+     * @param gpsMillis GPS time in milliseconds
+     * @return Most recent barometer data, or null if not available
+     */
+    @Override
+    @Nullable
+    public MBaroData getBaroAtTime(long gpsMillis) {
+        return sensorDataSet.getBaroAtTime(gpsMillis, DEFAULT_MAX_AGE_MS);
+    }
+    
+    /**
+     * Get humidity data at or before the given GPS time
+     * 
+     * @param gpsMillis GPS time in milliseconds
+     * @return Most recent humidity data, or null if not available
+     */
+    @Override
+    @Nullable
+    public MHumidityData getHumidityAtTime(long gpsMillis) {
+        return sensorDataSet.getHumidityAtTime(gpsMillis, DEFAULT_MAX_AGE_MS);
+    }
+    
+    /**
+     * Get the full SensorDataSet for direct access to all sensor types
+     */
+    @NonNull
+    public SensorDataSet getSensorDataSet() {
+        return sensorDataSet;
+    }
+    
+    // ========== Legacy combined sensor accessor (backwards compatibility) ==========
 
     /**
      * Get the sensor measurement closest to the given GPS time
@@ -144,7 +235,10 @@ public class MockSensorProvider {
      *
      * @param gpsMillis GPS time in milliseconds
      * @return Most recent sensor data at or before the requested time, or null if no data available
+     * @deprecated Use type-specific methods like {@link #getImuAtTime(long)}, {@link #getMagAtTime(long)}, etc.
      */
+    @Deprecated
+    @Override
     @Nullable
     public MSensorData getSensorAtTime(long gpsMillis) {
         if (sensorData.isEmpty()) {
@@ -229,7 +323,9 @@ public class MockSensorProvider {
     /**
      * Get current sensor measurement based on playback time
      * Automatically advances through sensor data as time progresses
+     * @deprecated Use type-specific methods for new code
      */
+    @Deprecated
     @Nullable
     public MSensorData getCurrentSensor() {
         if (!started || sensorData.isEmpty()) return null;
@@ -257,8 +353,10 @@ public class MockSensorProvider {
     }
 
     /**
-     * Get all loaded sensor data (for analysis/visualization)
+     * Get all loaded sensor data (legacy combined format)
+     * @deprecated Use getSensorDataSet() for new code
      */
+    @Deprecated
     @NonNull
     public List<MSensorData> getAllSensorData() {
         return sensorData;
@@ -267,14 +365,59 @@ public class MockSensorProvider {
     /**
      * Check if sensor data is available
      */
+    @Override
     public boolean hasSensorData() {
-        return !sensorData.isEmpty();
+        return !sensorDataSet.isEmpty() || !sensorData.isEmpty();
+    }
+    
+    /**
+     * Check if specific sensor type has data
+     */
+    @Override
+    public boolean hasImuData() {
+        return !sensorDataSet.imuData.isEmpty();
+    }
+    
+    @Override
+    public boolean hasMagData() {
+        return !sensorDataSet.magData.isEmpty();
+    }
+    
+    @Override
+    public boolean hasBaroData() {
+        return !sensorDataSet.baroData.isEmpty();
+    }
+    
+    @Override
+    public boolean hasHumidityData() {
+        return !sensorDataSet.humidityData.isEmpty();
+    }
+    
+    @NonNull
+    @Override
+    public String getStatusSummary() {
+        if (!started) {
+            return "MockSensor: Not started";
+        }
+        if (sensorDataSet.isEmpty() && sensorData.isEmpty()) {
+            return "MockSensor: No data loaded";
+        }
+        return String.format("MockSensor: IMU=%d MAG=%d BARO=%d HUM=%d",
+                sensorDataSet.imuData.size(),
+                sensorDataSet.magData.size(),
+                sensorDataSet.baroData.size(),
+                sensorDataSet.humidityData.size());
     }
 
     /**
      * Get the time range of available sensor data
      */
     public long[] getTimeRange() {
+        long[] range = sensorDataSet.getTimeRange();
+        if (range != null) {
+            return range;
+        }
+        // Fallback to legacy data
         if (sensorData.isEmpty()) {
             return new long[]{0, 0};
         }
