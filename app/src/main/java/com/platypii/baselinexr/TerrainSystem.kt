@@ -133,7 +133,7 @@ class TerrainSystem(
             val tileToTerrainOffset = GeoUtils.calculateOffset(terrainConfig!!.terrainOrigin, tile.config.tileOrigin)
 
             // Apply offsets to destination
-            val offsetDest = GeoUtils.applyOffset(dest, terrainToPoiOffset, tileToTerrainOffset)
+            val offsetDest = GeoUtils.applyOffset(dest, terrainToPoiOffset, tileToTerrainOffset) ?: return@forEach
 
             var tilePosition = gpsToWorldTransform.toWorldCoordinates(offsetDest.lat, offsetDest.lng, offsetDest.alt, currentTime, motionEstimator)
 

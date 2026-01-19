@@ -37,6 +37,7 @@ class BaselineActivity : AppSystemActivity() {
     var hudSystem: HudSystem? = null
     private var flightStatsSystem: FlightStatsSystem? = null
     var speedChartSystem: SpeedChartSystem? = null
+    var sensorDataSystem: SensorDataSystem? = null
     private var targetPanelSystem: TargetPanel? = null
     private var portalSystem: PortalSystem? = null
     var miniMapPanel: MiniMapPanel? = null
@@ -89,6 +90,7 @@ class BaselineActivity : AppSystemActivity() {
         hudSystem = HudSystem()
         flightStatsSystem = FlightStatsSystem()
         speedChartSystem = SpeedChartSystem()
+        sensorDataSystem = SensorDataSystem()
         directionArrowSystem = DirectionArrowSystem()
         targetPanelSystem = TargetPanel(gpsTransform)
         portalSystem = PortalSystem(gpsTransform, this)
@@ -98,6 +100,7 @@ class BaselineActivity : AppSystemActivity() {
         systemManager.registerSystem(hudSystem!!)
         systemManager.registerSystem(flightStatsSystem!!)
         systemManager.registerSystem(speedChartSystem!!)
+        systemManager.registerSystem(sensorDataSystem!!)
         systemManager.registerSystem(directionArrowSystem!!)
         systemManager.registerSystem(targetPanelSystem!!)
         systemManager.registerSystem(portalSystem!!)
@@ -143,6 +146,7 @@ class BaselineActivity : AppSystemActivity() {
         hudSystem?.cleanup()
         flightStatsSystem?.cleanup()
         speedChartSystem?.cleanup()
+        sensorDataSystem?.cleanup()
         terrainSystem?.cleanup()
         directionArrowSystem?.cleanup()
         targetPanelSystem?.cleanup()
@@ -232,6 +236,34 @@ class BaselineActivity : AppSystemActivity() {
                     // Set up speed chart references
                     val speedChartLive = rootView?.findViewById<com.platypii.baselinexr.charts.SpeedChartLive>(R.id.speed_chart_live)
                     speedChartSystem?.setSpeedChart(speedChartLive)
+                }
+            },
+            PanelRegistration(R.layout.sensor_data_panel) {
+                config {
+                    themeResourceId = R.style.PanelAppThemeTransparent
+                    includeGlass = false
+                    enableTransparent = true
+                }
+                panel {
+                    // Set up sensor data panel references
+                    val gyroX = rootView?.findViewById<TextView>(R.id.gyro_x)
+                    val gyroY = rootView?.findViewById<TextView>(R.id.gyro_y)
+                    val gyroZ = rootView?.findViewById<TextView>(R.id.gyro_z)
+                    val accelX = rootView?.findViewById<TextView>(R.id.accel_x)
+                    val accelY = rootView?.findViewById<TextView>(R.id.accel_y)
+                    val accelZ = rootView?.findViewById<TextView>(R.id.accel_z)
+                    val magX = rootView?.findViewById<TextView>(R.id.mag_x)
+                    val magY = rootView?.findViewById<TextView>(R.id.mag_y)
+                    val magZ = rootView?.findViewById<TextView>(R.id.mag_z)
+                    val imuRateView = rootView?.findViewById<TextView>(R.id.imu_rate)
+                    val magRateView = rootView?.findViewById<TextView>(R.id.mag_rate)
+                    val sampleCountView = rootView?.findViewById<TextView>(R.id.sample_count)
+                    sensorDataSystem?.setViews(
+                        gyroX, gyroY, gyroZ,
+                        accelX, accelY, accelZ,
+                        magX, magY, magZ,
+                        imuRateView, magRateView, sampleCountView
+                    )
                 }
             })
     }

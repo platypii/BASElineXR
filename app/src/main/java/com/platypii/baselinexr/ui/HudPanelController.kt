@@ -8,6 +8,7 @@ import com.platypii.baselinexr.BaselineActivity
 import com.platypii.baselinexr.DropzoneOptions
 import com.platypii.baselinexr.DropzoneOptionsList
 import com.platypii.baselinexr.HudOptions
+import com.platypii.baselinexr.MockTrackList
 import com.platypii.baselinexr.MockTrackOptions
 import com.platypii.baselinexr.R
 import com.platypii.baselinexr.Services
@@ -49,6 +50,7 @@ class HudPanelController(private val activity: BaselineActivity) {
             activity.terrainSystem?.reload()
             // Restart location service to switch between Live and Replay modes
             Services.location.restart()
+            Services.sensor.restart()
         }
 
         // Dropzone button cycles through dropzone options (null = Auto)
@@ -73,11 +75,22 @@ class HudPanelController(private val activity: BaselineActivity) {
 
         // Track button cycles through mock tracks
         val trackButton = rootView?.findViewById<Button>(R.id.track_button)
-        trackButton?.text = MockTrackOptions.getCurrentDisplayName()
+        trackButton?.text = MockTrackList.getDisplayName(MockTrackOptions.current, activity)
         trackButton?.setOnClickListener {
             MockTrackOptions.cycleToNext()
-            trackButton.text = MockTrackOptions.getCurrentDisplayName()
+            trackButton.text = MockTrackList.getDisplayName(MockTrackOptions.current, activity)
             Services.location.restart()
+            Services.sensor.restart()
+        }
+
+        // Sensor data button toggles raw sensor data panel visibility
+        val sensorDataButton = rootView?.findViewById<Button>(R.id.sensor_data_button)
+        sensorDataButton?.isSelected = HudOptions.showSensorData
+        sensorDataButton?.setOnClickListener {
+            HudOptions.showSensorData = !HudOptions.showSensorData
+            HudOptions.saveHudOptions(activity)
+            sensorDataButton.isSelected = HudOptions.showSensorData
+            activity.sensorDataSystem?.updateVisibility()
         }
 
         // Add click listener to hudPanel to toggle extraControls visibility

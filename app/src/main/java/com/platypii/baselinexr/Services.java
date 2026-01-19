@@ -14,6 +14,7 @@ import com.platypii.baselinexr.cloud.AuthState;
 import com.platypii.baselinexr.cloud.tasks.Tasks;
 import com.platypii.baselinexr.jarvis.FlightComputer;
 import com.platypii.baselinexr.location.LocationService;
+import com.platypii.baselinexr.location.SensorService;
 import com.platypii.baselinexr.places.Places;
 import com.platypii.baselinexr.tracks.TrackLogger;
 import com.platypii.baselinexr.util.Convert;
@@ -41,6 +42,7 @@ public class Services {
     // Services
     public static final BluetoothService bluetooth = new BluetoothService();
     public static final LocationService location = new LocationService(bluetooth);
+    public static final SensorService sensor = new SensorService();
     public static final FlightComputer flightComputer = new FlightComputer();
     public static final Tasks tasks = new Tasks();
     public static final Places places = new Places();
@@ -83,6 +85,9 @@ public class Services {
 
             Log.i(TAG, "Starting location service");
             location.start(appContext);
+
+            Log.i(TAG, "Starting sensor service");
+            sensor.start(appContext);
 
             Log.i(TAG, "Starting flight services");
             flightComputer.start();
@@ -137,6 +142,7 @@ public class Services {
             places.stop();
             tasks.stop();
             flightComputer.stop();
+            sensor.stop();
             location.stop();
             bluetooth.stop();
             initialized = false;

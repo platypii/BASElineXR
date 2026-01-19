@@ -7,19 +7,27 @@ public class HudOptions {
 
     private static final String PREF_NAME = "BASElineXRPrefs";
     private static final String KEY_SHOW_SPEED_CHART = "hud_showSpeedChart";
+    private static final String KEY_SHOW_SENSOR_DATA = "hud_showSensorData";
 
     // Show speed chart panel?
     public static boolean showSpeedChart = true;
+    
+    // Show raw sensor data panel?
+    public static boolean showSensorData = false;
 
     // Load saved HUD options from SharedPreferences
     public static void loadHudOptions(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         showSpeedChart = prefs.getBoolean(KEY_SHOW_SPEED_CHART, false);
+        showSensorData = prefs.getBoolean(KEY_SHOW_SENSOR_DATA, false);
     }
 
     // Save HUD options to SharedPreferences
     public static void saveHudOptions(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
-        prefs.edit().putBoolean(KEY_SHOW_SPEED_CHART, showSpeedChart).apply();
+        prefs.edit()
+            .putBoolean(KEY_SHOW_SPEED_CHART, showSpeedChart)
+            .putBoolean(KEY_SHOW_SENSOR_DATA, showSensorData)
+            .apply();
     }
 }

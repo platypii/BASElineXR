@@ -8,12 +8,21 @@ import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Publish/subscribe with background and main thread awareness
  */
 public class PubSub<T> {
     private static final String TAG = "PubSub";
+
+    // Shared single-thread executor for async posts - avoids creating a new thread per message
+    private static final ExecutorService executor = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "PubSub-Async");
+        t.setDaemon(true);
+        return t;
+    });
 
     @NonNull
     private final List<Subscriber<T>> subs = new ArrayList<>();
@@ -42,10 +51,11 @@ public class PubSub<T> {
     }
 
     /**
-     * Post in a thread so that the caller doesn't block
+     * Post in a background thread so that the caller doesn't block.
+     * Uses a shared single-thread executor to avoid creating a new thread per message.
      */
     public void postAsync(T obj) {
-        new Thread(() -> post(obj)).start();
+        executor.execute(() -> post(obj));
     }
 
     public void subscribe(@NonNull Subscriber<T> sub) {

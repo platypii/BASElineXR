@@ -94,17 +94,11 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
         // MOCK LOCATION
         if (useMock) {
             locationMode = LOCATION_MOCK;
-            // Delay location updates because it crashes
-            new Thread(() -> {
-                try {
-                    Thread.sleep(4000);
-                    if (locationMode == LOCATION_MOCK && startGeneration == myGeneration) {
-                        locationProviderMock.start(context);
-                        locationProviderMock.locationUpdates.subscribe(this);
-                    }
-                } catch (InterruptedException ignored) {
-                }
-            }).start();
+            // Start mock location provider directly (no delay needed - PlaybackTimeline handles sync)
+            if (startGeneration == myGeneration) {
+                locationProviderMock.start(context);
+                locationProviderMock.locationUpdates.subscribe(this);
+            }
         } else if (bluetooth.preferences.preferenceEnabled) {
             // Start bluetooth location service
             locationMode = LOCATION_BLUETOOTH;

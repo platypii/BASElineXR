@@ -190,6 +190,11 @@ class SpaceSystem(
 
             // Apply offsets to destination to get trench position in user's reference frame
             val trenchLocation = GeoUtils.applyOffset(VROptions.current.destination, terrainToPortal)
+            if (trenchLocation == null) {
+                // No destination set, hide trench and return
+                updateCompositionVisibility(false)
+                return
+            }
 
             // Convert to world coordinates
             val currentTime = System.currentTimeMillis()
