@@ -38,6 +38,9 @@ class BaselineActivity : AppSystemActivity() {
     private var flightStatsSystem: FlightStatsSystem? = null
     var speedChartSystem: SpeedChartSystem? = null
     var sensorDataSystem: SensorDataSystem? = null
+    var magCalibrationSystem: com.platypii.baselinexr.calibration.MagCalibrationSystem? = null
+    var ahrsSystem: com.platypii.baselinexr.ahrs.AhrsSystem? = null
+    var ahrsVisualizationSystem: com.platypii.baselinexr.ahrs.AhrsVisualizationSystem? = null
     private var targetPanelSystem: TargetPanel? = null
     private var portalSystem: PortalSystem? = null
     var miniMapPanel: MiniMapPanel? = null
@@ -91,6 +94,9 @@ class BaselineActivity : AppSystemActivity() {
         flightStatsSystem = FlightStatsSystem()
         speedChartSystem = SpeedChartSystem()
         sensorDataSystem = SensorDataSystem()
+        magCalibrationSystem = com.platypii.baselinexr.calibration.MagCalibrationSystem()
+        ahrsSystem = com.platypii.baselinexr.ahrs.AhrsSystem()
+        ahrsVisualizationSystem = com.platypii.baselinexr.ahrs.AhrsVisualizationSystem()
         directionArrowSystem = DirectionArrowSystem()
         targetPanelSystem = TargetPanel(gpsTransform)
         portalSystem = PortalSystem(gpsTransform, this)
@@ -101,6 +107,9 @@ class BaselineActivity : AppSystemActivity() {
         systemManager.registerSystem(flightStatsSystem!!)
         systemManager.registerSystem(speedChartSystem!!)
         systemManager.registerSystem(sensorDataSystem!!)
+        systemManager.registerSystem(magCalibrationSystem!!)
+        systemManager.registerSystem(ahrsSystem!!)
+        systemManager.registerSystem(ahrsVisualizationSystem!!)
         systemManager.registerSystem(directionArrowSystem!!)
         systemManager.registerSystem(targetPanelSystem!!)
         systemManager.registerSystem(portalSystem!!)
@@ -147,6 +156,7 @@ class BaselineActivity : AppSystemActivity() {
         flightStatsSystem?.cleanup()
         speedChartSystem?.cleanup()
         sensorDataSystem?.cleanup()
+        ahrsSystem?.destroy()
         terrainSystem?.cleanup()
         directionArrowSystem?.cleanup()
         targetPanelSystem?.cleanup()
@@ -263,6 +273,94 @@ class BaselineActivity : AppSystemActivity() {
                         accelX, accelY, accelZ,
                         magX, magY, magZ,
                         imuRateView, magRateView, sampleCountView
+                    )
+                }
+            },
+            PanelRegistration(R.layout.mag_calibration_panel) {
+                config {
+                    themeResourceId = R.style.PanelAppThemeTransparent
+                    includeGlass = false
+                    enableTransparent = true
+                }
+                panel {
+                    // Set up mag calibration panel references
+                    val sampleCount = rootView?.findViewById<TextView>(R.id.sample_count)
+                    val offsetX = rootView?.findViewById<TextView>(R.id.offset_x)
+                    val offsetY = rootView?.findViewById<TextView>(R.id.offset_y)
+                    val offsetZ = rootView?.findViewById<TextView>(R.id.offset_z)
+                    val magnitude = rootView?.findViewById<TextView>(R.id.magnitude)
+                    val sphericity = rootView?.findViewById<TextView>(R.id.sphericity)
+                    val quality = rootView?.findViewById<TextView>(R.id.quality)
+                    val softIronMatrix = rootView?.findViewById<TextView>(R.id.soft_iron_matrix)
+                    val calibrationType = rootView?.findViewById<TextView>(R.id.calibration_type)
+                    val calibrationStatus = rootView?.findViewById<TextView>(R.id.calibration_status)
+                    val hardIronButton = rootView?.findViewById<android.widget.Button>(R.id.hard_iron_button)
+                    val softIronButton = rootView?.findViewById<android.widget.Button>(R.id.soft_iron_button)
+                    val clearButton = rootView?.findViewById<android.widget.Button>(R.id.clear_button)
+                    val applyHardIronButton = rootView?.findViewById<android.widget.Button>(R.id.apply_hard_iron_button)
+                    val applyFullButton = rootView?.findViewById<android.widget.Button>(R.id.apply_full_button)
+                    magCalibrationSystem?.setViews(
+                        sampleCount,
+                        offsetX, offsetY, offsetZ,
+                        magnitude, sphericity, quality,
+                        softIronMatrix, calibrationType, calibrationStatus,
+                        hardIronButton, softIronButton, clearButton,
+                        applyHardIronButton, applyFullButton
+                    )
+                }
+            },
+            PanelRegistration(R.layout.ahrs_panel) {
+                config {
+                    themeResourceId = R.style.PanelAppThemeTransparent
+                    includeGlass = false
+                    enableTransparent = true
+                }
+                panel {
+                    // Set up AHRS panel references
+                    val gainSlider = rootView?.findViewById<android.widget.SeekBar>(R.id.gain_slider)
+                    val gainValue = rootView?.findViewById<TextView>(R.id.gain_value)
+                    val accelRejectSlider = rootView?.findViewById<android.widget.SeekBar>(R.id.accel_reject_slider)
+                    val accelRejectValue = rootView?.findViewById<TextView>(R.id.accel_reject_value)
+                    val magRejectSlider = rootView?.findViewById<android.widget.SeekBar>(R.id.mag_reject_slider)
+                    val magRejectValue = rootView?.findViewById<TextView>(R.id.mag_reject_value)
+                    val accelStatus = rootView?.findViewById<TextView>(R.id.accel_status)
+                    val accelError = rootView?.findViewById<TextView>(R.id.accel_error)
+                    val magStatus = rootView?.findViewById<TextView>(R.id.mag_status)
+                    val magError = rootView?.findViewById<TextView>(R.id.mag_error)
+                    val ahrsState = rootView?.findViewById<TextView>(R.id.ahrs_state)
+                    val biasX = rootView?.findViewById<TextView>(R.id.bias_x)
+                    val biasY = rootView?.findViewById<TextView>(R.id.bias_y)
+                    val biasZ = rootView?.findViewById<TextView>(R.id.bias_z)
+                    val biasStatus = rootView?.findViewById<TextView>(R.id.bias_status)
+                    val biasProgress = rootView?.findViewById<TextView>(R.id.bias_progress)
+                    val gyroMagnitude = rootView?.findViewById<TextView>(R.id.gyro_magnitude)
+                    val gyroThreshold = rootView?.findViewById<TextView>(R.id.gyro_threshold)
+                    val headingView = rootView?.findViewById<TextView>(R.id.heading)
+                    val pitchView = rootView?.findViewById<TextView>(R.id.pitch)
+                    val rollView = rootView?.findViewById<TextView>(R.id.roll)
+                    ahrsSystem?.setViews(
+                        gainSlider, gainValue,
+                        accelRejectSlider, accelRejectValue,
+                        magRejectSlider, magRejectValue,
+                        accelStatus, accelError,
+                        magStatus, magError,
+                        ahrsState,
+                        biasX, biasY, biasZ,
+                        biasStatus, biasProgress,
+                        gyroMagnitude, gyroThreshold,
+                        headingView, pitchView, rollView
+                    )
+                    
+                    // Playback controls
+                    val btnPlay = rootView?.findViewById<android.widget.Button>(R.id.btn_play)
+                    val btnPause = rootView?.findViewById<android.widget.Button>(R.id.btn_pause)
+                    val btnReset = rootView?.findViewById<android.widget.Button>(R.id.btn_reset)
+                    val playbackTimeView = rootView?.findViewById<TextView>(R.id.playback_time)
+                    val playbackSlider = rootView?.findViewById<android.widget.SeekBar>(R.id.playback_slider)
+                    val speedSpinner = rootView?.findViewById<android.widget.Spinner>(R.id.speed_spinner)
+                    ahrsSystem?.setPlaybackViews(
+                        btnPlay, btnPause, btnReset,
+                        playbackTimeView, playbackSlider, speedSpinner
                     )
                 }
             })

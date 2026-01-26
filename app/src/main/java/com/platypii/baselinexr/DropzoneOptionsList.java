@@ -45,8 +45,18 @@ public class DropzoneOptionsList {
             R.drawable.minimap_tooele
     );
 
+    public static final DropzoneOptions SQUAW_PEAK = new DropzoneOptions(
+            "Squaw Peak",
+            new LatLngAlt(40.2673, -111.6359, 1509),
+            40.256476,   // latMin
+            40.287073,   // latMax
+            -111.643766, // lngMin
+            -111.609434, // lngMax
+            R.drawable.minimap_squaw_peak
+    );
+
     public static final DropzoneOptions[] ALL_DROPZONES = {
-            KAPOWSIN, SEBASTIAN, OGDEN, TOOELE
+            KAPOWSIN, SEBASTIAN, OGDEN, TOOELE, SQUAW_PEAK
     };
 
     public static DropzoneOptions getByName(String name) {

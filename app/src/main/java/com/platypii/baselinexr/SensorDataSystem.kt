@@ -47,6 +47,11 @@ class SensorDataSystem : SystemBase() {
     private var imuSubscriber: PubSub.Subscriber<MImuData>? = null
     private var magSubscriber: PubSub.Subscriber<MMagData>? = null
     
+    // UI update throttling - update at ~30Hz instead of 400Hz
+    private var lastImuUiUpdate = 0L
+    private var lastMagUiUpdate = 0L
+    private val uiUpdateIntervalMs = 33L  // ~30 Hz
+    
     // Activity reference for UI updates
     private var activity: BaselineActivity? = null
     
@@ -119,14 +124,24 @@ class SensorDataSystem : SystemBase() {
         imuSubscriber = PubSub.Subscriber { imu ->
             imuRateCalc.addSample()
             imuSampleCount++
-            updateImuDisplay(imu)
+            // Throttle UI updates to ~30Hz
+            val now = System.currentTimeMillis()
+            if (now - lastImuUiUpdate >= uiUpdateIntervalMs) {
+                lastImuUiUpdate = now
+                updateImuDisplay(imu)
+            }
         }
         Services.sensor.imuUpdates.subscribeMain(imuSubscriber!!)
         
         magSubscriber = PubSub.Subscriber { mag ->
             magRateCalc.addSample()
             magSampleCount++
-            updateMagDisplay(mag)
+            // Throttle UI updates to ~30Hz
+            val now = System.currentTimeMillis()
+            if (now - lastMagUiUpdate >= uiUpdateIntervalMs) {
+                lastMagUiUpdate = now
+                updateMagDisplay(mag)
+            }
         }
         Services.sensor.magUpdates.subscribeMain(magSubscriber!!)
         
@@ -134,8 +149,8 @@ class SensorDataSystem : SystemBase() {
     }
     
     private fun unsubscribeFromSensorUpdates() {
-        imuSubscriber?.let { Services.sensor.imuUpdates.unsubscribe(it) }
-        magSubscriber?.let { Services.sensor.magUpdates.unsubscribe(it) }
+        imuSubscriber?.let { Services.sensor.imuUpdates.unsubscribeMain(it) }
+        magSubscriber?.let { Services.sensor.magUpdates.unsubscribeMain(it) }
         imuSubscriber = null
         magSubscriber = null
         Log.i(TAG, "Unsubscribed from sensor updates")

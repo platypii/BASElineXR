@@ -93,6 +93,26 @@ class HudPanelController(private val activity: BaselineActivity) {
             activity.sensorDataSystem?.updateVisibility()
         }
 
+        // Mag calibration button toggles magnetometer calibration panel visibility
+        val magCalButton = rootView?.findViewById<Button>(R.id.mag_cal_button)
+        magCalButton?.isSelected = HudOptions.showMagCalibration
+        magCalButton?.setOnClickListener {
+            HudOptions.showMagCalibration = !HudOptions.showMagCalibration
+            HudOptions.saveHudOptions(activity)
+            magCalButton.isSelected = HudOptions.showMagCalibration
+            activity.magCalibrationSystem?.updateVisibility()
+        }
+
+        // AHRS button toggles AHRS panel visibility
+        val ahrsButton = rootView?.findViewById<Button>(R.id.ahrs_button)
+        ahrsButton?.isSelected = HudOptions.showAhrs
+        ahrsButton?.setOnClickListener {
+            HudOptions.showAhrs = !HudOptions.showAhrs
+            HudOptions.saveHudOptions(activity)
+            ahrsButton.isSelected = HudOptions.showAhrs
+            activity.ahrsSystem?.updateVisibility()
+        }
+
         // Add click listener to hudPanel to toggle extraControls visibility
         val hudPanel = rootView?.findViewById<android.widget.LinearLayout>(R.id.hudPanel)
         hudPanel?.setOnClickListener({

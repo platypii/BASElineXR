@@ -48,7 +48,19 @@ public class MockLocationProvider extends LocationProvider {
      */
     @Override
     public void start(@NonNull Context context) throws SecurityException {
-        Log.i(TAG, "Starting mock location service");
+        startInternal(context, true);
+    }
+
+    /**
+     * Restart from current timeline position (for seek operations).
+     * Does not reset the timeline.
+     */
+    public void restartFromCurrentPosition(@NonNull Context context) {
+        startInternal(context, false);
+    }
+
+    private void startInternal(@NonNull Context context, boolean resetTimeline) {
+        Log.i(TAG, "Starting mock location service (resetTimeline=" + resetTimeline + ")");
         generation++;
         final int myGeneration = generation;
         started = true;
@@ -56,8 +68,10 @@ public class MockLocationProvider extends LocationProvider {
         // Clear previous location to avoid non-monotonic timestamp errors when switching tracks
         lastLoc = null;
 
-        // Reset timeline for new playback session
-        timeline.reset();
+        // Only reset timeline for fresh starts, not seeks
+        if (resetTimeline) {
+            timeline.reset();
+        }
 
         // Load track from csv
         List<MLocation> all = loadData(context);
@@ -66,9 +80,16 @@ public class MockLocationProvider extends LocationProvider {
             return;
         }
 
-        // Initialize shared timeline with first GPS timestamp
+        // Initialize shared timeline with first GPS timestamp (only on fresh start)
         final long trackStartTime = all.get(0).millis;
-        timeline.init(trackStartTime, "MockLocationProvider");
+        final long trackEndTime = all.get(all.size() - 1).millis;
+        if (resetTimeline) {
+            timeline.init(trackStartTime, "MockLocationProvider");
+            timeline.setTrackEndTime(trackEndTime);
+        }
+
+        // Get current playback position to skip data before this point
+        final long seekPositionMs = timeline.getPlaybackPosition();
 
         // Capture timeline generation to detect if timeline is reset while we're running
         final int timelineGeneration = timeline.getGeneration();
@@ -78,8 +99,13 @@ public class MockLocationProvider extends LocationProvider {
                 // Check if we should stop: provider stopped, generation changed, or timeline was reset
                 if (!started || generation != myGeneration || timeline.getGeneration() != timelineGeneration) break;
 
+                // Skip data points before seek position
+                final long locElapsed = loc.millis - trackStartTime;
+                if (locElapsed < seekPositionMs) {
+                    continue;  // Skip this data point, it's before the seek position
+                }
+
                 final long elapsed = timeline.getElapsedSinceStart();
-                final long locElapsed = loc.millis - trackStartTime; // Time since first fix
                 if (locElapsed > elapsed) {
                     try {
                         Thread.sleep(locElapsed - elapsed);

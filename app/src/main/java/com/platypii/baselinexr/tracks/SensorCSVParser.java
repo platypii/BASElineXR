@@ -39,10 +39,12 @@ import java.util.List;
  */
 public class SensorCSVParser {
     private static final String TAG = "SensorCSVParser";
+    private static final String PLAYBACK_DEBUG = "PLAYBACK_DEBUG";
 
     /**
      * Parse a SENSOR.CSV file and return a SensorDataSet.
      * Data before the first $TIME entry is discarded since we can't sync it.
+     * The first $TIME entry is also skipped because GPS may not be synced yet.
      */
     @NonNull
     public static SensorDataSet parse(@NonNull BufferedReader reader) throws IOException {
@@ -57,6 +59,7 @@ public class SensorCSVParser {
         List<PendingBaro> pendingBaro = new ArrayList<>();
 
         MTimeSync currentSync = null;
+        MTimeSync firstSync = null;  // Track first sync to skip it
         boolean inData = false;
         String sessionId = null;
         String deviceId = null;
@@ -103,7 +106,23 @@ public class SensorCSVParser {
                     MTimeSync sync = parseTime(line);
                     if (sync != null) {
                         timeSyncList.add(sync);
-                        currentSync = sync;
+                        
+                        // Skip the first $TIME entry - GPS may not be synced yet
+                        // (FlySight shows ~2 second skew on first entry)
+                        if (firstSync == null) {
+                            firstSync = sync;
+                            Log.i(PLAYBACK_DEBUG, "Skipping first $TIME entry (GPS startup): " + sync);
+                            continue;  // Don't use this sync, wait for the second one
+                        }
+                        
+                        // Only use the FIRST valid sync to establish offset.
+                        // Using multiple syncs causes timestamp discontinuities because
+                        // GPS TOW updates at 1Hz with jitter while sensor time is continuous.
+                        if (currentSync == null) {
+                            currentSync = sync;
+                            Log.i(PLAYBACK_DEBUG, "Using $TIME sync (single reference): " + sync);
+                        }
+                        // Ignore subsequent $TIME entries - they would cause timestamp jumps
 
                         // Process pending data now that we have sync
                         for (PendingImu p : pendingImu) {

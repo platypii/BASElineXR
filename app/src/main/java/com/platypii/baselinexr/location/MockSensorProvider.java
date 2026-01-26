@@ -29,6 +29,7 @@ import java.util.List;
  */
 public class MockSensorProvider {
     private static final String TAG = "MockSensorProvider";
+    private static final String PLAYBACK_DEBUG = "PLAYBACK_DEBUG";
 
     // Use shared PlaybackTimeline for synchronized playback
     private final PlaybackTimeline timeline = PlaybackTimeline.getInstance();
@@ -70,7 +71,19 @@ public class MockSensorProvider {
      * or initializes it ourselves if we have sensor data with $TIME sync but no GPS.
      */
     public void start(@NonNull Context context) {
-        Log.i(TAG, "Starting mock sensor service");
+        startInternal(context, true);
+    }
+
+    /**
+     * Restart from current timeline position (for seek operations).
+     * Does not wait for or reset the timeline.
+     */
+    public void restartFromCurrentPosition(@NonNull Context context) {
+        startInternal(context, false);
+    }
+
+    private void startInternal(@NonNull Context context, boolean waitForTimeline) {
+        Log.i(TAG, "Starting mock sensor service (waitForTimeline=" + waitForTimeline + ")");
         generation++;
         final int myGeneration = generation;
         started = true;
@@ -97,8 +110,8 @@ public class MockSensorProvider {
 
         final long sensorStartTime = dataTimeline.get(0).millis;
 
-        // Wait for GPS timeline to be ready, or initialize ourselves if only sensor data exists
-        if (!timeline.isReady()) {
+        // Wait for GPS timeline to be ready only on fresh start
+        if (waitForTimeline && !timeline.isReady()) {
             Log.i(TAG, "Waiting for PlaybackTimeline to be initialized...");
             boolean ready = timeline.waitForReady(TIMELINE_WAIT_TIMEOUT);
 
@@ -110,33 +123,71 @@ public class MockSensorProvider {
             }
         }
 
+        // Use timeline's track start time for elapsed calculations
+        // This ensures sensor data is synchronized with GPS data
+        final long trackStartTime = timeline.getTrackStartTimeGps();
+
+        // Update track end time if sensor data extends beyond GPS data (only on fresh start)
+        if (waitForTimeline) {
+            final long sensorEndTime = dataTimeline.get(dataTimeline.size() - 1).millis;
+            if (sensorEndTime > timeline.getTrackEndTimeGps()) {
+                timeline.setTrackEndTime(sensorEndTime);
+            }
+        }
+
+        // Get current playback position to skip data before this point
+        final long seekPositionMs = timeline.getPlaybackPosition();
+
         Log.i(TAG, "Sensor playback: " + dataTimeline.size() + " samples, " +
-                "sensorStart=" + sensorStartTime + ", " + timeline.getDebugInfo());
+                "sensorStart=" + sensorStartTime + ", trackStart=" + trackStartTime + 
+                ", seekPosition=" + seekPositionMs + ", " + timeline.getDebugInfo());
+        
+        // Log offset between sensor and GPS start times for debugging
+        final long startOffset = sensorStartTime - trackStartTime;
+        Log.i(PLAYBACK_DEBUG, "Sensor/GPS start offset: " + startOffset + "ms (sensor=" + 
+                sensorStartTime + ", gps=" + trackStartTime + ")");
 
         // Capture timeline generation to detect if timeline is reset while we're running
         final int timelineGeneration = timeline.getGeneration();
 
         playbackThread = new Thread(() -> {
+            long lastLogTime = 0;
+            int samplesEmitted = 0;
+            
             for (TimestampedData data : dataTimeline) {
                 // Check if we should stop: provider stopped, generation changed, or timeline was reset
                 if (!started || generation != myGeneration || timeline.getGeneration() != timelineGeneration) break;
 
+                // Skip data points before seek position
+                final long dataElapsed = data.millis - trackStartTime;
+                if (dataElapsed < seekPositionMs) {
+                    continue;  // Skip this data point, it's before the seek position
+                }
+
                 final long elapsed = timeline.getElapsedSinceStart();
-                final long dataElapsed = data.millis - sensorStartTime;
-                if (dataElapsed > elapsed) {
+                final long sleepTime = dataElapsed - elapsed;
+                if (sleepTime > 0) {
+                    // Log unusually large sleep times
+                    if (sleepTime > 500) {
+                        Log.w(PLAYBACK_DEBUG, "Large sensor sleep: " + sleepTime + "ms, dataElapsed=" + 
+                                dataElapsed + ", elapsed=" + elapsed + ", samples=" + samplesEmitted);
+                    }
                     try {
-                        Thread.sleep(dataElapsed - elapsed);
+                        Thread.sleep(sleepTime);
                     } catch (InterruptedException e) {
                         // Thread was interrupted - exit cleanly
                         Log.i(TAG, "Mock sensor thread interrupted, exiting");
                         break;
                     }
                 }
+                
+                samplesEmitted++;
 
                 // Shift timestamp to current phone time using shared timeline
                 long shiftedMillis = timeline.toPhoneTime(data.millis);
 
-                // Emit the appropriate update
+                // Emit the appropriate update asynchronously (like GPS does)
+                // This prevents subscriber processing from slowing down the playback loop
                 if (data.imu != null) {
                     MImuData shifted = new MImuData(shiftedMillis,
                             data.imu.gyroX, data.imu.gyroY, data.imu.gyroZ,

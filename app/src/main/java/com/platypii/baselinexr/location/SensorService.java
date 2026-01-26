@@ -37,9 +37,6 @@ public class SensorService implements Subscriber<MImuData> {
 
     // Future: BluetoothSensorProvider
 
-    // Rotation estimator for orientation
-    public final RotationEstimator rotationEstimator = new SimpleRotationEstimator();
-
     // PubSub for re-publishing sensor updates (after processing)
     public final PubSub<MImuData> imuUpdates = new PubSub<>();
     public final PubSub<MMagData> magUpdates = new PubSub<>();
@@ -55,18 +52,12 @@ public class SensorService implements Subscriber<MImuData> {
 
     @Override
     public void apply(MImuData imu) {
-        // Update rotation estimator
-        rotationEstimator.updateImu(imu);
-
-        // Re-post to subscribers
+        // Re-post to subscribers (AhrsSystem handles rotation estimation)
         imuUpdates.post(imu);
     }
 
     private void onMagUpdate(MMagData mag) {
-        // Update rotation estimator
-        rotationEstimator.updateMag(mag);
-
-        // Re-post to subscribers
+        // Re-post to subscribers (AhrsSystem handles rotation estimation)
         magUpdates.post(mag);
     }
 
@@ -104,17 +95,16 @@ public class SensorService implements Subscriber<MImuData> {
 
         if (useMock) {
             sensorMode = SENSOR_MOCK;
-            // Start sensor provider on background thread (it will wait for PlaybackTimeline if needed)
-            new Thread(() -> {
-                if (sensorMode == SENSOR_MOCK && startGeneration == myGeneration) {
-                    mockSensorProvider.start(context);
-                    // Subscribe to sensor updates
-                    mockSensorProvider.imuUpdates.subscribe(this);
-                    mockSensorProvider.magUpdates.subscribe(magSubscriber);
-                    mockSensorProvider.baroUpdates.subscribe(baroSubscriber);
-                    Log.i(TAG, "Mock sensor provider started");
-                }
-            }).start();
+            // Subscribe FIRST, before starting playback (to avoid race condition)
+            mockSensorProvider.imuUpdates.subscribe(this);
+            mockSensorProvider.magUpdates.subscribe(magSubscriber);
+            mockSensorProvider.baroUpdates.subscribe(baroSubscriber);
+            
+            // Start sensor provider (will wait for GPS timeline, then start playback thread)
+            // This can block for up to 2 seconds waiting for timeline, but that's OK
+            // since GPS service starts first and initializes the timeline quickly
+            mockSensorProvider.start(context);
+            Log.i(TAG, "Mock sensor provider started");
         } else {
             // Future: Bluetooth sensor mode
             sensorMode = SENSOR_NONE;
@@ -132,7 +122,6 @@ public class SensorService implements Subscriber<MImuData> {
         // Future: stop bluetooth sensor
 
         sensorMode = SENSOR_NONE;
-        rotationEstimator.reset();
     }
 
     /**
@@ -149,6 +138,27 @@ public class SensorService implements Subscriber<MImuData> {
     }
 
     /**
+     * Seek to a specific position in the playback.
+     * This restarts the provider from the current timeline position.
+     * @param positionMs Position in milliseconds from track start (timeline already updated by caller)
+     */
+    public void seekTo(long positionMs) {
+        if (sensorMode != SENSOR_MOCK) {
+            Log.w(TAG, "seekTo only works in mock mode");
+            return;
+        }
+        if (appContext == null) {
+            Log.e(TAG, "Cannot seek: no context available");
+            return;
+        }
+        Log.i(TAG, "Seeking sensor playback to " + positionMs + "ms");
+        // Stop current playback thread (but don't unsubscribe or change mode)
+        mockSensorProvider.stop();
+        // Restart from current timeline position (doesn't reset timeline)
+        mockSensorProvider.restartFromCurrentPosition(appContext);
+    }
+
+    /**
      * Check if sensor data is available
      */
     public boolean hasSensorData() {
@@ -161,5 +171,13 @@ public class SensorService implements Subscriber<MImuData> {
     @Nullable
     public MockSensorProvider getMockSensorProvider() {
         return sensorMode == SENSOR_MOCK ? mockSensorProvider : null;
+    }
+
+    /**
+     * Get the loaded sensor data set (for calibration and analysis)
+     */
+    @Nullable
+    public com.platypii.baselinexr.tracks.SensorDataSet getLastSensorDataSet() {
+        return sensorMode == SENSOR_MOCK ? mockSensorProvider.getSensorData() : null;
     }
 }

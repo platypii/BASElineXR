@@ -166,4 +166,25 @@ public class LocationService extends LocationProvider implements Subscriber<MLoc
         start(appContext);
     }
 
+    /**
+     * Seek to a specific position in the playback.
+     * This restarts the provider from the current timeline position.
+     * @param positionMs Position in milliseconds from track start (timeline already updated by caller)
+     */
+    public void seekTo(long positionMs) {
+        if (locationMode != LOCATION_MOCK) {
+            Log.w(TAG, "seekTo only works in mock mode");
+            return;
+        }
+        if (appContext == null) {
+            Log.e(TAG, "Cannot seek: no context available");
+            return;
+        }
+        Log.i(TAG, "Seeking location playback to " + positionMs + "ms");
+        // Stop current playback thread (but don't unsubscribe or change mode)
+        locationProviderMock.stop();
+        // Restart from current timeline position (doesn't reset timeline)
+        locationProviderMock.restartFromCurrentPosition(appContext);
+    }
+
 }

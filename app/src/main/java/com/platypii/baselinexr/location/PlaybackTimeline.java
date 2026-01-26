@@ -3,6 +3,7 @@ package com.platypii.baselinexr.location;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 /**
  * Shared timeline for synchronized playback of GPS and sensor data.
@@ -13,6 +14,11 @@ import androidx.annotation.NonNull;
  *
  * Either GPS or Sensor data can initialize the timeline (whichever loads first),
  * allowing for scenarios where only one data source is available.
+ * 
+ * Supports:
+ * - Play/Pause/Resume
+ * - Seek to position
+ * - Playback speed control
  */
 public class PlaybackTimeline {
     private static final String TAG = "PlaybackTimeline";
@@ -22,6 +28,9 @@ public class PlaybackTimeline {
 
     // The first GPS epoch timestamp from the data (either GPS track or sensor $TIME sync)
     private long trackStartTimeGps = 0;
+    
+    // The last GPS epoch timestamp (end of track)
+    private long trackEndTimeGps = 0;
 
     // Phone time when playback started
     private long systemStartTime = 0;
@@ -31,6 +40,14 @@ public class PlaybackTimeline {
 
     // Whether the timeline has been initialized
     private volatile boolean ready = false;
+    
+    // Playback state
+    private volatile boolean playing = true;
+    private volatile float playbackSpeed = 1.0f;
+    
+    // Pause tracking: when paused, we freeze elapsed time
+    private long pausedElapsedMs = 0;
+    private long pauseStartTime = 0;
 
     // Generation counter - incremented on each reset to detect stale threads
     private volatile int generation = 0;
@@ -40,6 +57,15 @@ public class PlaybackTimeline {
 
     // Source of timeline initialization (for debugging)
     private String initSource = null;
+    
+    // Listener for playback state changes
+    public interface PlaybackListener {
+        void onPlaybackStateChanged(boolean playing);
+        void onSeek(long newPositionMs);
+        void onSpeedChanged(float speed);
+    }
+    @Nullable
+    private PlaybackListener listener = null;
 
     private PlaybackTimeline() {
     }
@@ -142,11 +168,13 @@ public class PlaybackTimeline {
     }
 
     /**
-     * Get elapsed time since playback started.
+     * Get elapsed time since playback started (accounting for pause and speed).
      * Useful for pacing playback.
      */
     public long getElapsedSinceStart() {
-        return System.currentTimeMillis() - systemStartTime;
+        if (!playing) return pausedElapsedMs;
+        long realElapsed = System.currentTimeMillis() - systemStartTime;
+        return (long)(realElapsed * playbackSpeed);
     }
 
     /**
@@ -154,7 +182,153 @@ public class PlaybackTimeline {
      * Useful for knowing current position in the data.
      */
     public long getTrackElapsed() {
-        return System.currentTimeMillis() - systemStartTime;
+        return getElapsedSinceStart();
+    }
+    
+    // =========================================================================
+    // Playback Control Methods
+    // =========================================================================
+    
+    /**
+     * Set the track end time (for calculating duration).
+     */
+    public void setTrackEndTime(long endTimeGps) {
+        this.trackEndTimeGps = endTimeGps;
+    }
+
+    /**
+     * Get the track end time in GPS epoch milliseconds.
+     */
+    public long getTrackEndTimeGps() {
+        return trackEndTimeGps;
+    }
+
+    /**
+     * Get total track duration in milliseconds.
+     */
+    public long getTrackDuration() {
+        return trackEndTimeGps - trackStartTimeGps;
+    }
+
+    /**
+     * Get current playback position in milliseconds from track start.
+     */
+    public long getPlaybackPosition() {
+        if (!ready) return 0;
+        return getElapsedSinceStart();
+    }
+
+    /**
+     * Check if playback is currently playing (not paused).
+     */
+    public boolean isPlaying() {
+        return playing;
+    }
+
+    /**
+     * Pause playback.
+     */
+    public void pause() {
+        synchronized (lock) {
+            if (playing) {
+                playing = false;
+                pausedElapsedMs = getElapsedSinceStart();
+                pauseStartTime = System.currentTimeMillis();
+                Log.i(TAG, "Playback paused at " + pausedElapsedMs + "ms");
+                if (listener != null) listener.onPlaybackStateChanged(false);
+            }
+        }
+    }
+
+    /**
+     * Resume playback.
+     */
+    public void resume() {
+        synchronized (lock) {
+            if (!playing) {
+                // Adjust systemStartTime to account for pause duration
+                long pauseDuration = System.currentTimeMillis() - pauseStartTime;
+                systemStartTime += pauseDuration;
+                playing = true;
+                Log.i(TAG, "Playback resumed from " + pausedElapsedMs + "ms");
+                if (listener != null) listener.onPlaybackStateChanged(true);
+            }
+        }
+    }
+
+    /**
+     * Toggle play/pause state.
+     */
+    public void togglePlayPause() {
+        if (playing) {
+            pause();
+        } else {
+            resume();
+        }
+    }
+
+    /**
+     * Seek to a specific position in the track.
+     * @param positionMs Position in milliseconds from track start
+     */
+    public void seekTo(long positionMs) {
+        synchronized (lock) {
+            if (!ready) return;
+            
+            long duration = getTrackDuration();
+            positionMs = Math.max(0, Math.min(positionMs, duration));
+            
+            // Reset the timeline offset to simulate starting at this position
+            long now = System.currentTimeMillis();
+            systemStartTime = now - (long)(positionMs / playbackSpeed);
+            timeDelta = systemStartTime - trackStartTimeGps;
+            pausedElapsedMs = positionMs;
+            
+            // Increment generation to signal providers to restart
+            generation++;
+            
+            Log.i(TAG, "Seeked to " + positionMs + "ms, generation=" + generation);
+            if (listener != null) listener.onSeek(positionMs);
+        }
+    }
+
+    /**
+     * Set playback speed.
+     * @param speed Playback speed multiplier (1.0 = normal, 2.0 = 2x, 0.5 = half speed)
+     */
+    public void setPlaybackSpeed(float speed) {
+        synchronized (lock) {
+            if (speed <= 0) speed = 1.0f;
+            long currentPos = getPlaybackPosition();
+            playbackSpeed = speed;
+            // Recalculate systemStartTime to maintain current position
+            long now = System.currentTimeMillis();
+            systemStartTime = now - (long)(currentPos / playbackSpeed);
+            Log.i(TAG, "Playback speed set to " + speed + "x");
+            if (listener != null) listener.onSpeedChanged(speed);
+        }
+    }
+
+    /**
+     * Get current playback speed.
+     */
+    public float getPlaybackSpeed() {
+        return playbackSpeed;
+    }
+
+    /**
+     * Set playback listener.
+     */
+    public void setListener(@Nullable PlaybackListener listener) {
+        this.listener = listener;
+    }
+
+    /**
+     * Restart playback from the beginning.
+     */
+    public void restart() {
+        seekTo(0);
+        resume();
     }
 
     /**
@@ -165,9 +339,14 @@ public class PlaybackTimeline {
             generation++;
             ready = false;
             trackStartTimeGps = 0;
+            trackEndTimeGps = 0;
             systemStartTime = 0;
             timeDelta = 0;
             initSource = null;
+            playing = true;
+            playbackSpeed = 1.0f;
+            pausedElapsedMs = 0;
+            pauseStartTime = 0;
             Log.i(TAG, "Timeline reset, generation=" + generation);
         }
     }

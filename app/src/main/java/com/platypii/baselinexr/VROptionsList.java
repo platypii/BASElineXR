@@ -38,9 +38,25 @@ public class VROptionsList {
             null
     );
 
+    // Squaw Peak, Utah - terrain from USGS LiDAR
+    // Terrain origin (SW): 40.252778, -111.623204
+    // Terrain center: 40.270890, -111.605728
+    // Elevation range: 1676m - 3113m
+    // Track data: exit 40.2712,-111.6170,2375m -> landing 40.2673,-111.6359,1509m
+    public static final VROptions SQUAW_PEAK = new VROptions(
+            "Squaw Peak",
+            "kpow",
+            new LatLngAlt(40.2673, -111.6359, 500.0), // landing area
+            VROptions.ShaderType.FOG_SHADER,
+            false,  // use terrain model
+            true,
+            true,
+            new LatLngAlt(40.2712, -111.6170, 2375.0) // exit point
+    );
+
     // All modes for cycling
     public static final VROptions[] ALL_MODES = {
-            EIGER, ZILLA, KPOW_7500
+            EIGER, ZILLA, KPOW_7500, SQUAW_PEAK
     };
 
     public static VROptions getByName(String name) {

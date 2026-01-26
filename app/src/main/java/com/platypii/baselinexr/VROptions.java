@@ -9,7 +9,7 @@ import com.platypii.baselinexr.measurements.LatLngAlt;
 public class VROptions {
 
     // Current active configuration
-    public static VROptions current = VROptionsList.ZILLA;
+    public static VROptions current = VROptionsList.SQUAW_PEAK;
 
     public enum ShaderType {
         DEFAULT_SHADER,
