@@ -56,6 +56,33 @@ public class Flysight2ControlPoint {
     public static final int SENSOR_ACCEL = 2;
     public static final int SENSOR_GYRO = 3;
     public static final int SENSOR_MAG = 4;
+    public static final int SENSOR_COUNT = 5;
+
+    // Sensor names for display
+    public static final String[] SENSOR_NAMES = {"Baro", "Hum", "Accel", "Gyro", "Mag"};
+
+    // ODR values in Hz for each sensor (index = ODR setting from config.txt)
+    // Baro (LPS22HH): ODR 0-3
+    public static final double[] BARO_ODR_HZ = {10, 20, 50, 100};
+    // Humidity (HTS221): ODR 0-3
+    public static final double[] HUM_ODR_HZ = {0, 1, 7, 12.5};
+    // Accel (LSM6DSO): ODR 0-11
+    public static final double[] ACCEL_ODR_HZ = {0, 12.5, 26, 52, 104, 208, 416, 833, 1666, 3333, 6666, 1.6};
+    // Gyro (LSM6DSO): ODR 0-10
+    public static final double[] GYRO_ODR_HZ = {0, 12.5, 26, 52, 104, 208, 416, 833, 1666, 3333, 6666};
+    // Mag (LIS2MDL): ODR 0-3
+    public static final double[] MAG_ODR_HZ = {10, 20, 50, 100};
+
+    // Default ODR index for each sensor (from FlySight firmware defaults)
+    // {Baro=2, Hum=1, Accel=1, Gyro=1, Mag=0}
+    public static final int[] DEFAULT_ODR_INDEX = {2, 1, 1, 1, 0};
+
+    // Common divider values for dropdown selection
+    public static final int[] DIVIDER_VALUES = {0, 1, 2, 4, 8, 16, 32, 64};
+    public static final String[] DIVIDER_LABELS = {"Auto", "1", "2", "4", "8", "16", "32", "64"};
+
+    // Current divider values (updated from device responses)
+    private final int[] currentDividers = new int[SENSOR_COUNT];
 
     // Response status codes
     public static final int CP_STATUS_SUCCESS = 0x01;
@@ -86,6 +113,19 @@ public class Flysight2ControlPoint {
 
     public void setListener(@Nullable ControlPointListener listener) {
         this.listener = listener;
+    }
+
+    /**
+     * Get the default ODR in Hz for a specific sensor
+     */
+    public static double getDefaultOdrHz(int sensorId) {
+        if (sensorId < 0 || sensorId >= SENSOR_COUNT) return 0;
+        int odrIndex = DEFAULT_ODR_INDEX[sensorId];
+        double[] odrArray = getOdrValues(sensorId);
+        if (odrIndex < odrArray.length) {
+            return odrArray[odrIndex];
+        }
+        return 0;
     }
 
     /**
@@ -271,6 +311,10 @@ public class Flysight2ControlPoint {
                 int sensorId = data[0] & 0xFF;
                 int divider = (data[1] & 0xFF) | ((data[2] & 0xFF) << 8);
                 Log.i(TAG, "  -> sensor=" + sensorId + " divider=" + divider);
+                // Cache the divider value
+                if (statusCode == CP_STATUS_SUCCESS) {
+                    updateCurrentDivider(sensorId, divider);
+                }
             } else if (opcode == SD_CMD_GET_GNSS_BLE_MASK && data.length >= 1) {
                 int mask = data[0] & 0xFF;
                 Log.i(TAG, "  -> mask=0x" + Integer.toHexString(mask));
@@ -301,6 +345,82 @@ public class Flysight2ControlPoint {
             case CP_STATUS_NOT_PERMITTED: return "NOT_PERMITTED";
             case CP_STATUS_BUSY: return "BUSY";
             default: return "UNKNOWN(" + statusCode + ")";
+        }
+    }
+
+    /**
+     * Get ODR values array for a sensor
+     * @param sensorId 0=Baro, 1=Hum, 2=Accel, 3=Gyro, 4=Mag
+     * @return Array of Hz values for each ODR setting
+     */
+    public static double[] getOdrValues(int sensorId) {
+        switch (sensorId) {
+            case SENSOR_BARO: return BARO_ODR_HZ;
+            case SENSOR_HUM: return HUM_ODR_HZ;
+            case SENSOR_ACCEL: return ACCEL_ODR_HZ;
+            case SENSOR_GYRO: return GYRO_ODR_HZ;
+            case SENSOR_MAG: return MAG_ODR_HZ;
+            default: return new double[]{0};
+        }
+    }
+
+    /**
+     * Format ODR labels for dropdown display
+     * @param sensorId 0=Baro, 1=Hum, 2=Accel, 3=Gyro, 4=Mag
+     * @return Array of display strings like "1: 10 Hz"
+     */
+    public static String[] getOdrLabels(int sensorId) {
+        double[] values = getOdrValues(sensorId);
+        String[] labels = new String[values.length];
+        for (int i = 0; i < values.length; i++) {
+            if (values[i] == 0) {
+                labels[i] = i + ": Off";
+            } else if (values[i] < 1) {
+                labels[i] = i + ": " + values[i] + " Hz";
+            } else {
+                labels[i] = i + ": " + (int) values[i] + " Hz";
+            }
+        }
+        return labels;
+    }
+
+    /**
+     * Calculate output rate given ODR index and divider
+     * @param sensorId 0=Baro, 1=Hum, 2=Accel, 3=Gyro, 4=Mag
+     * @param odrIndex Index into the ODR array for this sensor
+     * @param divider BLE divider (0=auto, 1=full rate, 2=half, etc.)
+     * @return Output rate in Hz, or -1 for auto mode
+     */
+    public static double calculateOutputRate(int sensorId, int odrIndex, int divider) {
+        double[] odrValues = getOdrValues(sensorId);
+        if (odrIndex < 0 || odrIndex >= odrValues.length) {
+            return 0;
+        }
+        double odrHz = odrValues[odrIndex];
+        if (divider == 0) {
+            return -1; // Auto mode
+        }
+        return odrHz / divider;
+    }
+
+    /**
+     * Get cached divider value for a sensor
+     * @param sensorId 0=Baro, 1=Hum, 2=Accel, 3=Gyro, 4=Mag
+     * @return Current divider value, or -1 if not yet fetched
+     */
+    public int getCurrentDivider(int sensorId) {
+        if (sensorId < 0 || sensorId >= SENSOR_COUNT) {
+            return -1;
+        }
+        return currentDividers[sensorId];
+    }
+
+    /**
+     * Update cached divider value (called when response received)
+     */
+    private void updateCurrentDivider(int sensorId, int divider) {
+        if (sensorId >= 0 && sensorId < SENSOR_COUNT) {
+            currentDividers[sensorId] = divider;
         }
     }
 }

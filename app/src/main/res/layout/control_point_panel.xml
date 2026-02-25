@@ -134,6 +134,43 @@
                 android:textSize="14sp"
                 android:fontFamily="monospace" />
         </LinearLayout>
+
+        <!-- Pinned MAC -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Pinned:"
+                android:textColor="#AAAAAA"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/pinned_mac"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1.5"
+                android:text="None"
+                android:textColor="#88FF88"
+                android:textSize="12sp"
+                android:fontFamily="monospace" />
+
+            <Button
+                android:id="@+id/forget_device_button"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:text="Forget"
+                android:textSize="11sp"
+                android:background="#444444"
+                android:textColor="#FFFFFF"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp" />
+        </LinearLayout>
     </LinearLayout>
 
     <!-- BLE Divider Settings Section -->
@@ -193,6 +230,449 @@
                 android:textColor="#88CCFF"
                 android:textSize="14sp" />
         </LinearLayout>
+    </LinearLayout>
+
+    <!-- Sensor Configuration Section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#22FFFFFF"
+        android:padding="8dp"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Sensor Configuration"
+            android:textColor="#FFFF00"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:paddingBottom="4dp" />
+
+        <!-- Column Headers -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingBottom="4dp">
+
+            <TextView
+                android:layout_width="45dp"
+                android:layout_height="wrap_content"
+                android:text="Sensor"
+                android:textColor="#AAAAAA"
+                android:textSize="10sp" />
+
+            <TextView
+                android:layout_width="50dp"
+                android:layout_height="wrap_content"
+                android:text="ODR"
+                android:textColor="#AAAAAA"
+                android:textSize="10sp" />
+
+            <TextView
+                android:layout_width="84dp"
+                android:layout_height="wrap_content"
+                android:text="Divider"
+                android:textColor="#AAAAAA"
+                android:textSize="10sp"
+                android:gravity="center" />
+
+            <TextView
+                android:layout_width="45dp"
+                android:layout_height="wrap_content"
+                android:text="Rate"
+                android:textColor="#AAAAAA"
+                android:textSize="10sp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text=""
+                android:textColor="#AAAAAA"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <!-- Baro Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="2dp">
+
+            <TextView
+                android:layout_width="45dp"
+                android:layout_height="wrap_content"
+                android:text="Baro"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/sensor_baro_odr"
+                android:layout_width="50dp"
+                android:layout_height="wrap_content"
+                android:text="---"
+                android:textColor="#CCCCCC"
+                android:textSize="11sp"
+                android:fontFamily="monospace" />
+
+            <Button
+                android:id="@+id/sensor_baro_div_dec"
+                android:layout_width="24dp"
+                android:layout_height="28dp"
+                android:text="−"
+                android:textSize="14sp"
+                android:background="#444444"
+                android:textColor="#FFFFFF"
+                android:padding="0dp" />
+
+            <TextView
+                android:id="@+id/sensor_baro_divider"
+                android:layout_width="36dp"
+                android:layout_height="wrap_content"
+                android:text="1"
+                android:textColor="#FFFF88"
+                android:textSize="12sp"
+                android:fontFamily="monospace"
+                android:gravity="center" />
+
+            <Button
+                android:id="@+id/sensor_baro_div_inc"
+                android:layout_width="24dp"
+                android:layout_height="28dp"
+                android:text="+"
+                android:textSize="14sp"
+                android:background="#444444"
+                android:textColor="#FFFFFF"
+                android:padding="0dp" />
+
+            <TextView
+                android:id="@+id/sensor_baro_rate"
+                android:layout_width="45dp"
+                android:layout_height="wrap_content"
+                android:text="---"
+                android:textColor="#88FF88"
+                android:textSize="11sp"
+                android:fontFamily="monospace" />
+
+            <Button
+                android:id="@+id/sensor_baro_set"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:background="@drawable/button_bg"
+                android:text="Set"
+                android:textColor="#88FF88"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Hum Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="2dp">
+
+            <TextView
+                android:layout_width="45dp"
+                android:layout_height="wrap_content"
+                android:text="Hum"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/sensor_hum_odr"
+                android:layout_width="50dp"
+                android:layout_height="wrap_content"
+                android:text="---"
+                android:textColor="#CCCCCC"
+                android:textSize="11sp"
+                android:fontFamily="monospace" />
+
+            <Button
+                android:id="@+id/sensor_hum_div_dec"
+                android:layout_width="24dp"
+                android:layout_height="28dp"
+                android:text="−"
+                android:textSize="14sp"
+                android:background="#444444"
+                android:textColor="#FFFFFF"
+                android:padding="0dp" />
+
+            <TextView
+                android:id="@+id/sensor_hum_divider"
+                android:layout_width="36dp"
+                android:layout_height="wrap_content"
+                android:text="1"
+                android:textColor="#FFFF88"
+                android:textSize="12sp"
+                android:fontFamily="monospace"
+                android:gravity="center" />
+
+            <Button
+                android:id="@+id/sensor_hum_div_inc"
+                android:layout_width="24dp"
+                android:layout_height="28dp"
+                android:text="+"
+                android:textSize="14sp"
+                android:background="#444444"
+                android:textColor="#FFFFFF"
+                android:padding="0dp" />
+
+            <TextView
+                android:id="@+id/sensor_hum_rate"
+                android:layout_width="45dp"
+                android:layout_height="wrap_content"
+                android:text="---"
+                android:textColor="#88FF88"
+                android:textSize="11sp"
+                android:fontFamily="monospace" />
+
+            <Button
+                android:id="@+id/sensor_hum_set"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:background="@drawable/button_bg"
+                android:text="Set"
+                android:textColor="#88FF88"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Accel Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="2dp">
+
+            <TextView
+                android:layout_width="45dp"
+                android:layout_height="wrap_content"
+                android:text="Accel"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/sensor_accel_odr"
+                android:layout_width="50dp"
+                android:layout_height="wrap_content"
+                android:text="---"
+                android:textColor="#CCCCCC"
+                android:textSize="11sp"
+                android:fontFamily="monospace" />
+
+            <Button
+                android:id="@+id/sensor_accel_div_dec"
+                android:layout_width="24dp"
+                android:layout_height="28dp"
+                android:text="−"
+                android:textSize="14sp"
+                android:background="#444444"
+                android:textColor="#FFFFFF"
+                android:padding="0dp" />
+
+            <TextView
+                android:id="@+id/sensor_accel_divider"
+                android:layout_width="36dp"
+                android:layout_height="wrap_content"
+                android:text="1"
+                android:textColor="#FFFF88"
+                android:textSize="12sp"
+                android:fontFamily="monospace"
+                android:gravity="center" />
+
+            <Button
+                android:id="@+id/sensor_accel_div_inc"
+                android:layout_width="24dp"
+                android:layout_height="28dp"
+                android:text="+"
+                android:textSize="14sp"
+                android:background="#444444"
+                android:textColor="#FFFFFF"
+                android:padding="0dp" />
+
+            <TextView
+                android:id="@+id/sensor_accel_rate"
+                android:layout_width="45dp"
+                android:layout_height="wrap_content"
+                android:text="---"
+                android:textColor="#88FF88"
+                android:textSize="11sp"
+                android:fontFamily="monospace" />
+
+            <Button
+                android:id="@+id/sensor_accel_set"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:background="@drawable/button_bg"
+                android:text="Set"
+                android:textColor="#88FF88"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Gyro Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="2dp">
+
+            <TextView
+                android:layout_width="45dp"
+                android:layout_height="wrap_content"
+                android:text="Gyro"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/sensor_gyro_odr"
+                android:layout_width="50dp"
+                android:layout_height="wrap_content"
+                android:text="---"
+                android:textColor="#CCCCCC"
+                android:textSize="11sp"
+                android:fontFamily="monospace" />
+
+            <Button
+                android:id="@+id/sensor_gyro_div_dec"
+                android:layout_width="24dp"
+                android:layout_height="28dp"
+                android:text="−"
+                android:textSize="14sp"
+                android:background="#444444"
+                android:textColor="#FFFFFF"
+                android:padding="0dp" />
+
+            <TextView
+                android:id="@+id/sensor_gyro_divider"
+                android:layout_width="36dp"
+                android:layout_height="wrap_content"
+                android:text="1"
+                android:textColor="#FFFF88"
+                android:textSize="12sp"
+                android:fontFamily="monospace"
+                android:gravity="center" />
+
+            <Button
+                android:id="@+id/sensor_gyro_div_inc"
+                android:layout_width="24dp"
+                android:layout_height="28dp"
+                android:text="+"
+                android:textSize="14sp"
+                android:background="#444444"
+                android:textColor="#FFFFFF"
+                android:padding="0dp" />
+
+            <TextView
+                android:id="@+id/sensor_gyro_rate"
+                android:layout_width="45dp"
+                android:layout_height="wrap_content"
+                android:text="---"
+                android:textColor="#88FF88"
+                android:textSize="11sp"
+                android:fontFamily="monospace" />
+
+            <Button
+                android:id="@+id/sensor_gyro_set"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:background="@drawable/button_bg"
+                android:text="Set"
+                android:textColor="#88FF88"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Mag Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="2dp">
+
+            <TextView
+                android:layout_width="45dp"
+                android:layout_height="wrap_content"
+                android:text="Mag"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/sensor_mag_odr"
+                android:layout_width="50dp"
+                android:layout_height="wrap_content"
+                android:text="---"
+                android:textColor="#CCCCCC"
+                android:textSize="11sp"
+                android:fontFamily="monospace" />
+
+            <Button
+                android:id="@+id/sensor_mag_div_dec"
+                android:layout_width="24dp"
+                android:layout_height="28dp"
+                android:text="−"
+                android:textSize="14sp"
+                android:background="#444444"
+                android:textColor="#FFFFFF"
+                android:padding="0dp" />
+
+            <TextView
+                android:id="@+id/sensor_mag_divider"
+                android:layout_width="36dp"
+                android:layout_height="wrap_content"
+                android:text="1"
+                android:textColor="#FFFF88"
+                android:textSize="12sp"
+                android:fontFamily="monospace"
+                android:gravity="center" />
+
+            <Button
+                android:id="@+id/sensor_mag_div_inc"
+                android:layout_width="24dp"
+                android:layout_height="28dp"
+                android:text="+"
+                android:textSize="14sp"
+                android:background="#444444"
+                android:textColor="#FFFFFF"
+                android:padding="0dp" />
+
+            <TextView
+                android:id="@+id/sensor_mag_rate"
+                android:layout_width="45dp"
+                android:layout_height="wrap_content"
+                android:text="---"
+                android:textColor="#88FF88"
+                android:textSize="11sp"
+                android:fontFamily="monospace" />
+
+            <Button
+                android:id="@+id/sensor_mag_set"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:background="@drawable/button_bg"
+                android:text="Set"
+                android:textColor="#88FF88"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Note about ODR -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Note: ODR is read-only (set via config.txt)"
+            android:textColor="#888888"
+            android:textSize="10sp"
+            android:paddingTop="4dp" />
     </LinearLayout>
 
     <!-- Device Info Section -->

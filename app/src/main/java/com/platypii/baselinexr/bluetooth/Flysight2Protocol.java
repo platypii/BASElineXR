@@ -51,6 +51,17 @@ public class Flysight2Protocol extends BleProtocol {
     // Time sync (TODO: implement proper TIME sync from FlySight)
     @Nullable
     private MTimeSync timeSync = null;
+    
+    // Bluetooth preferences for device pinning
+    @NonNull
+    private final BluetoothPreferences bluetoothPreferences;
+    
+    // Context for saving preferences (set after start)
+    @Nullable
+    private android.content.Context context = null;
+    
+    // Track if we've pinned the MAC for this connection
+    private boolean macPinned = false;
 
     // Flysight services
     private static final UUID flysightService0 = UUID.fromString("00000000-cc7a-482a-984a-7f2ed5b3e58f"); // File Transfer
@@ -84,8 +95,47 @@ public class Flysight2Protocol extends BleProtocol {
     // Bionic Avionics manufacturer ID for FlySight
     private static final int MANUFACTURER_ID_BIONIC = 0x09DB;
 
-    public Flysight2Protocol(@NonNull PubSub<MLocation> locationUpdates) {
+    public Flysight2Protocol(@NonNull PubSub<MLocation> locationUpdates, @NonNull BluetoothPreferences bluetoothPreferences) {
         this.locationUpdates = locationUpdates;
+        this.bluetoothPreferences = bluetoothPreferences;
+    }
+    
+    /**
+     * Set context for saving preferences. Call after starting the service.
+     */
+    public void setContext(@NonNull android.content.Context context) {
+        this.context = context;
+    }
+    
+    /**
+     * Forget the currently pinned FlySight device.
+     * Call this when the user wants to connect to a different FlySight.
+     */
+    public void forgetPinnedDevice() {
+        if (context != null) {
+            bluetoothPreferences.forgetFlysightDevice(context);
+            Log.i(TAG, "Forgot pinned FlySight device");
+        }
+    }
+    
+    /**
+     * Pin the currently connected FlySight device by MAC address.
+     * Called automatically after receiving valid data from a connection.
+     */
+    private void pinDeviceIfNeeded(@NonNull BluetoothPeripheral peripheral) {
+        if (macPinned || context == null) {
+            return;
+        }
+        String address = peripheral.getAddress();
+        String name = peripheral.getName();
+        
+        // Only pin if not already pinned or if this is the pinned device
+        if (bluetoothPreferences.flysightPinnedMac == null || 
+            bluetoothPreferences.flysightPinnedMac.equals(address)) {
+            bluetoothPreferences.pinFlysightDevice(context, address, name);
+            macPinned = true;
+            Log.i(TAG, "Pinned FlySight device: " + name + " " + address);
+        }
     }
 
     @Override
@@ -95,6 +145,13 @@ public class Flysight2Protocol extends BleProtocol {
         
         // First check if this is a FlySight device by name
         if (!"FlySight".equals(name)) {
+            return false;
+        }
+        
+        // Check if we have a pinned device - only connect to that specific MAC
+        if (!bluetoothPreferences.shouldConnectToFlysight(address)) {
+            Log.d(TAG, "Skipping FlySight " + address + " - not pinned device (pinned=" + 
+                bluetoothPreferences.flysightPinnedMac + ")");
             return false;
         }
         
@@ -148,6 +205,7 @@ public class Flysight2Protocol extends BleProtocol {
         Log.i(TAG, "flysight services discovered " + peripheral.getCurrentMtu());
         
         // Enumerate all services and characteristics for debugging
+        int sensorDataCharCount = 0;
         for (android.bluetooth.BluetoothGattService service : peripheral.getServices()) {
             String serviceUuid = service.getUuid().toString();
             Log.i(TAG, "  Service: " + serviceUuid.substring(0, 8) + "...");
@@ -162,7 +220,18 @@ public class Flysight2Protocol extends BleProtocol {
                 if ((props & 0x10) != 0) propsStr += "NOTIFY ";
                 if ((props & 0x20) != 0) propsStr += "INDICATE ";
                 Log.i(TAG, "    Char: " + charUuid.substring(0, 8) + "... props=" + propsStr);
+                
+                // Count Sensor Data service characteristics
+                if (serviceUuid.startsWith("00000001-cc7a")) {
+                    sensorDataCharCount++;
+                }
             }
+        }
+        
+        // Log characteristic count for debugging (just informational now, we rely on MAC pinning)
+        Log.i(TAG, "Sensor Data service has " + sensorDataCharCount + " characteristics");
+        if (sensorDataCharCount < 2) {
+            Log.w(TAG, "Warning: Sensor Data service has fewer than expected characteristics");
         }
         
         peripheral.requestMtu(256);
@@ -261,6 +330,10 @@ public class Flysight2Protocol extends BleProtocol {
             Log.w(TAG, "onCharacteristicUpdate: status=" + status + " len=" + value.length);
             return;
         }
+        
+        // Pin the MAC address after receiving valid data
+        // This ensures we only pin devices that are actually working
+        pinDeviceIfNeeded(peripheral);
         
         // Route by characteristic UUID
         UUID uuid = characteristic.getUuid();

@@ -37,14 +37,14 @@ public class BluetoothService {
     public final PubSub<NMEA> nmeaUpdates = new PubSub<>();
     public final PubSub<MLocation> locationUpdates = new PubSub<>();
 
+    // Android shared preferences for bluetooth
+    public final BluetoothPreferences preferences = new BluetoothPreferences();
+
     // FlySight protocol for sensor data
-    public final Flysight2Protocol flysightProtocol = new Flysight2Protocol(locationUpdates);
+    public final Flysight2Protocol flysightProtocol = new Flysight2Protocol(locationUpdates, preferences);
 
     // BLE subsystem
     public final BleService ble = new BleService(flysightProtocol);
-
-    // Android shared preferences for bluetooth
-    public final BluetoothPreferences preferences = new BluetoothPreferences();
 
     @Nullable
     private BluetoothAdapter bluetoothAdapter;

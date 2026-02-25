@@ -269,14 +269,23 @@ class BaselineActivity : AppSystemActivity() {
                     val magX = rootView?.findViewById<TextView>(R.id.mag_x)
                     val magY = rootView?.findViewById<TextView>(R.id.mag_y)
                     val magZ = rootView?.findViewById<TextView>(R.id.mag_z)
+                    val baroPressure = rootView?.findViewById<TextView>(R.id.baro_pressure)
+                    val baroTemp = rootView?.findViewById<TextView>(R.id.baro_temp)
+                    val humHumidity = rootView?.findViewById<TextView>(R.id.hum_humidity)
+                    val humTemp = rootView?.findViewById<TextView>(R.id.hum_temp)
                     val imuRateView = rootView?.findViewById<TextView>(R.id.imu_rate)
                     val magRateView = rootView?.findViewById<TextView>(R.id.mag_rate)
+                    val baroRateView = rootView?.findViewById<TextView>(R.id.baro_rate)
+                    val humRateView = rootView?.findViewById<TextView>(R.id.hum_rate)
                     val sampleCountView = rootView?.findViewById<TextView>(R.id.sample_count)
                     sensorDataSystem?.setViews(
                         gyroX, gyroY, gyroZ,
                         accelX, accelY, accelZ,
                         magX, magY, magZ,
-                        imuRateView, magRateView, sampleCountView
+                        baroPressure, baroTemp,
+                        humHumidity, humTemp,
+                        imuRateView, magRateView, baroRateView, humRateView,
+                        sampleCountView
                     )
                 }
             },
@@ -292,23 +301,70 @@ class BaselineActivity : AppSystemActivity() {
                     val deviceMode = rootView?.findViewById<TextView>(R.id.device_mode)
                     val firmwareVersion = rootView?.findViewById<TextView>(R.id.firmware_version)
                     val deviceId = rootView?.findViewById<TextView>(R.id.device_id)
+                    val pinnedMac = rootView?.findViewById<TextView>(R.id.pinned_mac)
                     val dividerStatus = rootView?.findViewById<TextView>(R.id.divider_status)
                     val responseLog = rootView?.findViewById<TextView>(R.id.response_log)
+                    val forgetDeviceButton = rootView?.findViewById<android.widget.Button>(R.id.forget_device_button)
                     val setDividersButton = rootView?.findViewById<android.widget.Button>(R.id.set_dividers_button)
                     val getDividersButton = rootView?.findViewById<android.widget.Button>(R.id.get_dividers_button)
                     val getFwButton = rootView?.findViewById<android.widget.Button>(R.id.get_fw_button)
                     val getDeviceIdButton = rootView?.findViewById<android.widget.Button>(R.id.get_device_id_button)
+                    
+                    // Sensor config: ODR (TextView), Divider (TextView + dec/inc buttons), Rate, Set
+                    val baroOdr = rootView?.findViewById<TextView>(R.id.sensor_baro_odr)
+                    val baroDivider = rootView?.findViewById<TextView>(R.id.sensor_baro_divider)
+                    val baroDivDec = rootView?.findViewById<android.widget.Button>(R.id.sensor_baro_div_dec)
+                    val baroDivInc = rootView?.findViewById<android.widget.Button>(R.id.sensor_baro_div_inc)
+                    val baroRate = rootView?.findViewById<TextView>(R.id.sensor_baro_rate)
+                    val baroSet = rootView?.findViewById<android.widget.Button>(R.id.sensor_baro_set)
+                    
+                    val humOdr = rootView?.findViewById<TextView>(R.id.sensor_hum_odr)
+                    val humDivider = rootView?.findViewById<TextView>(R.id.sensor_hum_divider)
+                    val humDivDec = rootView?.findViewById<android.widget.Button>(R.id.sensor_hum_div_dec)
+                    val humDivInc = rootView?.findViewById<android.widget.Button>(R.id.sensor_hum_div_inc)
+                    val humRate = rootView?.findViewById<TextView>(R.id.sensor_hum_rate)
+                    val humSet = rootView?.findViewById<android.widget.Button>(R.id.sensor_hum_set)
+                    
+                    val accelOdr = rootView?.findViewById<TextView>(R.id.sensor_accel_odr)
+                    val accelDivider = rootView?.findViewById<TextView>(R.id.sensor_accel_divider)
+                    val accelDivDec = rootView?.findViewById<android.widget.Button>(R.id.sensor_accel_div_dec)
+                    val accelDivInc = rootView?.findViewById<android.widget.Button>(R.id.sensor_accel_div_inc)
+                    val accelRate = rootView?.findViewById<TextView>(R.id.sensor_accel_rate)
+                    val accelSet = rootView?.findViewById<android.widget.Button>(R.id.sensor_accel_set)
+                    
+                    val gyroOdr = rootView?.findViewById<TextView>(R.id.sensor_gyro_odr)
+                    val gyroDivider = rootView?.findViewById<TextView>(R.id.sensor_gyro_divider)
+                    val gyroDivDec = rootView?.findViewById<android.widget.Button>(R.id.sensor_gyro_div_dec)
+                    val gyroDivInc = rootView?.findViewById<android.widget.Button>(R.id.sensor_gyro_div_inc)
+                    val gyroRate = rootView?.findViewById<TextView>(R.id.sensor_gyro_rate)
+                    val gyroSet = rootView?.findViewById<android.widget.Button>(R.id.sensor_gyro_set)
+                    
+                    val magOdr = rootView?.findViewById<TextView>(R.id.sensor_mag_odr)
+                    val magDivider = rootView?.findViewById<TextView>(R.id.sensor_mag_divider)
+                    val magDivDec = rootView?.findViewById<android.widget.Button>(R.id.sensor_mag_div_dec)
+                    val magDivInc = rootView?.findViewById<android.widget.Button>(R.id.sensor_mag_div_inc)
+                    val magRate = rootView?.findViewById<TextView>(R.id.sensor_mag_rate)
+                    val magSet = rootView?.findViewById<android.widget.Button>(R.id.sensor_mag_set)
+                    
                     controlPointSystem?.setViews(
                         connectionStatus,
                         deviceMode,
                         firmwareVersion,
                         deviceId,
+                        pinnedMac,
                         dividerStatus,
                         responseLog,
+                        forgetDeviceButton,
                         setDividersButton,
                         getDividersButton,
                         getFwButton,
-                        getDeviceIdButton
+                        getDeviceIdButton,
+                        // Sensor config views: odr, divider, dec, inc, rate, set
+                        baroOdr, baroDivider, baroDivDec, baroDivInc, baroRate, baroSet,
+                        humOdr, humDivider, humDivDec, humDivInc, humRate, humSet,
+                        accelOdr, accelDivider, accelDivDec, accelDivInc, accelRate, accelSet,
+                        gyroOdr, gyroDivider, gyroDivDec, gyroDivInc, gyroRate, gyroSet,
+                        magOdr, magDivider, magDivDec, magDivInc, magRate, magSet
                     )
                 }
             },

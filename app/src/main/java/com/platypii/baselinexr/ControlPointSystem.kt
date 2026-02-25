@@ -30,16 +30,33 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
     private var deviceMode: TextView? = null
     private var firmwareVersion: TextView? = null
     private var deviceId: TextView? = null
+    private var pinnedMac: TextView? = null
     private var dividerStatus: TextView? = null
     private var responseLog: TextView? = null
     
+    private var forgetDeviceButton: Button? = null
     private var setDividersButton: Button? = null
     private var getDividersButton: Button? = null
     private var getFwButton: Button? = null
     private var getDeviceIdButton: Button? = null
     
-    // Track divider values received
-    private val dividerValues = IntArray(5) { -1 }  // -1 = unknown
+    // Sensor configuration UI elements
+    data class SensorRow(
+        val sensorId: Int,
+        var odrText: TextView? = null,
+        var dividerText: TextView? = null,
+        var divDecButton: Button? = null,
+        var divIncButton: Button? = null,
+        var rateText: TextView? = null,
+        var setButton: Button? = null
+    )
+    private val sensorRows = Array(Flysight2ControlPoint.SENSOR_COUNT) { SensorRow(it) }
+    
+    // Track current divider index for each sensor (index into DIVIDER_VALUES)
+    private val dividerIndices = IntArray(Flysight2ControlPoint.SENSOR_COUNT) { 1 }  // Default to index 1 = value 1
+    
+    // Track divider values received from device
+    private val dividerValues = IntArray(Flysight2ControlPoint.SENSOR_COUNT) { -1 }  // -1 = unknown
     
     // Activity reference for UI updates
     private var activity: BaselineActivity? = null
@@ -96,32 +113,146 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         deviceMode: TextView?,
         firmwareVersion: TextView?,
         deviceId: TextView?,
+        pinnedMac: TextView?,
         dividerStatus: TextView?,
         responseLog: TextView?,
+        forgetDeviceButton: Button?,
         setDividersButton: Button?,
         getDividersButton: Button?,
         getFwButton: Button?,
-        getDeviceIdButton: Button?
+        getDeviceIdButton: Button?,
+        // Sensor config views: odr, divider text, dec button, inc button, rate, set button
+        baroOdr: TextView?, baroDivider: TextView?, baroDivDec: Button?, baroDivInc: Button?, baroRate: TextView?, baroSet: Button?,
+        humOdr: TextView?, humDivider: TextView?, humDivDec: Button?, humDivInc: Button?, humRate: TextView?, humSet: Button?,
+        accelOdr: TextView?, accelDivider: TextView?, accelDivDec: Button?, accelDivInc: Button?, accelRate: TextView?, accelSet: Button?,
+        gyroOdr: TextView?, gyroDivider: TextView?, gyroDivDec: Button?, gyroDivInc: Button?, gyroRate: TextView?, gyroSet: Button?,
+        magOdr: TextView?, magDivider: TextView?, magDivDec: Button?, magDivInc: Button?, magRate: TextView?, magSet: Button?
     ) {
         this.connectionStatus = connectionStatus
         this.deviceMode = deviceMode
         this.firmwareVersion = firmwareVersion
         this.deviceId = deviceId
+        this.pinnedMac = pinnedMac
         this.dividerStatus = dividerStatus
         this.responseLog = responseLog
+        this.forgetDeviceButton = forgetDeviceButton
         this.setDividersButton = setDividersButton
         this.getDividersButton = getDividersButton
         this.getFwButton = getFwButton
         this.getDeviceIdButton = getDeviceIdButton
         
+        // Set up sensor row references
+        sensorRows[Flysight2ControlPoint.SENSOR_BARO].apply {
+            odrText = baroOdr; dividerText = baroDivider; divDecButton = baroDivDec; divIncButton = baroDivInc; rateText = baroRate; setButton = baroSet
+        }
+        sensorRows[Flysight2ControlPoint.SENSOR_HUM].apply {
+            odrText = humOdr; dividerText = humDivider; divDecButton = humDivDec; divIncButton = humDivInc; rateText = humRate; setButton = humSet
+        }
+        sensorRows[Flysight2ControlPoint.SENSOR_ACCEL].apply {
+            odrText = accelOdr; dividerText = accelDivider; divDecButton = accelDivDec; divIncButton = accelDivInc; rateText = accelRate; setButton = accelSet
+        }
+        sensorRows[Flysight2ControlPoint.SENSOR_GYRO].apply {
+            odrText = gyroOdr; dividerText = gyroDivider; divDecButton = gyroDivDec; divIncButton = gyroDivInc; rateText = gyroRate; setButton = gyroSet
+        }
+        sensorRows[Flysight2ControlPoint.SENSOR_MAG].apply {
+            odrText = magOdr; dividerText = magDivider; divDecButton = magDivDec; divIncButton = magDivInc; rateText = magRate; setButton = magSet
+        }
+        
         // Set up button click listeners
+        forgetDeviceButton?.setOnClickListener { onForgetDeviceClick() }
         setDividersButton?.setOnClickListener { onSetDividersClick() }
         getDividersButton?.setOnClickListener { onGetDividersClick() }
         getFwButton?.setOnClickListener { onGetFwClick() }
         getDeviceIdButton?.setOnClickListener { onGetDeviceIdClick() }
         
-        // Update connection status
+        // Set up sensor configuration UI
+        setupSensorControls()
+        
+        // Update connection status and pinned MAC display
         updateConnectionStatus()
+        updatePinnedMacDisplay()
+    }
+    
+    private fun setupSensorControls() {
+        for (row in sensorRows) {
+            val sensorId = row.sensorId
+            
+            // Display default ODR for this sensor
+            updateOdrDisplay(sensorId)
+            
+            // Initialize divider display
+            dividerIndices[sensorId] = 1  // Default to index 1 = value 1
+            updateDividerDisplay(sensorId)
+            
+            // Dec button
+            row.divDecButton?.setOnClickListener {
+                if (dividerIndices[sensorId] > 0) {
+                    dividerIndices[sensorId]--
+                    updateDividerDisplay(sensorId)
+                }
+            }
+            
+            // Inc button
+            row.divIncButton?.setOnClickListener {
+                if (dividerIndices[sensorId] < Flysight2ControlPoint.DIVIDER_VALUES.size - 1) {
+                    dividerIndices[sensorId]++
+                    updateDividerDisplay(sensorId)
+                }
+            }
+            
+            // Set button
+            row.setButton?.setOnClickListener { onSetSensorDivider(sensorId) }
+        }
+    }
+    
+    private fun updateDividerDisplay(sensorId: Int) {
+        val row = sensorRows.getOrNull(sensorId) ?: return
+        val dividerIndex = dividerIndices[sensorId]
+        val label = Flysight2ControlPoint.DIVIDER_LABELS.getOrElse(dividerIndex) { "1" }
+        row.dividerText?.text = label
+        
+        // Update rate display
+        updateSensorRateDisplay(sensorId)
+    }
+    
+    private fun updateOdrDisplay(sensorId: Int) {
+        val row = sensorRows.getOrNull(sensorId) ?: return
+        val defaultOdrHz = Flysight2ControlPoint.getDefaultOdrHz(sensorId)
+        row.odrText?.text = if (defaultOdrHz >= 1) {
+            String.format("%.0fHz", defaultOdrHz)
+        } else {
+            String.format("%.1fHz", defaultOdrHz)
+        }
+    }
+    
+    private fun updateSensorRateDisplay(sensorId: Int) {
+        val row = sensorRows.getOrNull(sensorId) ?: return
+        val dividerIndex = dividerIndices[sensorId]
+        val divider = Flysight2ControlPoint.DIVIDER_VALUES.getOrElse(dividerIndex) { 1 }
+        
+        val rateText = if (divider == 0) {
+            "Auto"
+        } else {
+            // Calculate rate = defaultOdrHz / divider
+            val defaultOdrHz = Flysight2ControlPoint.getDefaultOdrHz(sensorId)
+            val rate = defaultOdrHz / divider
+            if (rate >= 1) String.format("%.0fHz", rate) else String.format("%.1fHz", rate)
+        }
+        row.rateText?.text = rateText
+    }
+    
+    private fun onSetSensorDivider(sensorId: Int) {
+        val dividerIndex = dividerIndices[sensorId]
+        val divider = Flysight2ControlPoint.DIVIDER_VALUES.getOrElse(dividerIndex) { 1 }
+        
+        Log.i(TAG, "Set Divider for sensor $sensorId to $divider")
+        val controlPoint = Services.bluetooth?.flysightProtocol?.controlPoint
+        if (controlPoint != null) {
+            controlPoint.setBleDivider(sensorId, divider)
+            appendLog("SET ${Flysight2ControlPoint.SENSOR_NAMES[sensorId]}=$divider")
+        } else {
+            appendLog("Error: Not connected")
+        }
     }
     
     private fun onSetDividersClick() {
@@ -197,7 +328,8 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
                         val divider = (data[1].toInt() and 0xFF) or ((data[2].toInt() and 0xFF) shl 8)
                         dividerValues[sensorId] = divider
                         updateDividerDisplay()
-                        appendLog("GET_DIVIDER[$sensorId]: $divider")
+                        updateSensorDividerFromDevice(sensorId, divider)
+                        appendLog("GET ${Flysight2ControlPoint.SENSOR_NAMES.getOrElse(sensorId) { "?" }}=$divider")
                     }
                 }
                 Flysight2ControlPoint.DS_CMD_GET_FW_VERSION.toInt() -> {
@@ -231,7 +363,7 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
     private fun updateDividerDisplay() {
         val sb = StringBuilder("Dividers: ")
         val names = arrayOf("B", "H", "A", "G", "M")
-        for (i in 0..4) {
+        for (i in 0 until Flysight2ControlPoint.SENSOR_COUNT) {
             if (i > 0) sb.append(" ")
             sb.append(names[i]).append("=")
             if (dividerValues[i] >= 0) {
@@ -243,6 +375,20 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         dividerStatus?.text = sb.toString()
     }
     
+    private fun updateSensorDividerFromDevice(sensorId: Int, divider: Int) {
+        // Find the index in DIVIDER_VALUES that matches this divider
+        val index = Flysight2ControlPoint.DIVIDER_VALUES.indexOf(divider)
+        if (index >= 0) {
+            dividerIndices[sensorId] = index
+            updateDividerDisplay(sensorId)
+        } else {
+            // Value not in our predefined list - show as-is
+            Log.w(TAG, "Divider value $divider not in predefined list for sensor $sensorId")
+            val row = sensorRows.getOrNull(sensorId)
+            row?.dividerText?.text = divider.toString()
+        }
+    }
+    
     private fun updateConnectionStatus() {
         val isConnected = Services.bluetooth?.flysightProtocol?.controlPoint != null
         if (isConnected) {
@@ -252,6 +398,27 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
             connectionStatus?.text = "Disconnected"
             connectionStatus?.setTextColor(0xFFFF8888.toInt())
         }
+    }
+    
+    private fun updatePinnedMacDisplay() {
+        val prefs = Services.bluetooth?.preferences
+        val mac = prefs?.flysightPinnedMac
+        if (mac != null) {
+            pinnedMac?.text = mac
+            pinnedMac?.setTextColor(0xFF88FF88.toInt())
+            forgetDeviceButton?.isEnabled = true
+        } else {
+            pinnedMac?.text = "None"
+            pinnedMac?.setTextColor(0xFFAAAA88.toInt())
+            forgetDeviceButton?.isEnabled = false
+        }
+    }
+    
+    private fun onForgetDeviceClick() {
+        Log.i(TAG, "Forget device button clicked")
+        Services.bluetooth?.flysightProtocol?.forgetPinnedDevice()
+        updatePinnedMacDisplay()
+        appendLog("Forgot pinned device")
     }
     
     private fun appendLog(message: String) {
@@ -276,9 +443,10 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         
         if (HudOptions.showControlPoint) {
             // Reset divider values
-            for (i in 0..4) dividerValues[i] = -1
+            for (i in 0 until Flysight2ControlPoint.SENSOR_COUNT) dividerValues[i] = -1
             updateDividerDisplay()
             updateConnectionStatus()
+            updatePinnedMacDisplay()
             registerAsListener()
         } else {
             unregisterAsListener()

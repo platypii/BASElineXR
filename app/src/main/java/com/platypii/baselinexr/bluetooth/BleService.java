@@ -70,6 +70,14 @@ public class BleService {
             Exceptions.report(new NullPointerException("activity should not be null"));
             return;
         }
+        
+        // Set context on protocols that need it for preferences
+        for (BleProtocol protocol : protocols) {
+            if (protocol instanceof Flysight2Protocol) {
+                ((Flysight2Protocol) protocol).setContext(activity.getApplicationContext());
+            }
+        }
+        
         central = new BluetoothCentralManager(activity.getApplicationContext(), bluetoothCentralManagerCallback, handler);
 
         final BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
