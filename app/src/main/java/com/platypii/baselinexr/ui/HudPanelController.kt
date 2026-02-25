@@ -113,6 +113,16 @@ class HudPanelController(private val activity: BaselineActivity) {
             activity.ahrsSystem?.updateVisibility()
         }
 
+        // Control Point button toggles control point panel visibility
+        val controlPointButton = rootView?.findViewById<Button>(R.id.control_point_button)
+        controlPointButton?.isSelected = HudOptions.showControlPoint
+        controlPointButton?.setOnClickListener {
+            HudOptions.showControlPoint = !HudOptions.showControlPoint
+            HudOptions.saveHudOptions(activity)
+            controlPointButton.isSelected = HudOptions.showControlPoint
+            activity.controlPointSystem?.updateVisibility()
+        }
+
         // Add click listener to hudPanel to toggle extraControls visibility
         val hudPanel = rootView?.findViewById<android.widget.LinearLayout>(R.id.hudPanel)
         hudPanel?.setOnClickListener({

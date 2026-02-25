@@ -38,6 +38,7 @@ class BaselineActivity : AppSystemActivity() {
     private var flightStatsSystem: FlightStatsSystem? = null
     var speedChartSystem: SpeedChartSystem? = null
     var sensorDataSystem: SensorDataSystem? = null
+    var controlPointSystem: ControlPointSystem? = null
     var magCalibrationSystem: com.platypii.baselinexr.calibration.MagCalibrationSystem? = null
     var ahrsSystem: com.platypii.baselinexr.ahrs.AhrsSystem? = null
     var ahrsVisualizationSystem: com.platypii.baselinexr.ahrs.AhrsVisualizationSystem? = null
@@ -94,6 +95,7 @@ class BaselineActivity : AppSystemActivity() {
         flightStatsSystem = FlightStatsSystem()
         speedChartSystem = SpeedChartSystem()
         sensorDataSystem = SensorDataSystem()
+        controlPointSystem = ControlPointSystem()
         magCalibrationSystem = com.platypii.baselinexr.calibration.MagCalibrationSystem()
         ahrsSystem = com.platypii.baselinexr.ahrs.AhrsSystem()
         ahrsVisualizationSystem = com.platypii.baselinexr.ahrs.AhrsVisualizationSystem()
@@ -107,6 +109,7 @@ class BaselineActivity : AppSystemActivity() {
         systemManager.registerSystem(flightStatsSystem!!)
         systemManager.registerSystem(speedChartSystem!!)
         systemManager.registerSystem(sensorDataSystem!!)
+        systemManager.registerSystem(controlPointSystem!!)
         systemManager.registerSystem(magCalibrationSystem!!)
         systemManager.registerSystem(ahrsSystem!!)
         systemManager.registerSystem(ahrsVisualizationSystem!!)
@@ -156,6 +159,7 @@ class BaselineActivity : AppSystemActivity() {
         flightStatsSystem?.cleanup()
         speedChartSystem?.cleanup()
         sensorDataSystem?.cleanup()
+        controlPointSystem?.cleanup()
         ahrsSystem?.destroy()
         terrainSystem?.cleanup()
         directionArrowSystem?.cleanup()
@@ -273,6 +277,38 @@ class BaselineActivity : AppSystemActivity() {
                         accelX, accelY, accelZ,
                         magX, magY, magZ,
                         imuRateView, magRateView, sampleCountView
+                    )
+                }
+            },
+            PanelRegistration(R.layout.control_point_panel) {
+                config {
+                    themeResourceId = R.style.PanelAppThemeTransparent
+                    includeGlass = false
+                    enableTransparent = true
+                }
+                panel {
+                    // Set up control point panel references
+                    val connectionStatus = rootView?.findViewById<TextView>(R.id.connection_status)
+                    val deviceMode = rootView?.findViewById<TextView>(R.id.device_mode)
+                    val firmwareVersion = rootView?.findViewById<TextView>(R.id.firmware_version)
+                    val deviceId = rootView?.findViewById<TextView>(R.id.device_id)
+                    val dividerStatus = rootView?.findViewById<TextView>(R.id.divider_status)
+                    val responseLog = rootView?.findViewById<TextView>(R.id.response_log)
+                    val setDividersButton = rootView?.findViewById<android.widget.Button>(R.id.set_dividers_button)
+                    val getDividersButton = rootView?.findViewById<android.widget.Button>(R.id.get_dividers_button)
+                    val getFwButton = rootView?.findViewById<android.widget.Button>(R.id.get_fw_button)
+                    val getDeviceIdButton = rootView?.findViewById<android.widget.Button>(R.id.get_device_id_button)
+                    controlPointSystem?.setViews(
+                        connectionStatus,
+                        deviceMode,
+                        firmwareVersion,
+                        deviceId,
+                        dividerStatus,
+                        responseLog,
+                        setDividersButton,
+                        getDividersButton,
+                        getFwButton,
+                        getDeviceIdButton
                     )
                 }
             },

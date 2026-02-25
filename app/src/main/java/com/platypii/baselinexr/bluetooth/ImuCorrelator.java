@@ -146,14 +146,16 @@ public class ImuCorrelator {
             qz = buf.getShort() / 10000f;
         }
         
-        // Look up matching accel by timestamp (fuzzy match within tolerance)
-        // FlySight firmware sends accel first, then gyro ~79ms later with different timestamp
-        PendingAccel accel = findClosestAccel(sensorTimeMs, 100); // 100ms tolerance
+        // Look up matching accel - firmware always sends accel first, then gyro for same sample
+        // Timestamps may differ by 80-160ms due to firmware clock quirks, so use most recent accel
+        PendingAccel accel = getMostRecentAccel();
         android.util.Log.d(TAG, "onGyroReceived: t=" + sensorTimeMs + " gyro=(" + wx + "," + wy + "," + wz + ") accelMatch=" + (accel != null) + " pending=" + pendingAccel.size());
         if (accel == null) {
-            // No matching accel within tolerance window
+            // No pending accel available
             return null;
         }
+        long timeDiff = sensorTimeMs - accel.sensorTimeMs;
+        android.util.Log.d(TAG, "  -> paired with accel t=" + accel.sensorTimeMs + " (diff=" + timeDiff + "ms)");
         
         // Use accel temperature if gyro temperature not available
         float temperature = Float.isNaN(gyroTemp) ? accel.temperature : gyroTemp;
@@ -167,6 +169,36 @@ public class ImuCorrelator {
                 qw, qx, qy, qz);
     }
     
+    /**
+     * Get and remove the most recent pending accel.
+     * Since firmware always sends accel first, then gyro, this is the correct match.
+     * 
+     * @return Most recent PendingAccel or null if none pending
+     */
+    @Nullable
+    private PendingAccel getMostRecentAccel() {
+        if (pendingAccel.isEmpty()) {
+            return null;
+        }
+        
+        // Find the entry with the highest (most recent) sensor timestamp
+        Long mostRecentKey = null;
+        for (Long key : pendingAccel.keySet()) {
+            if (mostRecentKey == null || key > mostRecentKey) {
+                mostRecentKey = key;
+            }
+        }
+        
+        // Remove and return the most recent accel
+        // Also clear any older entries (they're orphaned)
+        PendingAccel result = pendingAccel.remove(mostRecentKey);
+        if (pendingAccel.size() > 0) {
+            android.util.Log.d(TAG, "Clearing " + pendingAccel.size() + " orphaned accel entries");
+            pendingAccel.clear();
+        }
+        return result;
+    }
+
     /**
      * Find the closest accel timestamp within tolerance window.
      * Removes and returns the matching entry if found.

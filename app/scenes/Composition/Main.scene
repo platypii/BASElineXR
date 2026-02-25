@@ -13,6 +13,7 @@ entities:
             - ref:SensorDataPanel
             - ref:MagCalibrationPanel
             - ref:AhrsPanel
+            - ref:ControlPointPanel
       tag: Scene
   com.meta.models.SceneNode:
     - components:
@@ -265,5 +266,37 @@ entities:
         com.meta.spatial.toolkit.PanelDimensions:
           {}
       tag: AhrsPanel
+  com.meta.models.SceneNode:
+    - components:
+        com.meta.components.Animatable:
+          {}
+        com.meta.components.Name:
+          name: ControlPointPanel
+        com.meta.components.PointerNodeInverseComponent:
+          {}
+        com.meta.components.SceneNode:
+          rotation.data:
+            - 0
+            - 0
+            - 1
+            - 0
+          rotation.format: Quaternion
+          scale:
+            - 1.2
+            - 1.5
+            - 1
+          translation:
+            - -3.5
+            - 0
+            - -1.70000005
+          componentVersion: 1
+        com.meta.spatial.toolkit.Grabbable:
+          type: 0
+          enabled: true
+        com.meta.spatial.toolkit.Panel:
+          panel: "@layout/control_point_panel"
+        com.meta.spatial.toolkit.PanelDimensions:
+          {}
+      tag: ControlPointPanel
 metadata:
   version: 1.33

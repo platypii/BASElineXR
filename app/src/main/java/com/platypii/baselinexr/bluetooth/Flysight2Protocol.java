@@ -1,5 +1,6 @@
 package com.platypii.baselinexr.bluetooth;
 
+import com.platypii.baselinexr.events.FlysightModeEvent;
 import com.platypii.baselinexr.location.LocationCheck;
 import com.platypii.baselinexr.location.NMEAException;
 import com.platypii.baselinexr.measurements.MBaroData;
@@ -20,6 +21,7 @@ import androidx.annotation.Nullable;
 import com.welie.blessed.BluetoothPeripheral;
 import com.welie.blessed.GattStatus;
 import com.welie.blessed.WriteType;
+import org.greenrobot.eventbus.EventBus;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
@@ -38,6 +40,13 @@ public class Flysight2Protocol extends BleProtocol {
     
     // IMU correlator for combining accel + gyro packets
     private final ImuCorrelator imuCorrelator = new ImuCorrelator();
+    
+    // Control point manager for sending commands
+    public final Flysight2ControlPoint controlPoint = new Flysight2ControlPoint();
+    
+    // Track device mode (SLEEP=0, ACTIVE=1, etc.)
+    private int deviceMode = FlysightModeEvent.MODE_SLEEP;
+    private boolean sensorsSubscribed = false;
     
     // Time sync (TODO: implement proper TIME sync from FlySight)
     @Nullable
@@ -134,8 +143,10 @@ public class Flysight2Protocol extends BleProtocol {
         }
         
         peripheral.requestMtu(256);
-        // Start heartbeat thread
-        startHeartbeat(peripheral, flysightService0, flysightCharacteristicRX);
+        // Note: Heartbeat is for File Transfer service only (to reset 30s timeout)
+        // In ACTIVE mode, File Transfer is unavailable (SD card busy with logging)
+        // Sensor data notifications keep the BLE connection alive, so no heartbeat needed
+        // startHeartbeat(peripheral, flysightService0, flysightCharacteristicRX);
     }
 
     // Track which peripheral we're connected to for delayed commands
@@ -145,25 +156,32 @@ public class Flysight2Protocol extends BleProtocol {
     public void onMtuChanged(@NonNull BluetoothPeripheral peripheral, int mtu, @NonNull GattStatus status) {
         Log.i(TAG, "flysight mtu changed " + mtu + " status=" + status);
         connectedPeripheral = peripheral;
+        controlPoint.setPeripheral(peripheral);
+        sensorsSubscribed = false;
         
-        // First, subscribe to control point indications so we can see command responses
-        // After this completes, we'll send dividers BEFORE subscribing to high-rate sensors
+        // Subscribe to Control Point (SD_Control_Point) for command responses
         boolean cpOk = peripheral.setNotify(flysightService1, flysightCharacteristicControlPoint, true);
-        Log.i(TAG, "setNotify control point=" + cpOk);
+        Log.i(TAG, "setNotify SD control point=" + cpOk);
+        
+        // Subscribe to Device Control Point (DS_Control_Point) for device state command responses
+        boolean dsCpOk = peripheral.setNotify(flysightService3, flysightCharacteristicDeviceControlPoint, true);
+        Log.i(TAG, "setNotify DS control point=" + dsCpOk);
+        
+        // Subscribe to Device Mode (DS_Mode) to detect ACTIVE mode transitions
+        boolean modeOk = peripheral.setNotify(flysightService3, flysightCharacteristicMode, true);
+        Log.i(TAG, "setNotify device mode=" + modeOk);
+        
+        // Also read current mode immediately
+        peripheral.readCharacteristic(flysightService3, flysightCharacteristicMode);
     }
     
     /**
-     * Send SET_BLE_DIVIDER command to control point to configure sensor streaming rate
+     * Configure dividers for all sensors.
+     * Only needed for dev devices without config file, or to override settings.
      */
-    private void setBleDiv(@NonNull BluetoothPeripheral peripheral, int sensorId, int divider) {
-        byte[] cmd = new byte[] {
-            0x10, // SD_CMD_SET_BLE_DIVIDER
-            (byte) sensorId,
-            (byte) (divider & 0xFF),        // divider low byte
-            (byte) ((divider >> 8) & 0xFF)  // divider high byte
-        };
-        boolean ok = peripheral.writeCharacteristic(flysightService1, flysightCharacteristicControlPoint, cmd, WriteType.WITH_RESPONSE);
-        Log.i(TAG, "setBleDiv sensor=" + sensorId + " divider=" + divider + " ok=" + ok);
+    public void configureSensorDividers(int divider) {
+        Log.i(TAG, "Configuring sensor dividers to " + divider);
+        controlPoint.configureAllDividers(divider);
     }
     
     private void subscribeToSensors(@NonNull BluetoothPeripheral peripheral) {
@@ -183,21 +201,18 @@ public class Flysight2Protocol extends BleProtocol {
         String uuidShort = characteristic.getUuid().toString().substring(0, 8);
         Log.i(TAG, "onNotificationStateUpdate: uuid=" + uuidShort + " status=" + status);
         
-        // After control point subscription succeeds, send dividers FIRST, then subscribe to sensors
+        // Control point ready - we can now send commands
         if (characteristic.getUuid().equals(flysightCharacteristicControlPoint) && status == GattStatus.SUCCESS) {
-            Log.i(TAG, "Control point ready, setting BLE dividers BEFORE subscribing to sensors...");
-            // Set BLE dividers to reduce data rate (prevents queue swamping)
-            // sensor_id: 0=Baro, 1=Hum, 2=Accel, 3=Gyro, 4=Mag
-            // divider=20 at 200Hz gives ~10Hz output
-            int divider = 20;
-            setBleDiv(peripheral, 0, divider); // Baro
-            setBleDiv(peripheral, 1, divider); // Hum
-            setBleDiv(peripheral, 2, divider); // Accel
-            setBleDiv(peripheral, 3, divider); // Gyro
-            setBleDiv(peripheral, 4, divider); // Mag
-            
-            // Now subscribe to sensors (after dividers are set)
-            subscribeToSensors(peripheral);
+            Log.i(TAG, "Control point ready for commands");
+            // If device is already in ACTIVE mode, configure and subscribe now
+            if (deviceMode == FlysightModeEvent.MODE_ACTIVE && !sensorsSubscribed) {
+                onDeviceBecameActive(peripheral);
+            }
+        }
+        
+        // Device mode subscription ready
+        if (characteristic.getUuid().equals(flysightCharacteristicMode) && status == GattStatus.SUCCESS) {
+            Log.i(TAG, "Device mode notifications enabled");
         }
     }
 
@@ -228,7 +243,11 @@ public class Flysight2Protocol extends BleProtocol {
             } else if (uuid.equals(flysightCharacteristicHum)) {
                 processHum(value);
             } else if (uuid.equals(flysightCharacteristicControlPoint)) {
-                processControlPointResponse(value);
+                controlPoint.processResponse(value);
+            } else if (uuid.equals(flysightCharacteristicDeviceControlPoint)) {
+                controlPoint.processResponse(value);
+            } else if (uuid.equals(flysightCharacteristicMode)) {
+                processDsMode(value);
             } else {
                 // Unknown characteristic, use legacy processBytes
                 processBytes(peripheral, value);
@@ -239,30 +258,43 @@ public class Flysight2Protocol extends BleProtocol {
     }
     
     /**
-     * Handle control point indication responses
-     * Format: [0xF0] [Request Opcode] [Status] [Optional Data...]
-     * Status: 0x01=Success, 0x02=Not Supported, 0x03=Invalid Param, 0x04=Failed, 0x05=Not Permitted
+     * Handle DS_Mode characteristic update (device mode changes)
+     * Mode values: 0=SLEEP, 1=ACTIVE, 2=CONFIG, 3=USB, 4=PAIRING, 5=START
      */
-    private void processControlPointResponse(@NonNull byte[] value) {
-        if (value.length < 3) {
-            Log.w(TAG, "Control point response too short: " + value.length);
+    private void processDsMode(@NonNull byte[] value) {
+        if (value.length < 1) {
+            Log.w(TAG, "DS_Mode value too short");
             return;
         }
-        int responseId = value[0] & 0xFF;
-        int opcode = value[1] & 0xFF;
-        int statusCode = value[2] & 0xFF;
-        String statusStr;
-        switch (statusCode) {
-            case 0x01: statusStr = "SUCCESS"; break;
-            case 0x02: statusStr = "NOT_SUPPORTED"; break;
-            case 0x03: statusStr = "INVALID_PARAM"; break;
-            case 0x04: statusStr = "FAILED"; break;
-            case 0x05: statusStr = "NOT_PERMITTED"; break;
-            case 0x06: statusStr = "BUSY"; break;
-            default: statusStr = "UNKNOWN(" + statusCode + ")"; break;
+        int previousMode = deviceMode;
+        deviceMode = value[0] & 0xFF;
+        Log.i(TAG, "Device mode: " + FlysightModeEvent.modeName(previousMode) + " -> " + FlysightModeEvent.modeName(deviceMode));
+        
+        // Post event for other components
+        EventBus.getDefault().post(new FlysightModeEvent(deviceMode, previousMode));
+        
+        // If transitioning to ACTIVE mode, configure and subscribe to sensors
+        if ((deviceMode == FlysightModeEvent.MODE_ACTIVE || deviceMode == FlysightModeEvent.MODE_START) 
+                && !sensorsSubscribed && connectedPeripheral != null) {
+            onDeviceBecameActive(connectedPeripheral);
         }
-        Log.i(TAG, "Control point response: responseId=0x" + Integer.toHexString(responseId) 
-            + " opcode=0x" + Integer.toHexString(opcode) + " status=" + statusStr);
+    }
+    
+    /**
+     * Called when device enters ACTIVE mode - subscribe to sensor data streams.
+     * Note: Divider configuration is NOT done automatically. Production devices use config.txt.
+     * For dev devices, call configureSensorDividers() manually or through UI.
+     */
+    private void onDeviceBecameActive(@NonNull BluetoothPeripheral peripheral) {
+        Log.i(TAG, "Device became active, subscribing to sensors...");
+        
+        // Note: Divider configuration removed from automatic flow.
+        // Production devices have dividers set from config.txt.
+        // Dev devices can call controlPoint.configureAllDividers() manually.
+        
+        // Subscribe to sensor data
+        subscribeToSensors(peripheral);
+        sensorsSubscribed = true;
     }
 
     @Override
