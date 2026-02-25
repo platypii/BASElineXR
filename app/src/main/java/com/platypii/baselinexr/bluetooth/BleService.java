@@ -108,6 +108,15 @@ public class BleService {
      * Scan for bluetooth peripherals
      */
     private void scan() {
+        // Don't scan if already connected or connecting
+        if (bluetoothState == BT_CONNECTED) {
+            Log.w(TAG, "Not scanning - already connected to " + (currentPeripheral != null ? currentPeripheral.getAddress() : "unknown"));
+            return;
+        }
+        if (bluetoothState == BT_CONNECTING) {
+            Log.w(TAG, "Not scanning - connection in progress");
+            return;
+        }
         setState(BT_SCANNING);
         // Scan for peripherals with a certain service UUIDs
         central.startPairingPopupHack();
@@ -128,24 +137,27 @@ public class BleService {
 
         @Override
         public void onConnectionFailed(@NonNull BluetoothPeripheral peripheral, @NonNull final HciStatus status) {
-            Log.e(TAG, "BLE connection " + peripheral.getName() + " failed with status " + status);
+            Log.e(TAG, "BLE connection failed " + peripheral.getAddress() + " " + peripheral.getName() + " status=" + status);
             scanIfPermitted(activity); // start over
         }
 
         @Override
         public void onDisconnectedPeripheral(@NonNull final BluetoothPeripheral peripheral, @NonNull final HciStatus status) {
-            Log.i(TAG, "BLE disconnected " + peripheral.getName() + " with status " + status);
+            Log.i(TAG, "BLE disconnected " + peripheral.getAddress() + " " + peripheral.getName() + " with status " + status);
             currentPeripheral = null;
             // Go back to searching
             if (BluetoothState.started(bluetoothState)) {
+                Log.i(TAG, "Restarting scan after disconnect");
                 scanIfPermitted(activity);
             }
         }
 
         @Override
         public void onDiscoveredPeripheral(@NonNull BluetoothPeripheral peripheral, @NonNull ScanResult scanResult) {
+            // Only process discoveries when actively scanning
             if (bluetoothState != BT_SCANNING) {
-                Log.e(TAG, "Invalid BLE state: " + BluetoothState.BT_STATES[bluetoothState]);
+                Log.w(TAG, "Ignoring discovered peripheral - not scanning (state=" + BluetoothState.BT_STATES[bluetoothState] + ")");
+                return;
             }
             if (!hasDiscovered) {
                 Log.i(TAG, "Discovered first bluetooth peripheral");
@@ -160,6 +172,7 @@ public class BleService {
                 if (protocol.canParse(peripheral, record)) {
                     Log.i(TAG, protocol + " device found, connecting to: " + deviceName);
                     connect(peripheral, protocol);
+                    return;  // Only connect to first matching device
                 }
             }
         }
@@ -176,8 +189,10 @@ public class BleService {
 
     private void connect(@NonNull BluetoothPeripheral peripheral, @NonNull BleProtocol protocol) {
         if (bluetoothState != BT_SCANNING) {
-            Log.e(TAG, "Invalid BLE state: " + BluetoothState.BT_STATES[bluetoothState]);
+            Log.e(TAG, "Cannot connect - invalid BLE state: " + BluetoothState.BT_STATES[bluetoothState]);
+            return;
         }
+        Log.i(TAG, "Connecting to " + peripheral.getAddress() + " " + peripheral.getName());
         central.stopScan();
         setState(BT_CONNECTING);
         // Connect to device

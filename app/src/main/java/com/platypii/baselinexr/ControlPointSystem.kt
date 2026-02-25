@@ -149,26 +149,19 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         }
     }
     
+    // DS_Control_Point (0x07) functionality is DISABLED
+    // Subscribing to it or sending commands triggers Quest OS pairing popup
+    // even on bonded devices. The connection also becomes unstable.
+    // See: https://github.com/platypii/BASElineXR/issues/XXX
+    
     private fun onGetFwClick() {
-        Log.i(TAG, "Get FW Version button clicked")
-        val controlPoint = Services.bluetooth?.flysightProtocol?.controlPoint
-        if (controlPoint != null) {
-            controlPoint.getFirmwareVersion()
-            appendLog("Sent: GET_FW_VERSION")
-        } else {
-            appendLog("Error: Not connected")
-        }
+        Log.i(TAG, "Get FW Version button clicked - DISABLED")
+        appendLog("FW version: disabled (causes popup)")
     }
     
     private fun onGetDeviceIdClick() {
-        Log.i(TAG, "Get Device ID button clicked")
-        val controlPoint = Services.bluetooth?.flysightProtocol?.controlPoint
-        if (controlPoint != null) {
-            controlPoint.getDeviceId()
-            appendLog("Sent: GET_DEVICE_ID")
-        } else {
-            appendLog("Error: Not connected")
-        }
+        Log.i(TAG, "Get Device ID button clicked - DISABLED")
+        appendLog("Device ID: disabled (causes popup)")
     }
     
     private fun registerAsListener() {
@@ -182,6 +175,7 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
     }
     
     override fun onControlPointResponse(opcode: Int, status: Int, data: ByteArray?) {
+        Log.i(TAG, "onControlPointResponse: opcode=0x${opcode.toString(16)} status=$status dataLen=${data?.size ?: 0}")
         activity?.runOnUiThread {
             val statusStr = when (status) {
                 Flysight2ControlPoint.CP_STATUS_SUCCESS -> "OK"

@@ -81,6 +81,9 @@ public class Flysight2Protocol extends BleProtocol {
     private static final long gpsEpochMilliseconds = 315964800000L - 18000L; // January 6, 1980 - 18s
     private static final long millisecondsPerWeek = 604800000L;
 
+    // Bionic Avionics manufacturer ID for FlySight
+    private static final int MANUFACTURER_ID_BIONIC = 0x09DB;
+
     public Flysight2Protocol(@NonNull PubSub<MLocation> locationUpdates) {
         this.locationUpdates = locationUpdates;
     }
@@ -89,13 +92,33 @@ public class Flysight2Protocol extends BleProtocol {
     public boolean canParse(@NonNull BluetoothPeripheral peripheral, @Nullable ScanRecord record) {
         String name = peripheral.getName();
         String address = peripheral.getAddress();
-       // Log.d(TAG, "canParse checking device: name=" + name + ", address=" + address);
         
-        boolean matches = "FlySight".equals(name);
-        if (matches) {
-            Log.i(TAG, "Found FlySight device! " + name + " " + address);
+        // First check if this is a FlySight device by name
+        if (!"FlySight".equals(name)) {
+            return false;
         }
-        return matches;
+        
+        // Check manufacturer data to ensure we're not connecting to a device in pairing mode
+        // FlySight uses manufacturer data with status byte: 0x00 = normal, 0x01 = pairing mode
+        if (record != null) {
+            byte[] mfgData = record.getManufacturerSpecificData(MANUFACTURER_ID_BIONIC);
+            if (mfgData != null && mfgData.length >= 1) {
+                int statusByte = mfgData[0] & 0xFF;
+                if (statusByte == 0x01) {
+                    // Device is in pairing request mode - skip it to avoid pairing popup
+                    Log.w(TAG, "Skipping FlySight " + address + " - device is in pairing mode (status=0x01)");
+                    return false;
+                }
+                Log.i(TAG, "Found FlySight device! " + name + " " + address + " (status=0x" + String.format("%02X", statusByte) + ")");
+            } else {
+                // No manufacturer data or wrong manufacturer - still try to connect
+                Log.i(TAG, "Found FlySight device! " + name + " " + address + " (no mfg data)");
+            }
+        } else {
+            Log.i(TAG, "Found FlySight device! " + name + " " + address + " (no scan record)");
+        }
+        
+        return true;
     }
 
     private boolean isFlysight(@NonNull BluetoothPeripheral peripheral, @Nullable ScanRecord record) {
@@ -163,9 +186,9 @@ public class Flysight2Protocol extends BleProtocol {
         boolean cpOk = peripheral.setNotify(flysightService1, flysightCharacteristicControlPoint, true);
         Log.i(TAG, "setNotify SD control point=" + cpOk);
         
-        // Subscribe to Device Control Point (DS_Control_Point) for device state command responses
-        boolean dsCpOk = peripheral.setNotify(flysightService3, flysightCharacteristicDeviceControlPoint, true);
-        Log.i(TAG, "setNotify DS control point=" + dsCpOk);
+        // NOTE: DS_Control_Point (0x07) subscription removed from auto-connect.
+        // Subscribing to it triggers the Quest OS pairing popup even on bonded devices.
+        // Call subscribeToDeviceControlPoint() explicitly when needed (e.g., from Control Point panel).
         
         // Subscribe to Device Mode (DS_Mode) to detect ACTIVE mode transitions
         boolean modeOk = peripheral.setNotify(flysightService3, flysightCharacteristicMode, true);
@@ -173,6 +196,21 @@ public class Flysight2Protocol extends BleProtocol {
         
         // Also read current mode immediately
         peripheral.readCharacteristic(flysightService3, flysightCharacteristicMode);
+    }
+    
+    /**
+     * Subscribe to DS_Control_Point for firmware version/device ID commands.
+     * Call this only when needed, as it may trigger Quest OS pairing popup on some devices.
+     * @return true if subscription was queued successfully
+     */
+    public boolean subscribeToDeviceControlPoint() {
+        if (connectedPeripheral == null) {
+            Log.w(TAG, "subscribeToDeviceControlPoint: no peripheral connected");
+            return false;
+        }
+        boolean ok = connectedPeripheral.setNotify(flysightService3, flysightCharacteristicDeviceControlPoint, true);
+        Log.i(TAG, "setNotify DS control point=" + ok);
+        return ok;
     }
     
     /**

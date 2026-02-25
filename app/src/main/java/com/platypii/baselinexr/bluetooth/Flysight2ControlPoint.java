@@ -26,7 +26,7 @@ import java.util.UUID;
  * - 0x04: SET_MODE (SLEEP=0, ACTIVE=1)
  */
 public class Flysight2ControlPoint {
-    private static final String TAG = "FS2ControlPoint";
+    private static final String TAG = "FlysightProtocol";  // Use same tag for easier filtering
 
     // Sensor Data service and control point
     private static final UUID sensorDataService = UUID.fromString("00000001-cc7a-482a-984a-7f2ed5b3e58f");
@@ -240,6 +240,13 @@ public class Flysight2ControlPoint {
      * Format: [0xF0] [Request Opcode] [Status] [Optional Data...]
      */
     public void processResponse(@NonNull byte[] value) {
+        // Log raw hex for debugging
+        StringBuilder hex = new StringBuilder();
+        for (byte b : value) {
+            hex.append(String.format("%02X ", b));
+        }
+        Log.i(TAG, "CP Response raw (" + value.length + " bytes): " + hex);
+        
         if (value.length < 3) {
             Log.w(TAG, "Control point response too short: " + value.length);
             return;
@@ -249,7 +256,8 @@ public class Flysight2ControlPoint {
         int statusCode = value[2] & 0xFF;
         
         String statusStr = getStatusString(statusCode);
-        Log.i(TAG, "Response: opcode=0x" + Integer.toHexString(opcode) 
+        Log.i(TAG, "CP Response: responseId=0x" + Integer.toHexString(responseId) 
+            + " opcode=0x" + Integer.toHexString(opcode) 
             + " status=" + statusStr);
 
         // Extract optional response data
