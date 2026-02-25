@@ -87,7 +87,7 @@ public class Services {
             location.start(appContext);
 
             Log.i(TAG, "Starting sensor service");
-            sensor.start(appContext);
+            sensor.start(appContext, bluetooth);
 
             Log.i(TAG, "Starting flight services");
             flightComputer.start();

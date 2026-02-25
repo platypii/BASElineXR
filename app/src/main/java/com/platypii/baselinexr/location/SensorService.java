@@ -7,7 +7,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.platypii.baselinexr.MockTrackOptions;
+import com.platypii.baselinexr.bluetooth.BluetoothService;
+import com.platypii.baselinexr.bluetooth.Flysight2Protocol;
 import com.platypii.baselinexr.measurements.MBaroData;
+import com.platypii.baselinexr.measurements.MHumData;
 import com.platypii.baselinexr.measurements.MImuData;
 import com.platypii.baselinexr.measurements.MMagData;
 import com.platypii.baselinexr.util.PubSub;
@@ -35,16 +38,20 @@ public class SensorService implements Subscriber<MImuData> {
     @NonNull
     private final MockSensorProvider mockSensorProvider;
 
-    // Future: BluetoothSensorProvider
+    // Bluetooth service reference (set on start)
+    @Nullable
+    private BluetoothService bluetooth;
 
     // PubSub for re-publishing sensor updates (after processing)
     public final PubSub<MImuData> imuUpdates = new PubSub<>();
     public final PubSub<MMagData> magUpdates = new PubSub<>();
     public final PubSub<MBaroData> baroUpdates = new PubSub<>();
+    public final PubSub<MHumData> humUpdates = new PubSub<>();
 
     // Subscribers for internal routing
     private final Subscriber<MMagData> magSubscriber = this::onMagUpdate;
     private final Subscriber<MBaroData> baroSubscriber = this::onBaroUpdate;
+    private final Subscriber<MHumData> humSubscriber = this::onHumUpdate;
 
     public SensorService() {
         mockSensorProvider = new MockSensorProvider();
@@ -52,11 +59,13 @@ public class SensorService implements Subscriber<MImuData> {
 
     @Override
     public void apply(MImuData imu) {
+        Log.v(TAG, "SensorService received IMU: " + imu);
         // Re-post to subscribers (AhrsSystem handles rotation estimation)
         imuUpdates.post(imu);
     }
 
     private void onMagUpdate(MMagData mag) {
+        Log.v(TAG, "SensorService received MAG: " + mag);
         // Re-post to subscribers (AhrsSystem handles rotation estimation)
         magUpdates.post(mag);
     }
@@ -64,6 +73,11 @@ public class SensorService implements Subscriber<MImuData> {
     private void onBaroUpdate(MBaroData baro) {
         // Re-post to subscribers
         baroUpdates.post(baro);
+    }
+
+    private void onHumUpdate(MHumData hum) {
+        // Re-post to subscribers
+        humUpdates.post(hum);
     }
 
     @NonNull
@@ -82,8 +96,9 @@ public class SensorService implements Subscriber<MImuData> {
         }
     }
 
-    public void start(@NonNull Context context) {
+    public void start(@NonNull Context context, @Nullable BluetoothService bluetoothService) {
         this.appContext = context;
+        this.bluetooth = bluetoothService;
         if (sensorMode != SENSOR_NONE) {
             Log.e(TAG, "Sensor service already started");
         }
@@ -105,11 +120,27 @@ public class SensorService implements Subscriber<MImuData> {
             // since GPS service starts first and initializes the timeline quickly
             mockSensorProvider.start(context);
             Log.i(TAG, "Mock sensor provider started");
+        } else if (bluetoothService != null) {
+            // Live bluetooth sensor mode
+            sensorMode = SENSOR_BLUETOOTH;
+            Flysight2Protocol protocol = bluetoothService.flysightProtocol;
+            // Subscribe to FlySight sensor data streams
+            protocol.imuUpdates.subscribe(this);
+            protocol.magUpdates.subscribe(magSubscriber);
+            protocol.baroUpdates.subscribe(baroSubscriber);
+            protocol.humUpdates.subscribe(humSubscriber);
+            Log.i(TAG, "Bluetooth sensor provider started, subscribed to protocol.imuUpdates/magUpdates/baroUpdates/humUpdates");
         } else {
-            // Future: Bluetooth sensor mode
             sensorMode = SENSOR_NONE;
-            Log.i(TAG, "No sensor source available (live mode not implemented yet)");
+            Log.i(TAG, "No sensor source available");
         }
+    }
+
+    /**
+     * Start sensor service (convenience method without bluetooth)
+     */
+    public void start(@NonNull Context context) {
+        start(context, null);
     }
 
     public void stop() {
@@ -118,10 +149,16 @@ public class SensorService implements Subscriber<MImuData> {
             mockSensorProvider.magUpdates.unsubscribe(magSubscriber);
             mockSensorProvider.baroUpdates.unsubscribe(baroSubscriber);
             mockSensorProvider.stop();
+        } else if (sensorMode == SENSOR_BLUETOOTH && bluetooth != null) {
+            Flysight2Protocol protocol = bluetooth.flysightProtocol;
+            protocol.imuUpdates.unsubscribe(this);
+            protocol.magUpdates.unsubscribe(magSubscriber);
+            protocol.baroUpdates.unsubscribe(baroSubscriber);
+            protocol.humUpdates.unsubscribe(humSubscriber);
         }
-        // Future: stop bluetooth sensor
 
         sensorMode = SENSOR_NONE;
+        bluetooth = null;
     }
 
     /**
@@ -133,8 +170,9 @@ public class SensorService implements Subscriber<MImuData> {
             return;
         }
         Log.i(TAG, "Restarting sensor service");
+        BluetoothService savedBluetooth = bluetooth;
         stop();
-        start(appContext);
+        start(appContext, savedBluetooth);
     }
 
     /**

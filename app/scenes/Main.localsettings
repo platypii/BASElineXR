@@ -4,3 +4,5 @@ data:
     - Space
     - Object1
     - trench8d
+    - Object2
+  current_tab: Object2
