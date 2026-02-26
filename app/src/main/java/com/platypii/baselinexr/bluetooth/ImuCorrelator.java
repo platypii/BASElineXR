@@ -97,7 +97,9 @@ public class ImuCorrelator {
         }
         
         // Parse quaternion (if present, sensor fusion enabled)
-        // Bytes 19-26: qw, qx, qy, qz as int16_t × 10000
+        // Bytes 19-26: qw, qx, qy, qz as int16_t × 10000 (little-endian)
+        // Frame: NWU (North-West-Up) - see docs/FlySight2-Coordinate-Systems.md
+        // Identity (1,0,0,0): device flat, +Y local = North, +X local = East, +Z local = Up
         float qw = Float.NaN, qx = Float.NaN, qy = Float.NaN, qz = Float.NaN;
         if ((mask & 0x10) != 0) {
             short rawW = buf.getShort();

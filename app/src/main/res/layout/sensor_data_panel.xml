@@ -488,7 +488,7 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Fusion Quaternion Section -->
+    <!-- Fusion Euler Angles Section -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -506,7 +506,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Fusion (quaternion)"
+                android:text="Fusion NWU Euler (↻ axis)"
                 android:textColor="#88FF88"
                 android:textSize="16sp"
                 android:textStyle="bold" />
@@ -531,12 +531,12 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="W:"
+                android:text="↻X (E):"
                 android:textColor="#AAAAAA"
                 android:textSize="14sp" />
 
             <TextView
-                android:id="@+id/quat_w"
+                android:id="@+id/euler_roll"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="2"
@@ -555,12 +555,12 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="X:"
+                android:text="↻Y (N):"
                 android:textColor="#AAAAAA"
                 android:textSize="14sp" />
 
             <TextView
-                android:id="@+id/quat_x"
+                android:id="@+id/euler_pitch"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="2"
@@ -579,36 +579,12 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Y:"
+                android:text="↻Z (Up):"
                 android:textColor="#AAAAAA"
                 android:textSize="14sp" />
 
             <TextView
-                android:id="@+id/quat_y"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="2"
-                android:text="---"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp"
-                android:fontFamily="monospace" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Z:"
-                android:textColor="#AAAAAA"
-                android:textSize="14sp" />
-
-            <TextView
-                android:id="@+id/quat_z"
+                android:id="@+id/euler_yaw"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="2"

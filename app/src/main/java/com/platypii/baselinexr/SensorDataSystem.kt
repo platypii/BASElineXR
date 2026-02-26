@@ -38,10 +38,9 @@ class SensorDataSystem : SystemBase() {
     private var baroTemp: TextView? = null
     private var humHumidity: TextView? = null
     private var humTemp: TextView? = null
-    private var quatW: TextView? = null
-    private var quatX: TextView? = null
-    private var quatY: TextView? = null
-    private var quatZ: TextView? = null
+    private var eulerRoll: TextView? = null
+    private var eulerPitch: TextView? = null
+    private var eulerYaw: TextView? = null
     private var imuRateView: TextView? = null
     private var magRateView: TextView? = null
     private var baroRateView: TextView? = null
@@ -124,7 +123,7 @@ class SensorDataSystem : SystemBase() {
         magX: TextView?, magY: TextView?, magZ: TextView?,
         baroPressure: TextView?, baroTemp: TextView?,
         humHumidity: TextView?, humTemp: TextView?,
-        quatW: TextView?, quatX: TextView?, quatY: TextView?, quatZ: TextView?,
+        eulerRoll: TextView?, eulerPitch: TextView?, eulerYaw: TextView?,
         imuRateView: TextView?, magRateView: TextView?, 
         baroRateView: TextView?, humRateView: TextView?,
         sampleCountView: TextView?
@@ -142,10 +141,9 @@ class SensorDataSystem : SystemBase() {
         this.baroTemp = baroTemp
         this.humHumidity = humHumidity
         this.humTemp = humTemp
-        this.quatW = quatW
-        this.quatX = quatX
-        this.quatY = quatY
-        this.quatZ = quatZ
+        this.eulerRoll = eulerRoll
+        this.eulerPitch = eulerPitch
+        this.eulerYaw = eulerYaw
         this.imuRateView = imuRateView
         this.magRateView = magRateView
         this.baroRateView = baroRateView
@@ -229,12 +227,47 @@ class SensorDataSystem : SystemBase() {
         accelY?.text = String.format("%+7.3f", imu.accelY)
         accelZ?.text = String.format("%+7.3f", imu.accelZ)
         
-        // Quaternion values (if available from sensor fusion)
+        // Euler angles from quaternion (if available from sensor fusion)
+        // See docs/FlySight2-Coordinate-Systems.md for detailed explanation
+        //
+        // NWU Frame at identity quaternion (1,0,0,0):
+        //   +X = East, +Y = North, +Z = Up
+        //   Device flat, LED/light side (+Y local) pointing North
+        //
+        // Euler angles represent rotation ABOUT each world axis:
+        //   ↻X (rotX): rotation about East axis (positive = North side tilts up)
+        //   ↻Y (rotY): rotation about North axis (positive = East side tilts down)
+        //   ↻Z (rotZ): rotation about Up axis (positive = CCW from above, LED toward West)
         if (!imu.qw.isNaN()) {
-            quatW?.text = String.format("%+.4f", imu.qw)
-            quatX?.text = String.format("%+.4f", imu.qx)
-            quatY?.text = String.format("%+.4f", imu.qy)
-            quatZ?.text = String.format("%+.4f", imu.qz)
+            val qw = imu.qw.toDouble()
+            val qx = imu.qx.toDouble()
+            val qy = imu.qy.toDouble()
+            val qz = imu.qz.toDouble()
+            
+            // ↻X: Rotation about X axis (East) - "Roll" in aircraft terms
+            // Positive = North side of device tilts upward
+            val sinr = 2.0 * (qw * qx + qy * qz)
+            val cosr = 1.0 - 2.0 * (qx * qx + qy * qy)
+            val rotX = Math.toDegrees(kotlin.math.atan2(sinr, cosr))
+            
+            // ↻Y: Rotation about Y axis (North) - "Pitch" in aircraft terms
+            // Positive = East side of device tilts downward
+            val sinp = 2.0 * (qw * qy - qz * qx)
+            val rotY = if (kotlin.math.abs(sinp) >= 1.0) {
+                Math.toDegrees(kotlin.math.sign(sinp) * Math.PI / 2.0)  // Gimbal lock
+            } else {
+                Math.toDegrees(kotlin.math.asin(sinp))
+            }
+            
+            // ↻Z: Rotation about Z axis (Up) - "Yaw" in aircraft terms
+            // Positive = counterclockwise from above (LED rotates toward West)
+            val siny = 2.0 * (qw * qz + qx * qy)
+            val cosy = 1.0 - 2.0 * (qy * qy + qz * qz)
+            val rotZ = Math.toDegrees(kotlin.math.atan2(siny, cosy))
+            
+            eulerRoll?.text = String.format("%+7.1f°", rotX)
+            eulerPitch?.text = String.format("%+7.1f°", rotY)
+            eulerYaw?.text = String.format("%+7.1f°", rotZ)
         }
         
         // Update rate and sample count
