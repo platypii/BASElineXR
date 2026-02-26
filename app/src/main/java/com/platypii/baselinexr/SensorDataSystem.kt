@@ -38,6 +38,10 @@ class SensorDataSystem : SystemBase() {
     private var baroTemp: TextView? = null
     private var humHumidity: TextView? = null
     private var humTemp: TextView? = null
+    private var quatW: TextView? = null
+    private var quatX: TextView? = null
+    private var quatY: TextView? = null
+    private var quatZ: TextView? = null
     private var imuRateView: TextView? = null
     private var magRateView: TextView? = null
     private var baroRateView: TextView? = null
@@ -120,6 +124,7 @@ class SensorDataSystem : SystemBase() {
         magX: TextView?, magY: TextView?, magZ: TextView?,
         baroPressure: TextView?, baroTemp: TextView?,
         humHumidity: TextView?, humTemp: TextView?,
+        quatW: TextView?, quatX: TextView?, quatY: TextView?, quatZ: TextView?,
         imuRateView: TextView?, magRateView: TextView?, 
         baroRateView: TextView?, humRateView: TextView?,
         sampleCountView: TextView?
@@ -137,6 +142,10 @@ class SensorDataSystem : SystemBase() {
         this.baroTemp = baroTemp
         this.humHumidity = humHumidity
         this.humTemp = humTemp
+        this.quatW = quatW
+        this.quatX = quatX
+        this.quatY = quatY
+        this.quatZ = quatZ
         this.imuRateView = imuRateView
         this.magRateView = magRateView
         this.baroRateView = baroRateView
@@ -219,6 +228,14 @@ class SensorDataSystem : SystemBase() {
         accelX?.text = String.format("%+7.3f", imu.accelX)
         accelY?.text = String.format("%+7.3f", imu.accelY)
         accelZ?.text = String.format("%+7.3f", imu.accelZ)
+        
+        // Quaternion values (if available from sensor fusion)
+        if (!imu.qw.isNaN()) {
+            quatW?.text = String.format("%+.4f", imu.qw)
+            quatX?.text = String.format("%+.4f", imu.qx)
+            quatY?.text = String.format("%+.4f", imu.qy)
+            quatZ?.text = String.format("%+.4f", imu.qz)
+        }
         
         // Update rate and sample count
         imuRateView?.text = String.format("%.1f Hz", imuRateCalc.getRate())

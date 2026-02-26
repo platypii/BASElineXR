@@ -62,8 +62,8 @@ public class Flysight2ControlPoint {
     public static final String[] SENSOR_NAMES = {"Baro", "Hum", "Accel", "Gyro", "Mag"};
 
     // ODR values in Hz for each sensor (index = ODR setting from config.txt)
-    // Baro (LPS22HH): ODR 0-3
-    public static final double[] BARO_ODR_HZ = {10, 20, 50, 100};
+    // Baro (LPS22HH): ODR 0-7
+    public static final double[] BARO_ODR_HZ = {0, 1, 10, 25, 50, 75, 100, 200};
     // Humidity (HTS221): ODR 0-3
     public static final double[] HUM_ODR_HZ = {0, 1, 7, 12.5};
     // Accel (LSM6DSO): ODR 0-11

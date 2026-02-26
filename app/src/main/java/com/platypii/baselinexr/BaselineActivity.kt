@@ -273,6 +273,10 @@ class BaselineActivity : AppSystemActivity() {
                     val baroTemp = rootView?.findViewById<TextView>(R.id.baro_temp)
                     val humHumidity = rootView?.findViewById<TextView>(R.id.hum_humidity)
                     val humTemp = rootView?.findViewById<TextView>(R.id.hum_temp)
+                    val quatW = rootView?.findViewById<TextView>(R.id.quat_w)
+                    val quatX = rootView?.findViewById<TextView>(R.id.quat_x)
+                    val quatY = rootView?.findViewById<TextView>(R.id.quat_y)
+                    val quatZ = rootView?.findViewById<TextView>(R.id.quat_z)
                     val imuRateView = rootView?.findViewById<TextView>(R.id.imu_rate)
                     val magRateView = rootView?.findViewById<TextView>(R.id.mag_rate)
                     val baroRateView = rootView?.findViewById<TextView>(R.id.baro_rate)
@@ -284,6 +288,7 @@ class BaselineActivity : AppSystemActivity() {
                         magX, magY, magZ,
                         baroPressure, baroTemp,
                         humHumidity, humTemp,
+                        quatW, quatX, quatY, quatZ,
                         imuRateView, magRateView, baroRateView, humRateView,
                         sampleCountView
                     )

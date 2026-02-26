@@ -26,13 +26,29 @@
         android:padding="8dp"
         android:layout_marginBottom="8dp">
 
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Gyroscope (deg/s)"
-            android:textColor="#FFFF00"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Gyroscope (deg/s)"
+                android:textColor="#FFFF00"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/imu_rate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="-- Hz"
+                android:textColor="#AAAAAA"
+                android:textSize="12sp"
+                android:fontFamily="monospace" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -208,13 +224,29 @@
         android:padding="8dp"
         android:layout_marginBottom="8dp">
 
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Magnetometer (gauss)"
-            android:textColor="#FF00FF"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Magnetometer (gauss)"
+                android:textColor="#FF00FF"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/mag_rate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="-- Hz"
+                android:textColor="#AAAAAA"
+                android:textSize="12sp"
+                android:fontFamily="monospace" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -299,13 +331,29 @@
         android:padding="8dp"
         android:layout_marginBottom="8dp">
 
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Barometer"
-            android:textColor="#FF8800"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Barometer"
+                android:textColor="#FF8800"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/baro_rate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="-- Hz"
+                android:textColor="#AAAAAA"
+                android:textSize="12sp"
+                android:fontFamily="monospace" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -366,13 +414,29 @@
         android:padding="8dp"
         android:layout_marginBottom="8dp">
 
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Humidity"
-            android:textColor="#00AAFF"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Humidity"
+                android:textColor="#00AAFF"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/hum_rate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="-- Hz"
+                android:textColor="#AAAAAA"
+                android:textSize="12sp"
+                android:fontFamily="monospace" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -424,21 +488,38 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Data Info Section -->
+    <!-- Fusion Quaternion Section -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:background="#22FFFFFF"
-        android:padding="8dp">
+        android:padding="8dp"
+        android:layout_marginBottom="8dp">
 
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Data Info"
-            android:textColor="#AAAAFF"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Fusion (quaternion)"
+                android:textColor="#88FF88"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/sample_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0"
+                android:textColor="#AAAAAA"
+                android:textSize="12sp"
+                android:fontFamily="monospace" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -450,18 +531,18 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="IMU Rate:"
+                android:text="W:"
                 android:textColor="#AAAAAA"
-                android:textSize="12sp" />
+                android:textSize="14sp" />
 
             <TextView
-                android:id="@+id/imu_rate"
+                android:id="@+id/quat_w"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="-- Hz"
+                android:layout_weight="2"
+                android:text="---"
                 android:textColor="#FFFFFF"
-                android:textSize="12sp"
+                android:textSize="14sp"
                 android:fontFamily="monospace" />
         </LinearLayout>
 
@@ -474,18 +555,18 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="MAG Rate:"
+                android:text="X:"
                 android:textColor="#AAAAAA"
-                android:textSize="12sp" />
+                android:textSize="14sp" />
 
             <TextView
-                android:id="@+id/mag_rate"
+                android:id="@+id/quat_x"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="-- Hz"
+                android:layout_weight="2"
+                android:text="---"
                 android:textColor="#FFFFFF"
-                android:textSize="12sp"
+                android:textSize="14sp"
                 android:fontFamily="monospace" />
         </LinearLayout>
 
@@ -498,18 +579,18 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Baro Rate:"
+                android:text="Y:"
                 android:textColor="#AAAAAA"
-                android:textSize="12sp" />
+                android:textSize="14sp" />
 
             <TextView
-                android:id="@+id/baro_rate"
+                android:id="@+id/quat_y"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="-- Hz"
+                android:layout_weight="2"
+                android:text="---"
                 android:textColor="#FFFFFF"
-                android:textSize="12sp"
+                android:textSize="14sp"
                 android:fontFamily="monospace" />
         </LinearLayout>
 
@@ -522,42 +603,18 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Hum Rate:"
+                android:text="Z:"
                 android:textColor="#AAAAAA"
-                android:textSize="12sp" />
+                android:textSize="14sp" />
 
             <TextView
-                android:id="@+id/hum_rate"
+                android:id="@+id/quat_z"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="-- Hz"
+                android:layout_weight="2"
+                android:text="---"
                 android:textColor="#FFFFFF"
-                android:textSize="12sp"
-                android:fontFamily="monospace" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Sample Count:"
-                android:textColor="#AAAAAA"
-                android:textSize="12sp" />
-
-            <TextView
-                android:id="@+id/sample_count"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="0"
-                android:textColor="#FFFFFF"
-                android:textSize="12sp"
+                android:textSize="14sp"
                 android:fontFamily="monospace" />
         </LinearLayout>
     </LinearLayout>

@@ -565,6 +565,13 @@ public class Flysight2Protocol extends BleProtocol {
     private void processHum(@NonNull byte[] value) {
         if (value.length < 1) return;
         
+        // Log raw bytes for debugging
+        StringBuilder hex = new StringBuilder();
+        for (byte b : value) {
+            hex.append(String.format("%02X ", b));
+        }
+        Log.i(TAG, "HUM raw bytes (" + value.length + "): " + hex.toString().trim());
+        
         ByteBuffer buf = ByteBuffer.wrap(value).order(ByteOrder.LITTLE_ENDIAN);
         int mask = buf.get() & 0xFF;
         
@@ -577,18 +584,23 @@ public class Flysight2Protocol extends BleProtocol {
         // Parse humidity (0.1% RH -> %)
         float humidity = 0;
         if ((mask & 0x40) != 0) {
-            humidity = (buf.getShort() & 0xFFFF) / 10f;  // uint16, 0.1% -> %
+            short rawHum = buf.getShort();
+            humidity = (rawHum & 0xFFFF) / 10f;  // uint16, 0.1% -> %
+            Log.i(TAG, "HUM: rawHum=" + rawHum + " (0x" + Integer.toHexString(rawHum & 0xFFFF) + ") -> " + humidity + "%");
         }
         
         // Parse temperature
         float temperature = Float.NaN;
         if ((mask & 0x20) != 0) {
-            temperature = buf.getShort() / 100f;  // 0.01°C -> °C
+            short rawTemp = buf.getShort();
+            temperature = rawTemp / 100f;  // 0.01°C -> °C
+            Log.i(TAG, "HUM: rawTemp=" + rawTemp + " -> " + temperature + "°C");
         }
+        
+        Log.i(TAG, "HUM parsed: mask=0x" + Integer.toHexString(mask) + " humidity=" + humidity + "% temp=" + temperature + "°C");
         
         double sensorTimeSec = sensorTimeMs / 1000.0;
         MHumData hum = MHumData.fromSensorTime(sensorTimeSec, timeSync, humidity, temperature);
-        Log.d(TAG, "flysight -> app: " + hum);
         humUpdates.post(hum);
     }
 
