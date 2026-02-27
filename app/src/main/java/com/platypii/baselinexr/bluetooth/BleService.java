@@ -153,6 +153,8 @@ public class BleService {
         public void onDisconnectedPeripheral(@NonNull final BluetoothPeripheral peripheral, @NonNull final HciStatus status) {
             Log.i(TAG, "BLE disconnected " + peripheral.getAddress() + " " + peripheral.getName() + " with status " + status);
             currentPeripheral = null;
+            // Reset state so scan() doesn't think we're still connected
+            setState(BT_STARTING);
             // Go back to searching
             if (BluetoothState.started(bluetoothState)) {
                 Log.i(TAG, "Restarting scan after disconnect");

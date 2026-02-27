@@ -154,22 +154,49 @@
                 android:id="@+id/pinned_mac"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1.5"
+                android:layout_weight="2"
                 android:text="None"
                 android:textColor="#88FF88"
                 android:textSize="12sp"
                 android:fontFamily="monospace" />
+        </LinearLayout>
+
+        <!-- Mode Control -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="4dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Set Mode:"
+                android:textColor="#AAAAAA"
+                android:textSize="14sp" />
 
             <Button
-                android:id="@+id/forget_device_button"
-                android:layout_width="wrap_content"
+                android:id="@+id/set_sleep_button"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="32dp"
-                android:text="Forget"
+                android:text="Sleep"
                 android:textSize="11sp"
-                android:background="#444444"
+                android:background="#446688"
                 android:textColor="#FFFFFF"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp" />
+                android:layout_marginEnd="4dp" />
+
+            <Button
+                android:id="@+id/set_active_button"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="32dp"
+                android:text="Active"
+                android:textSize="11sp"
+                android:background="#668844"
+                android:textColor="#FFFFFF" />
         </LinearLayout>
     </LinearLayout>
 

@@ -34,7 +34,8 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
     private var dividerStatus: TextView? = null
     private var responseLog: TextView? = null
     
-    private var forgetDeviceButton: Button? = null
+    private var setSleepButton: Button? = null
+    private var setActiveButton: Button? = null
     private var setDividersButton: Button? = null
     private var getDividersButton: Button? = null
     private var getFwButton: Button? = null
@@ -116,7 +117,8 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         pinnedMac: TextView?,
         dividerStatus: TextView?,
         responseLog: TextView?,
-        forgetDeviceButton: Button?,
+        setSleepButton: Button?,
+        setActiveButton: Button?,
         setDividersButton: Button?,
         getDividersButton: Button?,
         getFwButton: Button?,
@@ -135,7 +137,8 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         this.pinnedMac = pinnedMac
         this.dividerStatus = dividerStatus
         this.responseLog = responseLog
-        this.forgetDeviceButton = forgetDeviceButton
+        this.setSleepButton = setSleepButton
+        this.setActiveButton = setActiveButton
         this.setDividersButton = setDividersButton
         this.getDividersButton = getDividersButton
         this.getFwButton = getFwButton
@@ -159,7 +162,8 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         }
         
         // Set up button click listeners
-        forgetDeviceButton?.setOnClickListener { onForgetDeviceClick() }
+        setSleepButton?.setOnClickListener { onSetSleepClick() }
+        setActiveButton?.setOnClickListener { onSetActiveClick() }
         setDividersButton?.setOnClickListener { onSetDividersClick() }
         getDividersButton?.setOnClickListener { onGetDividersClick() }
         getFwButton?.setOnClickListener { onGetFwClick() }
@@ -280,19 +284,20 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         }
     }
     
-    // DS_Control_Point (0x07) functionality is DISABLED
-    // Subscribing to it or sending commands triggers Quest OS pairing popup
-    // even on bonded devices. The connection also becomes unstable.
-    // See: https://github.com/platypii/BASElineXR/issues/XXX
-    
     private fun onGetFwClick() {
-        Log.i(TAG, "Get FW Version button clicked - DISABLED")
-        appendLog("FW version: disabled (causes popup)")
+        Log.i(TAG, "Get FW Version button clicked")
+        val ok = Services.bluetooth?.flysightProtocol?.controlPoint?.getFirmwareVersion() ?: false
+        if (!ok) {
+            appendLog("FW version: not connected")
+        }
     }
     
     private fun onGetDeviceIdClick() {
-        Log.i(TAG, "Get Device ID button clicked - DISABLED")
-        appendLog("Device ID: disabled (causes popup)")
+        Log.i(TAG, "Get Device ID button clicked")
+        val ok = Services.bluetooth?.flysightProtocol?.controlPoint?.getDeviceId() ?: false
+        if (!ok) {
+            appendLog("Device ID: not connected")
+        }
     }
     
     private fun registerAsListener() {
@@ -345,6 +350,9 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
                         deviceId?.text = id
                         appendLog("ID: $id")
                     }
+                }
+                Flysight2ControlPoint.DS_CMD_SET_MODE.toInt() -> {
+                    appendLog("SET_MODE: $statusStr")
                 }
                 else -> {
                     appendLog("Response 0x${opcode.toString(16)}: $statusStr")
@@ -406,19 +414,26 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         if (mac != null) {
             pinnedMac?.text = mac
             pinnedMac?.setTextColor(0xFF88FF88.toInt())
-            forgetDeviceButton?.isEnabled = true
         } else {
             pinnedMac?.text = "None"
             pinnedMac?.setTextColor(0xFFAAAA88.toInt())
-            forgetDeviceButton?.isEnabled = false
         }
     }
     
-    private fun onForgetDeviceClick() {
-        Log.i(TAG, "Forget device button clicked")
-        Services.bluetooth?.flysightProtocol?.forgetPinnedDevice()
-        updatePinnedMacDisplay()
-        appendLog("Forgot pinned device")
+    private fun onSetSleepClick() {
+        Log.i(TAG, "Set Sleep button clicked")
+        val ok = Services.bluetooth?.flysightProtocol?.controlPoint?.setMode(FlysightModeEvent.MODE_SLEEP) ?: false
+        if (!ok) {
+            appendLog("Set Sleep: not connected")
+        }
+    }
+    
+    private fun onSetActiveClick() {
+        Log.i(TAG, "Set Active button clicked")
+        val ok = Services.bluetooth?.flysightProtocol?.controlPoint?.setMode(FlysightModeEvent.MODE_ACTIVE) ?: false
+        if (!ok) {
+            appendLog("Set Active: not connected")
+        }
     }
     
     private fun appendLog(message: String) {

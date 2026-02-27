@@ -148,11 +148,31 @@ public class Flysight2Protocol extends BleProtocol {
             return false;
         }
         
-        // Check if we have a pinned device - only connect to that specific MAC
-        if (!bluetoothPreferences.shouldConnectToFlysight(address)) {
-            Log.d(TAG, "Skipping FlySight " + address + " - not pinned device (pinned=" + 
-                bluetoothPreferences.flysightPinnedMac + ")");
-            return false;
+        // Check if device advertises the Sensor Data service UUID
+        // This is the most reliable way to identify the main FlySight device
+        // (vs individual sensor characteristics that may also advertise as "FlySight")
+        boolean hasServiceUuid = false;
+        if (record != null) {
+            final List<ParcelUuid> services = record.getServiceUuids();
+            if (services != null) {
+                for (ParcelUuid parcelUuid : services) {
+                    if (parcelUuid.getUuid().equals(flysightService1)) {
+                        hasServiceUuid = true;
+                        Log.i(TAG, "FlySight " + address + " advertises Sensor Data service UUID");
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // If no service UUID advertised, fall back to MAC pinning
+        if (!hasServiceUuid) {
+            if (!bluetoothPreferences.shouldConnectToFlysight(address)) {
+                Log.d(TAG, "Skipping FlySight " + address + " - no service UUID and not pinned (pinned=" + 
+                    bluetoothPreferences.flysightPinnedMac + ")");
+                return false;
+            }
+            Log.i(TAG, "FlySight " + address + " matched by pinned MAC (no service UUID in advertisement)");
         }
         
         // Check manufacturer data to ensure we're not connecting to a device in pairing mode
@@ -235,10 +255,9 @@ public class Flysight2Protocol extends BleProtocol {
         }
         
         peripheral.requestMtu(256);
-        // Note: Heartbeat is for File Transfer service only (to reset 30s timeout)
-        // In ACTIVE mode, File Transfer is unavailable (SD card busy with logging)
-        // Sensor data notifications keep the BLE connection alive, so no heartbeat needed
-        // startHeartbeat(peripheral, flysightService0, flysightCharacteristicRX);
+        // Heartbeat keeps connection alive by resetting the 30s BLE idle timeout
+        // This is needed when no sensor data is flowing (custom firmware may not stream)
+        startHeartbeat(peripheral, flysightService0, flysightCharacteristicRX);
     }
 
     // Track which peripheral we're connected to for delayed commands
@@ -255,9 +274,10 @@ public class Flysight2Protocol extends BleProtocol {
         boolean cpOk = peripheral.setNotify(flysightService1, flysightCharacteristicControlPoint, true);
         Log.i(TAG, "setNotify SD control point=" + cpOk);
         
-        // NOTE: DS_Control_Point (0x07) subscription removed from auto-connect.
-        // Subscribing to it triggers the Quest OS pairing popup even on bonded devices.
-        // Call subscribeToDeviceControlPoint() explicitly when needed (e.g., from Control Point panel).
+        // Subscribe to DS_Control_Point for firmware version/device ID commands
+        // Re-enabled after improving device filtering (service UUID + MAC pinning)
+        boolean dsCpOk = peripheral.setNotify(flysightService3, flysightCharacteristicDeviceControlPoint, true);
+        Log.i(TAG, "setNotify DS control point=" + dsCpOk);
         
         // Subscribe to Device Mode (DS_Mode) to detect ACTIVE mode transitions
         boolean modeOk = peripheral.setNotify(flysightService3, flysightCharacteristicMode, true);
@@ -311,8 +331,9 @@ public class Flysight2Protocol extends BleProtocol {
         // Control point ready - we can now send commands
         if (characteristic.getUuid().equals(flysightCharacteristicControlPoint) && status == GattStatus.SUCCESS) {
             Log.i(TAG, "Control point ready for commands");
-            // If device is already in ACTIVE mode, configure and subscribe now
-            if (deviceMode == FlysightModeEvent.MODE_ACTIVE && !sensorsSubscribed) {
+            // Subscribe to sensors immediately - custom firmware may always report SLEEP
+            // even when active and streaming data
+            if (!sensorsSubscribed) {
                 onDeviceBecameActive(peripheral);
             }
         }

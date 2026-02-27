@@ -308,7 +308,8 @@ class BaselineActivity : AppSystemActivity() {
                     val pinnedMac = rootView?.findViewById<TextView>(R.id.pinned_mac)
                     val dividerStatus = rootView?.findViewById<TextView>(R.id.divider_status)
                     val responseLog = rootView?.findViewById<TextView>(R.id.response_log)
-                    val forgetDeviceButton = rootView?.findViewById<android.widget.Button>(R.id.forget_device_button)
+                    val setSleepButton = rootView?.findViewById<android.widget.Button>(R.id.set_sleep_button)
+                    val setActiveButton = rootView?.findViewById<android.widget.Button>(R.id.set_active_button)
                     val setDividersButton = rootView?.findViewById<android.widget.Button>(R.id.set_dividers_button)
                     val getDividersButton = rootView?.findViewById<android.widget.Button>(R.id.get_dividers_button)
                     val getFwButton = rootView?.findViewById<android.widget.Button>(R.id.get_fw_button)
@@ -358,7 +359,8 @@ class BaselineActivity : AppSystemActivity() {
                         pinnedMac,
                         dividerStatus,
                         responseLog,
-                        forgetDeviceButton,
+                        setSleepButton,
+                        setActiveButton,
                         setDividersButton,
                         getDividersButton,
                         getFwButton,
