@@ -24,7 +24,7 @@ public class BluetoothPreferences {
     public String preferenceDeviceName = null;
     public boolean preferenceBle = true;
     
-    // FlySight device pinning - stores the known-good MAC address
+    // FlySight device pinning - stores the known-good MAC address and name
     @Nullable
     public String flysightPinnedMac = null;
     @Nullable
@@ -37,20 +37,6 @@ public class BluetoothPreferences {
         preferenceBle = prefs.getBoolean(PREF_BT_BLE, true);
         flysightPinnedMac = prefs.getString(PREF_FLYSIGHT_PINNED_MAC, null);
         flysightDeviceName = prefs.getString(PREF_FLYSIGHT_DEVICE_NAME, null);
-    }
-
-    public void save(@NonNull Context context, boolean enabled, String deviceId, String deviceName, boolean ble) {
-        preferenceEnabled = enabled;
-        preferenceDeviceId = deviceId;
-        preferenceDeviceName = deviceName;
-        preferenceBle = ble;
-        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        final SharedPreferences.Editor edit = prefs.edit();
-        edit.putBoolean(PREF_BT_ENABLED, preferenceEnabled);
-        edit.putString(PREF_BT_DEVICE_ID, preferenceDeviceId);
-        edit.putString(PREF_BT_DEVICE_NAME, preferenceDeviceName);
-        edit.putBoolean(PREF_BT_BLE, preferenceBle);
-        edit.apply();
     }
 
     /**

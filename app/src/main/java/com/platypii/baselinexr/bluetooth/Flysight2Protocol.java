@@ -66,11 +66,9 @@ public class Flysight2Protocol extends BleProtocol {
     // Flysight services
     private static final UUID flysightService0 = UUID.fromString("00000000-cc7a-482a-984a-7f2ed5b3e58f"); // File Transfer
     private static final UUID flysightService1 = UUID.fromString("00000001-cc7a-482a-984a-7f2ed5b3e58f"); // Sensor Data
-    private static final UUID flysightService2 = UUID.fromString("00000002-cc7a-482a-984a-7f2ed5b3e58f"); // Starter Pistol
     private static final UUID flysightService3 = UUID.fromString("00000003-cc7a-482a-984a-7f2ed5b3e58f"); // Device State
 
     // Flysight characteristics - File Transfer
-    private static final UUID flysightCharacteristicTX = UUID.fromString("00000001-8e22-4541-9d4c-21edae82ed19");
     private static final UUID flysightCharacteristicRX = UUID.fromString("00000002-8e22-4541-9d4c-21edae82ed19");
 
     // Flysight characteristics - Sensor Data
@@ -108,18 +106,7 @@ public class Flysight2Protocol extends BleProtocol {
     }
     
     /**
-     * Forget the currently pinned FlySight device.
-     * Call this when the user wants to connect to a different FlySight.
-     */
-    public void forgetPinnedDevice() {
-        if (context != null) {
-            bluetoothPreferences.forgetFlysightDevice(context);
-            Log.i(TAG, "Forgot pinned FlySight device");
-        }
-    }
-    
-    /**
-     * Pin the currently connected FlySight device by MAC address.
+     * Pin the currently connected FlySight device by MAC address and name.
      * Called automatically after receiving valid data from a connection.
      */
     private void pinDeviceIfNeeded(@NonNull BluetoothPeripheral peripheral) {
@@ -198,28 +185,6 @@ public class Flysight2Protocol extends BleProtocol {
         return true;
     }
 
-    private boolean isFlysight(@NonNull BluetoothPeripheral peripheral, @Nullable ScanRecord record) {
-        if (record != null) {
-            // Check services
-            final List<ParcelUuid> services = record.getServiceUuids();
-            if (services != null) {
-                for (ParcelUuid parcelUuid : services) {
-                    if (parcelUuid.getUuid().equals(flysightService1)) {
-                        return true;
-                    }
-                }
-            }
-            // Check manufacturer
-//            final byte[] mfg = record.getManufacturerSpecificData(2523);
-//            if (mfg != null && mfg.length == 1 && mfg[0] == 0) {
-//                return true;
-//            }
-        }
-        if (peripheral.getName().startsWith("KFS")) return true;
-        if (peripheral.getName().startsWith("FlySight")) return true;
-        return false;
-    }
-
     @Override
     public void onServicesDiscovered(@NonNull BluetoothPeripheral peripheral) {
         Log.i(TAG, "flysight services discovered " + peripheral.getCurrentMtu());
@@ -228,7 +193,7 @@ public class Flysight2Protocol extends BleProtocol {
         int sensorDataCharCount = 0;
         for (android.bluetooth.BluetoothGattService service : peripheral.getServices()) {
             String serviceUuid = service.getUuid().toString();
-            Log.i(TAG, "  Service: " + serviceUuid.substring(0, 8) + "...");
+            Log.d(TAG, "  Service: " + serviceUuid.substring(0, 8) + "...");
             for (android.bluetooth.BluetoothGattCharacteristic c : service.getCharacteristics()) {
                 String charUuid = c.getUuid().toString();
                 int props = c.getProperties();
@@ -239,7 +204,7 @@ public class Flysight2Protocol extends BleProtocol {
                 if ((props & 0x08) != 0) propsStr += "WRITE ";
                 if ((props & 0x10) != 0) propsStr += "NOTIFY ";
                 if ((props & 0x20) != 0) propsStr += "INDICATE ";
-                Log.i(TAG, "    Char: " + charUuid.substring(0, 8) + "... props=" + propsStr);
+                Log.d(TAG, "    Char: " + charUuid.substring(0, 8) + "... props=" + propsStr);
                 
                 // Count Sensor Data service characteristics
                 if (serviceUuid.startsWith("00000001-cc7a")) {
@@ -285,30 +250,6 @@ public class Flysight2Protocol extends BleProtocol {
         
         // Also read current mode immediately
         peripheral.readCharacteristic(flysightService3, flysightCharacteristicMode);
-    }
-    
-    /**
-     * Subscribe to DS_Control_Point for firmware version/device ID commands.
-     * Call this only when needed, as it may trigger Quest OS pairing popup on some devices.
-     * @return true if subscription was queued successfully
-     */
-    public boolean subscribeToDeviceControlPoint() {
-        if (connectedPeripheral == null) {
-            Log.w(TAG, "subscribeToDeviceControlPoint: no peripheral connected");
-            return false;
-        }
-        boolean ok = connectedPeripheral.setNotify(flysightService3, flysightCharacteristicDeviceControlPoint, true);
-        Log.i(TAG, "setNotify DS control point=" + ok);
-        return ok;
-    }
-    
-    /**
-     * Configure dividers for all sensors.
-     * Only needed for dev devices without config file, or to override settings.
-     */
-    public void configureSensorDividers(int divider) {
-        Log.i(TAG, "Configuring sensor dividers to " + divider);
-        controlPoint.configureAllDividers(divider);
     }
     
     private void subscribeToSensors(@NonNull BluetoothPeripheral peripheral) {
@@ -591,7 +532,7 @@ public class Flysight2Protocol extends BleProtocol {
         for (byte b : value) {
             hex.append(String.format("%02X ", b));
         }
-        Log.i(TAG, "HUM raw bytes (" + value.length + "): " + hex.toString().trim());
+        Log.d(TAG, "HUM raw bytes (" + value.length + "): " + hex.toString().trim());
         
         ByteBuffer buf = ByteBuffer.wrap(value).order(ByteOrder.LITTLE_ENDIAN);
         int mask = buf.get() & 0xFF;
@@ -607,7 +548,7 @@ public class Flysight2Protocol extends BleProtocol {
         if ((mask & 0x40) != 0) {
             short rawHum = buf.getShort();
             humidity = (rawHum & 0xFFFF) / 10f;  // uint16, 0.1% -> %
-            Log.i(TAG, "HUM: rawHum=" + rawHum + " (0x" + Integer.toHexString(rawHum & 0xFFFF) + ") -> " + humidity + "%");
+            Log.d(TAG, "HUM: rawHum=" + rawHum + " (0x" + Integer.toHexString(rawHum & 0xFFFF) + ") -> " + humidity + "%");
         }
         
         // Parse temperature
@@ -615,10 +556,10 @@ public class Flysight2Protocol extends BleProtocol {
         if ((mask & 0x20) != 0) {
             short rawTemp = buf.getShort();
             temperature = rawTemp / 100f;  // 0.01°C -> °C
-            Log.i(TAG, "HUM: rawTemp=" + rawTemp + " -> " + temperature + "°C");
+            Log.d(TAG, "HUM: rawTemp=" + rawTemp + " -> " + temperature + "°C");
         }
         
-        Log.i(TAG, "HUM parsed: mask=0x" + Integer.toHexString(mask) + " humidity=" + humidity + "% temp=" + temperature + "°C");
+        Log.d(TAG, "HUM parsed: mask=0x" + Integer.toHexString(mask) + " humidity=" + humidity + "% temp=" + temperature + "°C");
         
         double sensorTimeSec = sensorTimeMs / 1000.0;
         MHumData hum = MHumData.fromSensorTime(sensorTimeSec, timeSync, humidity, temperature);

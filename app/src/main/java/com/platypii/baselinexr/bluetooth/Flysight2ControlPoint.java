@@ -81,9 +81,6 @@ public class Flysight2ControlPoint {
     public static final int[] DIVIDER_VALUES = {0, 1, 2, 4, 8, 16, 32, 64};
     public static final String[] DIVIDER_LABELS = {"Auto", "1", "2", "4", "8", "16", "32", "64"};
 
-    // Current divider values (updated from device responses)
-    private final int[] currentDividers = new int[SENSOR_COUNT];
-
     // Response status codes
     public static final int CP_STATUS_SUCCESS = 0x01;
     public static final int CP_STATUS_NOT_SUPPORTED = 0x02;
@@ -165,40 +162,6 @@ public class Flysight2ControlPoint {
         };
         boolean ok = peripheral.writeCharacteristic(sensorDataService, sdControlPoint, cmd, WriteType.WITH_RESPONSE);
         Log.i(TAG, "getBleDivider sensor=" + sensorId + " ok=" + ok);
-        return ok;
-    }
-
-    /**
-     * Set GNSS BLE mask (which fields to include in GNSS packets)
-     * @param mask Bitmask: 0x80=TOW, 0x40=Week, 0x20=Position, 0x10=Velocity, 0x08=Accuracy, 0x04=NumSV
-     */
-    public boolean setGnssMask(int mask) {
-        if (peripheral == null) {
-            Log.w(TAG, "setGnssMask: no peripheral connected");
-            return false;
-        }
-        byte[] cmd = new byte[] {
-            SD_CMD_SET_GNSS_BLE_MASK,
-            (byte) mask
-        };
-        boolean ok = peripheral.writeCharacteristic(sensorDataService, sdControlPoint, cmd, WriteType.WITH_RESPONSE);
-        Log.i(TAG, "setGnssMask mask=0x" + Integer.toHexString(mask) + " ok=" + ok);
-        return ok;
-    }
-
-    /**
-     * Get current GNSS BLE mask
-     */
-    public boolean getGnssMask() {
-        if (peripheral == null) {
-            Log.w(TAG, "getGnssMask: no peripheral connected");
-            return false;
-        }
-        byte[] cmd = new byte[] {
-            SD_CMD_GET_GNSS_BLE_MASK
-        };
-        boolean ok = peripheral.writeCharacteristic(sensorDataService, sdControlPoint, cmd, WriteType.WITH_RESPONSE);
-        Log.i(TAG, "getGnssMask ok=" + ok);
         return ok;
     }
 
@@ -285,7 +248,7 @@ public class Flysight2ControlPoint {
         for (byte b : value) {
             hex.append(String.format("%02X ", b));
         }
-        Log.i(TAG, "CP Response raw (" + value.length + " bytes): " + hex);
+        Log.d(TAG, "CP Response raw (" + value.length + " bytes): " + hex);
         
         if (value.length < 3) {
             Log.w(TAG, "Control point response too short: " + value.length);
@@ -311,13 +274,6 @@ public class Flysight2ControlPoint {
                 int sensorId = data[0] & 0xFF;
                 int divider = (data[1] & 0xFF) | ((data[2] & 0xFF) << 8);
                 Log.i(TAG, "  -> sensor=" + sensorId + " divider=" + divider);
-                // Cache the divider value
-                if (statusCode == CP_STATUS_SUCCESS) {
-                    updateCurrentDivider(sensorId, divider);
-                }
-            } else if (opcode == SD_CMD_GET_GNSS_BLE_MASK && data.length >= 1) {
-                int mask = data[0] & 0xFF;
-                Log.i(TAG, "  -> mask=0x" + Integer.toHexString(mask));
             } else if (opcode == DS_CMD_GET_FW_VERSION) {
                 String version = new String(data);
                 Log.i(TAG, "  -> firmware=" + version);
@@ -361,66 +317,6 @@ public class Flysight2ControlPoint {
             case SENSOR_GYRO: return GYRO_ODR_HZ;
             case SENSOR_MAG: return MAG_ODR_HZ;
             default: return new double[]{0};
-        }
-    }
-
-    /**
-     * Format ODR labels for dropdown display
-     * @param sensorId 0=Baro, 1=Hum, 2=Accel, 3=Gyro, 4=Mag
-     * @return Array of display strings like "1: 10 Hz"
-     */
-    public static String[] getOdrLabels(int sensorId) {
-        double[] values = getOdrValues(sensorId);
-        String[] labels = new String[values.length];
-        for (int i = 0; i < values.length; i++) {
-            if (values[i] == 0) {
-                labels[i] = i + ": Off";
-            } else if (values[i] < 1) {
-                labels[i] = i + ": " + values[i] + " Hz";
-            } else {
-                labels[i] = i + ": " + (int) values[i] + " Hz";
-            }
-        }
-        return labels;
-    }
-
-    /**
-     * Calculate output rate given ODR index and divider
-     * @param sensorId 0=Baro, 1=Hum, 2=Accel, 3=Gyro, 4=Mag
-     * @param odrIndex Index into the ODR array for this sensor
-     * @param divider BLE divider (0=auto, 1=full rate, 2=half, etc.)
-     * @return Output rate in Hz, or -1 for auto mode
-     */
-    public static double calculateOutputRate(int sensorId, int odrIndex, int divider) {
-        double[] odrValues = getOdrValues(sensorId);
-        if (odrIndex < 0 || odrIndex >= odrValues.length) {
-            return 0;
-        }
-        double odrHz = odrValues[odrIndex];
-        if (divider == 0) {
-            return -1; // Auto mode
-        }
-        return odrHz / divider;
-    }
-
-    /**
-     * Get cached divider value for a sensor
-     * @param sensorId 0=Baro, 1=Hum, 2=Accel, 3=Gyro, 4=Mag
-     * @return Current divider value, or -1 if not yet fetched
-     */
-    public int getCurrentDivider(int sensorId) {
-        if (sensorId < 0 || sensorId >= SENSOR_COUNT) {
-            return -1;
-        }
-        return currentDividers[sensorId];
-    }
-
-    /**
-     * Update cached divider value (called when response received)
-     */
-    private void updateCurrentDivider(int sensorId, int divider) {
-        if (sensorId >= 0 && sensorId < SENSOR_COUNT) {
-            currentDividers[sensorId] = divider;
         }
     }
 }

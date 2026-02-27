@@ -136,6 +136,8 @@ public class BluetoothService {
     public String getDeviceName() {
         if (!preferences.preferenceEnabled) {
             return "Phone";
+        } else if (preferences.preferenceBle && preferences.flysightDeviceName != null) {
+            return preferences.flysightDeviceName;
         } else if (preferences.preferenceDeviceName != null) {
             return preferences.preferenceDeviceName;
         } else {
