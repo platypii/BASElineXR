@@ -146,6 +146,11 @@ public class BleService {
         @Override
         public void onConnectionFailed(@NonNull BluetoothPeripheral peripheral, @NonNull final HciStatus status) {
             Log.e(TAG, "BLE connection failed " + peripheral.getAddress() + " " + peripheral.getName() + " status=" + status);
+            // Don't try to reconnect if we're already stopped
+            if (bluetoothState == BT_STOPPED || bluetoothState == BT_STOPPING || activity == null) {
+                Log.i(TAG, "Not restarting scan after connection failure - BLE service is stopped");
+                return;
+            }
             scanIfPermitted(activity); // start over
         }
 
@@ -153,12 +158,21 @@ public class BleService {
         public void onDisconnectedPeripheral(@NonNull final BluetoothPeripheral peripheral, @NonNull final HciStatus status) {
             Log.i(TAG, "BLE disconnected " + peripheral.getAddress() + " " + peripheral.getName() + " with status " + status);
             currentPeripheral = null;
+            
+            // Don't try to reconnect if we're already stopped (e.g., headset went to sleep)
+            if (bluetoothState == BT_STOPPED || bluetoothState == BT_STOPPING) {
+                Log.i(TAG, "Not restarting scan - BLE service is stopped");
+                return;
+            }
+            
             // Reset state so scan() doesn't think we're still connected
             setState(BT_STARTING);
             // Go back to searching
-            if (BluetoothState.started(bluetoothState)) {
+            if (activity != null) {
                 Log.i(TAG, "Restarting scan after disconnect");
                 scanIfPermitted(activity);
+            } else {
+                Log.w(TAG, "Cannot restart scan - activity is null");
             }
         }
 
