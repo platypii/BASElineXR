@@ -305,7 +305,7 @@ class BaselineActivity : AppSystemActivity() {
                     val deviceMode = rootView?.findViewById<TextView>(R.id.device_mode)
                     val firmwareVersion = rootView?.findViewById<TextView>(R.id.firmware_version)
                     val deviceId = rootView?.findViewById<TextView>(R.id.device_id)
-                    val pinnedMac = rootView?.findViewById<TextView>(R.id.pinned_mac)
+                    val pinnedDevice = rootView?.findViewById<TextView>(R.id.pinned_device)
                     val dividerStatus = rootView?.findViewById<TextView>(R.id.divider_status)
                     val responseLog = rootView?.findViewById<TextView>(R.id.response_log)
                     val setSleepButton = rootView?.findViewById<android.widget.Button>(R.id.set_sleep_button)
@@ -356,7 +356,7 @@ class BaselineActivity : AppSystemActivity() {
                         deviceMode,
                         firmwareVersion,
                         deviceId,
-                        pinnedMac,
+                        pinnedDevice,
                         dividerStatus,
                         responseLog,
                         setSleepButton,

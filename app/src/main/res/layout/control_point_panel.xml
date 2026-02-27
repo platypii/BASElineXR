@@ -135,7 +135,7 @@
                 android:fontFamily="monospace" />
         </LinearLayout>
 
-        <!-- Pinned MAC -->
+        <!-- Pinned Device (Name + MAC combined) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -151,14 +151,16 @@
                 android:textSize="14sp" />
 
             <TextView
-                android:id="@+id/pinned_mac"
+                android:id="@+id/pinned_device"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="2"
                 android:text="None"
                 android:textColor="#88FF88"
                 android:textSize="12sp"
-                android:fontFamily="monospace" />
+                android:fontFamily="monospace"
+                android:ellipsize="middle"
+                android:singleLine="true" />
         </LinearLayout>
 
         <!-- Mode Control -->

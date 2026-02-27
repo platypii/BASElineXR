@@ -9,6 +9,7 @@ import com.meta.spatial.core.Vector3
 import com.meta.spatial.toolkit.SpatialActivityManager
 import com.meta.spatial.toolkit.Visible
 import com.platypii.baselinexr.bluetooth.Flysight2ControlPoint
+import com.platypii.baselinexr.events.BluetoothEvent
 import com.platypii.baselinexr.events.FlysightModeEvent
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
@@ -30,7 +31,7 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
     private var deviceMode: TextView? = null
     private var firmwareVersion: TextView? = null
     private var deviceId: TextView? = null
-    private var pinnedMac: TextView? = null
+    private var pinnedDevice: TextView? = null
     private var dividerStatus: TextView? = null
     private var responseLog: TextView? = null
     
@@ -114,7 +115,7 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         deviceMode: TextView?,
         firmwareVersion: TextView?,
         deviceId: TextView?,
-        pinnedMac: TextView?,
+        pinnedDevice: TextView?,
         dividerStatus: TextView?,
         responseLog: TextView?,
         setSleepButton: Button?,
@@ -134,7 +135,7 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         this.deviceMode = deviceMode
         this.firmwareVersion = firmwareVersion
         this.deviceId = deviceId
-        this.pinnedMac = pinnedMac
+        this.pinnedDevice = pinnedDevice
         this.dividerStatus = dividerStatus
         this.responseLog = responseLog
         this.setSleepButton = setSleepButton
@@ -172,9 +173,9 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         // Set up sensor configuration UI
         setupSensorControls()
         
-        // Update connection status and pinned MAC display
+        // Update connection status and pinned device display
         updateConnectionStatus()
-        updatePinnedMacDisplay()
+        updatePinnedDeviceDisplay()
     }
     
     private fun setupSensorControls() {
@@ -353,6 +354,10 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
                 }
                 Flysight2ControlPoint.DS_CMD_SET_MODE.toInt() -> {
                     appendLog("SET_MODE: $statusStr")
+                    // Read mode to trigger UI update
+                    if (status == Flysight2ControlPoint.CP_STATUS_SUCCESS) {
+                        Services.bluetooth?.flysightProtocol?.requestModeRead()
+                    }
                 }
                 else -> {
                     appendLog("Response 0x${opcode.toString(16)}: $statusStr")
@@ -366,6 +371,13 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         val modeName = FlysightModeEvent.modeName(event.mode)
         deviceMode?.text = modeName
         appendLog("Mode: $modeName")
+    }
+    
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onBluetoothEvent(event: BluetoothEvent) {
+        // Refresh status displays when connection state changes
+        updateConnectionStatus()
+        updatePinnedDeviceDisplay()
     }
     
     private fun updateDividerDisplay() {
@@ -408,15 +420,30 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         }
     }
     
-    private fun updatePinnedMacDisplay() {
+    private fun updatePinnedDeviceDisplay() {
         val prefs = Services.bluetooth?.preferences
+        val name = prefs?.flysightDeviceName
         val mac = prefs?.flysightPinnedMac
-        if (mac != null) {
-            pinnedMac?.text = mac
-            pinnedMac?.setTextColor(0xFF88FF88.toInt())
-        } else {
-            pinnedMac?.text = "None"
-            pinnedMac?.setTextColor(0xFFAAAA88.toInt())
+        
+        when {
+            name != null && mac != null -> {
+                // Format: "FlySight (AA:BB:...)"
+                val shortMac = if (mac.length > 8) "${mac.substring(0, 8)}..." else mac
+                pinnedDevice?.text = "$name ($shortMac)"
+                pinnedDevice?.setTextColor(0xFF88FF88.toInt())
+            }
+            name != null -> {
+                pinnedDevice?.text = name
+                pinnedDevice?.setTextColor(0xFF88FF88.toInt())
+            }
+            mac != null -> {
+                pinnedDevice?.text = mac
+                pinnedDevice?.setTextColor(0xFF88FF88.toInt())
+            }
+            else -> {
+                pinnedDevice?.text = "None"
+                pinnedDevice?.setTextColor(0xFFAAAA88.toInt())
+            }
         }
     }
     
@@ -461,7 +488,7 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
             for (i in 0 until Flysight2ControlPoint.SENSOR_COUNT) dividerValues[i] = -1
             updateDividerDisplay()
             updateConnectionStatus()
-            updatePinnedMacDisplay()
+            updatePinnedDeviceDisplay()
             registerAsListener()
         } else {
             unregisterAsListener()

@@ -35,6 +35,7 @@ public class Flysight2ControlPoint {
     // Device State service and control point
     private static final UUID deviceStateService = UUID.fromString("00000003-cc7a-482a-984a-7f2ed5b3e58f");
     private static final UUID dsControlPoint = UUID.fromString("00000007-8e22-4541-9d4c-21edae82ed19");
+    private static final UUID dsMode = UUID.fromString("00000005-8e22-4541-9d4c-21edae82ed19");
 
     // SD_Control_Point opcodes
     public static final byte SD_CMD_SET_GNSS_BLE_MASK = 0x01;
@@ -221,6 +222,20 @@ public class Flysight2ControlPoint {
         };
         boolean ok = peripheral.writeCharacteristic(deviceStateService, dsControlPoint, cmd, WriteType.WITH_RESPONSE);
         Log.i(TAG, "setMode mode=" + mode + " ok=" + ok);
+        return ok;
+    }
+
+    /**
+     * Read the current device mode via the DS_Mode characteristic.
+     * The result will arrive via onCharacteristicUpdate.
+     */
+    public boolean readMode() {
+        if (peripheral == null) {
+            Log.w(TAG, "readMode: no peripheral connected");
+            return false;
+        }
+        boolean ok = peripheral.readCharacteristic(deviceStateService, dsMode);
+        Log.i(TAG, "readMode ok=" + ok);
         return ok;
     }
 

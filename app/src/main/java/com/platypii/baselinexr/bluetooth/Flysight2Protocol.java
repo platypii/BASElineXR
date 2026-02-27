@@ -354,6 +354,14 @@ public class Flysight2Protocol extends BleProtocol {
     }
     
     /**
+     * Request a read of the current device mode.
+     * The result will be delivered via processDsMode() and posted as FlysightModeEvent.
+     */
+    public void requestModeRead() {
+        controlPoint.readMode();
+    }
+    
+    /**
      * Called when device enters ACTIVE mode - subscribe to sensor data streams.
      * Note: Divider configuration is NOT done automatically. Production devices use config.txt.
      * For dev devices, call configureSensorDividers() manually or through UI.
