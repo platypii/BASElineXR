@@ -44,10 +44,9 @@ class RawSensorVisualizationSystem : SystemBase() {
         private const val ACCEL_SCALE = 0.4f
         private const val MAG_SCALE = 1.0f
         
-        // Position relative to user (offset from AHRS viz)
-        private const val VIZ_FORWARD = -1.0f   // meters in front
+        // Position relative to user (same as AHRS viz)
+        private const val VIZ_FORWARD = 1.0f    // meters in front
         private const val VIZ_HEIGHT = -0.5f    // below eye level
-        private const val VIZ_RIGHT = 0.5f      // offset to the right to not overlap AHRS viz
     }
 
     private var initialized = false
@@ -66,7 +65,7 @@ class RawSensorVisualizationSystem : SystemBase() {
     private var magSubscriber: PubSub.Subscriber<MMagData>? = null
     
     // Visualization position
-    private var vizPosition = Vector3(VIZ_RIGHT, 0f, VIZ_FORWARD)
+    private var vizPosition = Vector3(0f, 0f, VIZ_FORWARD)
 
     override fun execute() {
         if (!initialized) {
@@ -143,9 +142,9 @@ class RawSensorVisualizationSystem : SystemBase() {
         // Get head position and place visualization in front of user
         val headPose = HeadPoseUtil.getHeadPose(systemManager)
         if (headPose != null && headPose != Pose()) {
-            vizPosition = headPose.t + Vector3(VIZ_RIGHT, VIZ_HEIGHT, VIZ_FORWARD)
+            vizPosition = headPose.t + Vector3(0f, VIZ_HEIGHT, VIZ_FORWARD)
         } else {
-            vizPosition = Vector3(VIZ_RIGHT, 1.0f, VIZ_FORWARD)
+            vizPosition = Vector3(0f, 1.0f, VIZ_FORWARD)
         }
         
         // Get raw fusion quaternion from IMU (NWU frame)

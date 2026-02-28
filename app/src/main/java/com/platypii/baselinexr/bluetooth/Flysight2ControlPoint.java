@@ -180,6 +180,36 @@ public class Flysight2ControlPoint {
     }
 
     /**
+     * Set magnetometer hard-iron calibration offsets on FlySight 2.
+     * Payload: [opcode(0x20)] [x_offset (int16_t LE)] [y_offset (int16_t LE)] [z_offset (int16_t LE)]
+     * Offsets are in milligauss.
+     *
+     * @param offsetXGauss Hard iron X offset in gauss
+     * @param offsetYGauss Hard iron Y offset in gauss
+     * @param offsetZGauss Hard iron Z offset in gauss
+     * @return true if write was queued successfully
+     */
+    public boolean setMagHardIron(float offsetXGauss, float offsetYGauss, float offsetZGauss) {
+        if (peripheral == null) {
+            Log.w(TAG, "setMagHardIron: no peripheral connected");
+            return false;
+        }
+        // Convert gauss to milligauss
+        short xMg = (short) Math.round(offsetXGauss * 1000.0);
+        short yMg = (short) Math.round(offsetYGauss * 1000.0);
+        short zMg = (short) Math.round(offsetZGauss * 1000.0);
+        byte[] cmd = new byte[] {
+            SD_CMD_SET_FUSION_MAG_HARD,
+            (byte) (xMg & 0xFF), (byte) ((xMg >> 8) & 0xFF),
+            (byte) (yMg & 0xFF), (byte) ((yMg >> 8) & 0xFF),
+            (byte) (zMg & 0xFF), (byte) ((zMg >> 8) & 0xFF)
+        };
+        boolean ok = peripheral.writeCharacteristic(sensorDataService, sdControlPoint, cmd, WriteType.WITH_RESPONSE);
+        Log.i(TAG, "setMagHardIron x=" + xMg + " y=" + yMg + " z=" + zMg + " mg, ok=" + ok);
+        return ok;
+    }
+
+    /**
      * Request firmware version via DS_Control_Point
      */
     public boolean getFirmwareVersion() {
