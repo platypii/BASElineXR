@@ -42,6 +42,7 @@ class BaselineActivity : AppSystemActivity() {
     var magCalibrationSystem: com.platypii.baselinexr.calibration.MagCalibrationSystem? = null
     var ahrsSystem: com.platypii.baselinexr.ahrs.AhrsSystem? = null
     var ahrsVisualizationSystem: com.platypii.baselinexr.ahrs.AhrsVisualizationSystem? = null
+    var rawSensorVisualizationSystem: com.platypii.baselinexr.sensor.RawSensorVisualizationSystem? = null
     private var targetPanelSystem: TargetPanel? = null
     private var portalSystem: PortalSystem? = null
     var miniMapPanel: MiniMapPanel? = null
@@ -99,6 +100,7 @@ class BaselineActivity : AppSystemActivity() {
         magCalibrationSystem = com.platypii.baselinexr.calibration.MagCalibrationSystem()
         ahrsSystem = com.platypii.baselinexr.ahrs.AhrsSystem()
         ahrsVisualizationSystem = com.platypii.baselinexr.ahrs.AhrsVisualizationSystem()
+        rawSensorVisualizationSystem = com.platypii.baselinexr.sensor.RawSensorVisualizationSystem()
         directionArrowSystem = DirectionArrowSystem()
         targetPanelSystem = TargetPanel(gpsTransform)
         portalSystem = PortalSystem(gpsTransform, this)
@@ -113,6 +115,7 @@ class BaselineActivity : AppSystemActivity() {
         systemManager.registerSystem(magCalibrationSystem!!)
         systemManager.registerSystem(ahrsSystem!!)
         systemManager.registerSystem(ahrsVisualizationSystem!!)
+        systemManager.registerSystem(rawSensorVisualizationSystem!!)
         systemManager.registerSystem(directionArrowSystem!!)
         systemManager.registerSystem(targetPanelSystem!!)
         systemManager.registerSystem(portalSystem!!)
@@ -306,10 +309,12 @@ class BaselineActivity : AppSystemActivity() {
                     val firmwareVersion = rootView?.findViewById<TextView>(R.id.firmware_version)
                     val deviceId = rootView?.findViewById<TextView>(R.id.device_id)
                     val pinnedDevice = rootView?.findViewById<TextView>(R.id.pinned_device)
+                    val unpinButton = rootView?.findViewById<android.widget.Button>(R.id.unpin_button)
                     val dividerStatus = rootView?.findViewById<TextView>(R.id.divider_status)
                     val responseLog = rootView?.findViewById<TextView>(R.id.response_log)
                     val setSleepButton = rootView?.findViewById<android.widget.Button>(R.id.set_sleep_button)
                     val setActiveButton = rootView?.findViewById<android.widget.Button>(R.id.set_active_button)
+                    val showRawButton = rootView?.findViewById<android.widget.Button>(R.id.show_raw_button)
                     val setDividersButton = rootView?.findViewById<android.widget.Button>(R.id.set_dividers_button)
                     val getDividersButton = rootView?.findViewById<android.widget.Button>(R.id.get_dividers_button)
                     val getFwButton = rootView?.findViewById<android.widget.Button>(R.id.get_fw_button)
@@ -357,10 +362,12 @@ class BaselineActivity : AppSystemActivity() {
                         firmwareVersion,
                         deviceId,
                         pinnedDevice,
+                        unpinButton,
                         dividerStatus,
                         responseLog,
                         setSleepButton,
                         setActiveButton,
+                        showRawButton,
                         setDividersButton,
                         getDividersButton,
                         getFwButton,

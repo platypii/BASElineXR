@@ -131,13 +131,12 @@ public class Flysight2Protocol extends BleProtocol {
         String address = peripheral.getAddress();
         
         // First check if this is a FlySight device by name
-        if (!"FlySight".equals(name)) {
+        // Accept "KFS" or "FlySightDev" (dev device with renamed name to avoid conflicts)
+        if (!"KFS".equals(name) && !"FlySightDev".equals(name)) {
             return false;
         }
         
-        // Check if device advertises the Sensor Data service UUID
-        // This is the most reliable way to identify the main FlySight device
-        // (vs individual sensor characteristics that may also advertise as "FlySight")
+        // Check if device advertises the Sensor Data service UUID (optional - may not be in every packet)
         boolean hasServiceUuid = false;
         if (record != null) {
             final List<ParcelUuid> services = record.getServiceUuids();
@@ -152,16 +151,6 @@ public class Flysight2Protocol extends BleProtocol {
             }
         }
         
-        // If no service UUID advertised, fall back to MAC pinning
-        if (!hasServiceUuid) {
-            if (!bluetoothPreferences.shouldConnectToFlysight(address)) {
-                Log.d(TAG, "Skipping FlySight " + address + " - no service UUID and not pinned (pinned=" + 
-                    bluetoothPreferences.flysightPinnedMac + ")");
-                return false;
-            }
-            Log.i(TAG, "FlySight " + address + " matched by pinned MAC (no service UUID in advertisement)");
-        }
-        
         // Check manufacturer data to ensure we're not connecting to a device in pairing mode
         // FlySight uses manufacturer data with status byte: 0x00 = normal, 0x01 = pairing mode
         if (record != null) {
@@ -173,10 +162,9 @@ public class Flysight2Protocol extends BleProtocol {
                     Log.w(TAG, "Skipping FlySight " + address + " - device is in pairing mode (status=0x01)");
                     return false;
                 }
-                Log.i(TAG, "Found FlySight device! " + name + " " + address + " (status=0x" + String.format("%02X", statusByte) + ")");
+                Log.i(TAG, "Found FlySight device! " + name + " " + address + " (status=0x" + String.format("%02X", statusByte) + ", svcUuid=" + hasServiceUuid + ")");
             } else {
-                // No manufacturer data or wrong manufacturer - still try to connect
-                Log.i(TAG, "Found FlySight device! " + name + " " + address + " (no mfg data)");
+                Log.i(TAG, "Found FlySight device! " + name + " " + address + " (no mfg data, svcUuid=" + hasServiceUuid + ")");
             }
         } else {
             Log.i(TAG, "Found FlySight device! " + name + " " + address + " (no scan record)");
@@ -189,11 +177,28 @@ public class Flysight2Protocol extends BleProtocol {
     public void onServicesDiscovered(@NonNull BluetoothPeripheral peripheral) {
         Log.i(TAG, "flysight services discovered " + peripheral.getCurrentMtu());
         
+        // CRITICAL: Verify the FlySight 2 Sensor Data service exists with the correct UUID
+        // This prevents connecting to other devices named "FlySight" (e.g., FlySight 1)
+        boolean hasFlysightSensorService = false;
+        boolean hasFlysightStateService = false;
+        
         // Enumerate all services and characteristics for debugging
         int sensorDataCharCount = 0;
         for (android.bluetooth.BluetoothGattService service : peripheral.getServices()) {
-            String serviceUuid = service.getUuid().toString();
-            Log.d(TAG, "  Service: " + serviceUuid.substring(0, 8) + "...");
+            UUID serviceUuid = service.getUuid();
+            String serviceUuidStr = serviceUuid.toString();
+            Log.d(TAG, "  Service: " + serviceUuidStr.substring(0, 8) + "...");
+            
+            // Check for FlySight 2 specific services (full UUID match)
+            if (serviceUuid.equals(flysightService1)) {
+                hasFlysightSensorService = true;
+                Log.i(TAG, "  -> FlySight 2 Sensor Data service FOUND");
+            }
+            if (serviceUuid.equals(flysightService3)) {
+                hasFlysightStateService = true;
+                Log.i(TAG, "  -> FlySight 2 Device State service FOUND");
+            }
+            
             for (android.bluetooth.BluetoothGattCharacteristic c : service.getCharacteristics()) {
                 String charUuid = c.getUuid().toString();
                 int props = c.getProperties();
@@ -206,17 +211,20 @@ public class Flysight2Protocol extends BleProtocol {
                 if ((props & 0x20) != 0) propsStr += "INDICATE ";
                 Log.d(TAG, "    Char: " + charUuid.substring(0, 8) + "... props=" + propsStr);
                 
-                // Count Sensor Data service characteristics
-                if (serviceUuid.startsWith("00000001-cc7a")) {
+                // Count Sensor Data service characteristics (full UUID match)
+                if (serviceUuid.equals(flysightService1)) {
                     sensorDataCharCount++;
                 }
             }
         }
         
-        // Log characteristic count for debugging (just informational now, we rely on MAC pinning)
         Log.i(TAG, "Sensor Data service has " + sensorDataCharCount + " characteristics");
-        if (sensorDataCharCount < 2) {
-            Log.w(TAG, "Warning: Sensor Data service has fewer than expected characteristics");
+        
+        // Verify the FlySight 2 services exist
+        if (!hasFlysightSensorService || !hasFlysightStateService) {
+            Log.w(TAG, "Warning: Device missing expected FlySight 2 services");
+            Log.w(TAG, "  hasFlysightSensorService=" + hasFlysightSensorService + " hasFlysightStateService=" + hasFlysightStateService);
+            // Continue anyway - firmware variations may have different service layouts
         }
         
         peripheral.requestMtu(256);
@@ -293,9 +301,8 @@ public class Flysight2Protocol extends BleProtocol {
             return;
         }
         
-        // Pin the MAC address after receiving valid data
-        // This ensures we only pin devices that are actually working
-        pinDeviceIfNeeded(peripheral);
+        // Note: Pinning disabled - we now rely solely on service UUID for device identification
+        // pinDeviceIfNeeded(peripheral);
         
         // Route by characteristic UUID
         UUID uuid = characteristic.getUuid();

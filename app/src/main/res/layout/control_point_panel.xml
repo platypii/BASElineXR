@@ -154,13 +154,23 @@
                 android:id="@+id/pinned_device"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="2"
+                android:layout_weight="1.5"
                 android:text="None"
                 android:textColor="#88FF88"
                 android:textSize="12sp"
                 android:fontFamily="monospace"
                 android:ellipsize="middle"
                 android:singleLine="true" />
+
+            <Button
+                android:id="@+id/unpin_button"
+                android:layout_width="0dp"
+                android:layout_weight="0.5"
+                android:layout_height="28dp"
+                android:text="Unpin"
+                android:textSize="10sp"
+                android:background="#884444"
+                android:textColor="#FFFFFF" />
         </LinearLayout>
 
         <!-- Mode Control -->
@@ -185,10 +195,10 @@
                 android:layout_weight="1"
                 android:layout_height="32dp"
                 android:text="Sleep"
-                android:textSize="11sp"
+                android:textSize="10sp"
                 android:background="#446688"
                 android:textColor="#FFFFFF"
-                android:layout_marginEnd="4dp" />
+                android:layout_marginEnd="2dp" />
 
             <Button
                 android:id="@+id/set_active_button"
@@ -196,8 +206,19 @@
                 android:layout_weight="1"
                 android:layout_height="32dp"
                 android:text="Active"
-                android:textSize="11sp"
+                android:textSize="10sp"
                 android:background="#668844"
+                android:textColor="#FFFFFF"
+                android:layout_marginEnd="2dp" />
+
+            <Button
+                android:id="@+id/show_raw_button"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="32dp"
+                android:text="Show"
+                android:textSize="10sp"
+                android:background="#664488"
                 android:textColor="#FFFFFF" />
         </LinearLayout>
     </LinearLayout>

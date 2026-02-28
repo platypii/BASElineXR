@@ -11,6 +11,7 @@ public class HudOptions {
     private static final String KEY_SHOW_MAG_CALIBRATION = "hud_showMagCalibration";
     private static final String KEY_SHOW_AHRS = "hud_showAhrs";
     private static final String KEY_SHOW_CONTROL_POINT = "hud_showControlPoint";
+    private static final String KEY_SHOW_RAW_SENSOR = "hud_showRawSensor";
 
     // Show speed chart panel?
     public static boolean showSpeedChart = true;
@@ -26,6 +27,9 @@ public class HudOptions {
     
     // Show Control Point panel?
     public static boolean showControlPoint = false;
+    
+    // Show Raw Sensor visualization?
+    public static boolean showRawSensor = false;
 
     // Load saved HUD options from SharedPreferences
     public static void loadHudOptions(Context context) {
@@ -35,6 +39,7 @@ public class HudOptions {
         showMagCalibration = prefs.getBoolean(KEY_SHOW_MAG_CALIBRATION, false);
         showAhrs = prefs.getBoolean(KEY_SHOW_AHRS, false);
         showControlPoint = prefs.getBoolean(KEY_SHOW_CONTROL_POINT, false);
+        showRawSensor = prefs.getBoolean(KEY_SHOW_RAW_SENSOR, false);
     }
 
     // Save HUD options to SharedPreferences
@@ -46,6 +51,7 @@ public class HudOptions {
             .putBoolean(KEY_SHOW_MAG_CALIBRATION, showMagCalibration)
             .putBoolean(KEY_SHOW_AHRS, showAhrs)
             .putBoolean(KEY_SHOW_CONTROL_POINT, showControlPoint)
+            .putBoolean(KEY_SHOW_RAW_SENSOR, showRawSensor)
             .apply();
     }
 }

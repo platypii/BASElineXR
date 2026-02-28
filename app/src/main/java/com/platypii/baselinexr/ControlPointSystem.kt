@@ -32,11 +32,13 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
     private var firmwareVersion: TextView? = null
     private var deviceId: TextView? = null
     private var pinnedDevice: TextView? = null
+    private var unpinButton: Button? = null
     private var dividerStatus: TextView? = null
     private var responseLog: TextView? = null
     
     private var setSleepButton: Button? = null
     private var setActiveButton: Button? = null
+    private var showRawButton: Button? = null
     private var setDividersButton: Button? = null
     private var getDividersButton: Button? = null
     private var getFwButton: Button? = null
@@ -116,10 +118,12 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         firmwareVersion: TextView?,
         deviceId: TextView?,
         pinnedDevice: TextView?,
+        unpinButton: Button?,
         dividerStatus: TextView?,
         responseLog: TextView?,
         setSleepButton: Button?,
         setActiveButton: Button?,
+        showRawButton: Button?,
         setDividersButton: Button?,
         getDividersButton: Button?,
         getFwButton: Button?,
@@ -136,10 +140,12 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         this.firmwareVersion = firmwareVersion
         this.deviceId = deviceId
         this.pinnedDevice = pinnedDevice
+        this.unpinButton = unpinButton
         this.dividerStatus = dividerStatus
         this.responseLog = responseLog
         this.setSleepButton = setSleepButton
         this.setActiveButton = setActiveButton
+        this.showRawButton = showRawButton
         this.setDividersButton = setDividersButton
         this.getDividersButton = getDividersButton
         this.getFwButton = getFwButton
@@ -165,6 +171,8 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         // Set up button click listeners
         setSleepButton?.setOnClickListener { onSetSleepClick() }
         setActiveButton?.setOnClickListener { onSetActiveClick() }
+        showRawButton?.setOnClickListener { onShowRawClick() }
+        unpinButton?.setOnClickListener { onUnpinClick() }
         setDividersButton?.setOnClickListener { onSetDividersClick() }
         getDividersButton?.setOnClickListener { onGetDividersClick() }
         getFwButton?.setOnClickListener { onGetFwClick() }
@@ -176,6 +184,7 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         // Update connection status and pinned device display
         updateConnectionStatus()
         updatePinnedDeviceDisplay()
+        updateShowRawButton()
     }
     
     private fun setupSensorControls() {
@@ -460,6 +469,40 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         val ok = Services.bluetooth?.flysightProtocol?.controlPoint?.setMode(FlysightModeEvent.MODE_ACTIVE) ?: false
         if (!ok) {
             appendLog("Set Active: not connected")
+        }
+    }
+    
+    private fun onShowRawClick() {
+        Log.i(TAG, "Show Raw button clicked")
+        HudOptions.showRawSensor = !HudOptions.showRawSensor
+        activity?.let { HudOptions.saveHudOptions(it) }
+        updateShowRawButton()
+    }
+    
+    private fun onUnpinClick() {
+        Log.i(TAG, "Unpin button clicked")
+        val prefs = Services.bluetooth?.preferences
+        val act = activity
+        if (prefs != null && prefs.flysightPinnedMac != null && act != null) {
+            prefs.forgetFlysightDevice(act)
+            appendLog("Device unpinned")
+            updatePinnedDeviceDisplay()
+            // Restart bluetooth to scan for any device
+            Services.bluetooth?.restart(act)
+        } else {
+            appendLog("No device pinned")
+        }
+    }
+    
+    private fun updateShowRawButton() {
+        showRawButton?.let { button ->
+            if (HudOptions.showRawSensor) {
+                button.text = "Hide"
+                button.setBackgroundColor(0xFF884466.toInt())
+            } else {
+                button.text = "Show"
+                button.setBackgroundColor(0xFF664488.toInt())
+            }
         }
     }
     
