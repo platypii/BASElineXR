@@ -123,6 +123,42 @@ object SensorMath {
     }
     
     /**
+     * Quaternion inverse (conjugate for unit quaternions).
+     * For a unit quaternion q = (x, y, z, w), inverse = (-x, -y, -z, w)
+     */
+    fun inverseQuaternion(q: Quaternion): Quaternion {
+        return Quaternion(-q.x, -q.y, -q.z, q.w)
+    }
+    
+    /**
+     * Convert Euler angles (degrees) to quaternion.
+     * Order: Yaw (Y) → Pitch (X) → Roll (Z), intrinsic.
+     * 
+     * @param yawDeg   rotation around Y axis (up), positive = turn left
+     * @param pitchDeg rotation around X axis (right), positive = nose up
+     * @param rollDeg  rotation around Z axis (forward), positive = roll right
+     */
+    fun eulerToQuaternion(yawDeg: Float, pitchDeg: Float, rollDeg: Float): Quaternion {
+        val yaw = Math.toRadians(yawDeg.toDouble()).toFloat()
+        val pitch = Math.toRadians(pitchDeg.toDouble()).toFloat()
+        val roll = Math.toRadians(rollDeg.toDouble()).toFloat()
+        
+        val cy = kotlin.math.cos(yaw * 0.5f)
+        val sy = kotlin.math.sin(yaw * 0.5f)
+        val cp = kotlin.math.cos(pitch * 0.5f)
+        val sp = kotlin.math.sin(pitch * 0.5f)
+        val cr = kotlin.math.cos(roll * 0.5f)
+        val sr = kotlin.math.sin(roll * 0.5f)
+        
+        return Quaternion(
+            cr * sp * cy + sr * cp * sy,  // x
+            cr * cp * sy - sr * sp * cy,  // y
+            sr * cp * cy - cr * sp * sy,  // z
+            cr * cp * cy + sr * sp * sy   // w
+        )
+    }
+    
+    /**
      * Rotate a vector by a quaternion.
      * v' = q * v * q^-1
      */
