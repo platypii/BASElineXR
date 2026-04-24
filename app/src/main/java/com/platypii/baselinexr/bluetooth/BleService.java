@@ -187,7 +187,7 @@ public class BleService {
                 Log.i(TAG, "Discovered first bluetooth peripheral");
                 hasDiscovered = true;
             }
-//            Log.d(TAG, "Discovered: " + peripheral.getAddress() + " " + peripheral.getAddress());
+            Log.d(TAG, "Discovered: " + peripheral.getAddress() + " " + peripheral.getName());
 
             // TODO: Check for bluetooth connect permission
             final ScanRecord record = scanResult.getScanRecord();
