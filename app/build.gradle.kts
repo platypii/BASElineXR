@@ -18,9 +18,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        // Update the ndkVersion to the right version for your app
-        ndkVersion = "29.0.13599879"
+        ndkVersion = "27.0.12077973"
     }
 
     packaging { resources.excludes.add("META-INF/LICENSE") }
@@ -84,7 +82,12 @@ dependencies {
 //  ksp("com.meta.spatial.plugin:com.meta.spatial.plugin.gradle.plugin:$metaSpatialSdkVersion")
 }
 
-afterEvaluate { tasks.named("assembleDebug") { dependsOn("export") } }
+// Meta Spatial SDK: export scenes before building any debug variant (quest/mobile)
+afterEvaluate {
+    tasks.matching { it.name.startsWith("assemble") && it.name.endsWith("Debug") }.configureEach {
+        dependsOn("export")
+    }
+}
 
 val projectDir = layout.projectDirectory
 val sceneDirectory = projectDir.dir("scenes")
@@ -92,12 +95,16 @@ val sceneDirectory = projectDir.dir("scenes")
 spatial {
     allowUsageDataCollection.set(true)
     scenes {
-        cliPath.set("C:\\Program Files\\Meta Spatial Editor\\v11\\Resources\\CLI.exe")
+        cliPath.set("C:\\Program Files\\Meta Spatial Editor\\v16\\Resources\\CLI.exe")
         // if you have installed Meta Spatial Editor somewhere else, update the file path.
         // cliPath.set("/Applications/Meta Spatial Editor.app/Contents/MacOS/CLI")
         exportItems {
             item {
                 projectPath.set(sceneDirectory.file("Main.metaspatial"))
+                outputPath.set(projectDir.dir("src/main/assets/scenes"))
+            }
+            item {
+                projectPath.set(sceneDirectory.file("Composition/Main.metaspatialcomp"))
                 outputPath.set(projectDir.dir("src/main/assets/scenes"))
             }
         }
