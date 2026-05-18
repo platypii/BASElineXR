@@ -1,5 +1,7 @@
 data:
   tabs:
-    - Composition
-    - Space
-  current_tab: Space
+  - Composition
+  - Space
+  - trench8d
+  - fighter
+  current_tab: trench8d

@@ -43,7 +43,6 @@ entities:
         com.meta.spatial.toolkit.PanelDimensions:
           {}
       tag: Panel
-  com.meta.models.SceneNode:
     - components:
         com.meta.components.Animatable:
           {}
@@ -75,7 +74,6 @@ entities:
         com.meta.spatial.toolkit.PanelDimensions:
           {}
       tag: FlightStatsPanel
-  com.meta.models.SceneNode:
     - components:
         com.meta.components.Animatable:
           {}
@@ -102,7 +100,6 @@ entities:
         com.meta.spatial.toolkit.PanelDimensions:
           {}
       tag: TargetPanel
-  com.meta.models.SceneNode:
     - components:
         com.meta.components.Animatable:
           {}
@@ -134,7 +131,6 @@ entities:
         com.meta.spatial.toolkit.PanelDimensions:
           {}
       tag: MiniMapPanel
-  com.meta.models.SceneNode:
     - components:
         com.meta.components.Animatable:
           {}
