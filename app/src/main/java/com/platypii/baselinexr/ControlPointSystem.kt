@@ -43,6 +43,17 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
     private var getDividersButton: Button? = null
     private var getFwButton: Button? = null
     private var getDeviceIdButton: Button? = null
+    private var gnssModelLabel: TextView? = null
+    private var gnssModelPrevButton: Button? = null
+    private var gnssModelNextButton: Button? = null
+    private var gnssModelSetButton: Button? = null
+    private var gnssRateLabel: TextView? = null
+    private var gnssRatePrevButton: Button? = null
+    private var gnssRateNextButton: Button? = null
+    private var gnssRateSetButton: Button? = null
+
+    private var gnssModelIndex = 7
+    private var gnssRateIndex = 1  // Default: 10 Hz
     
     // Sensor configuration UI elements
     data class SensorRow(
@@ -128,6 +139,14 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         getDividersButton: Button?,
         getFwButton: Button?,
         getDeviceIdButton: Button?,
+        gnssModelLabel: TextView?,
+        gnssModelPrevButton: Button?,
+        gnssModelNextButton: Button?,
+        gnssModelSetButton: Button?,
+        gnssRateLabel: TextView?,
+        gnssRatePrevButton: Button?,
+        gnssRateNextButton: Button?,
+        gnssRateSetButton: Button?,
         // Sensor config views: odr, divider text, dec button, inc button, rate, set button
         baroOdr: TextView?, baroDivider: TextView?, baroDivDec: Button?, baroDivInc: Button?, baroRate: TextView?, baroSet: Button?,
         humOdr: TextView?, humDivider: TextView?, humDivDec: Button?, humDivInc: Button?, humRate: TextView?, humSet: Button?,
@@ -150,6 +169,14 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         this.getDividersButton = getDividersButton
         this.getFwButton = getFwButton
         this.getDeviceIdButton = getDeviceIdButton
+        this.gnssModelLabel = gnssModelLabel
+        this.gnssModelPrevButton = gnssModelPrevButton
+        this.gnssModelNextButton = gnssModelNextButton
+        this.gnssModelSetButton = gnssModelSetButton
+        this.gnssRateLabel = gnssRateLabel
+        this.gnssRatePrevButton = gnssRatePrevButton
+        this.gnssRateNextButton = gnssRateNextButton
+        this.gnssRateSetButton = gnssRateSetButton
         
         // Set up sensor row references
         sensorRows[Flysight2ControlPoint.SENSOR_BARO].apply {
@@ -177,7 +204,10 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         getDividersButton?.setOnClickListener { onGetDividersClick() }
         getFwButton?.setOnClickListener { onGetFwClick() }
         getDeviceIdButton?.setOnClickListener { onGetDeviceIdClick() }
-        
+        gnssModelSetButton?.setOnClickListener { onSetGnssModelClick() }
+        gnssRateSetButton?.setOnClickListener { onSetGnssRateClick() }
+
+        setupGnssControls()
         // Set up sensor configuration UI
         setupSensorControls()
         
@@ -185,6 +215,44 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         updateConnectionStatus()
         updatePinnedDeviceDisplay()
         updateShowRawButton()
+    }
+
+    private fun setupGnssControls() {
+        updateGnssModelLabel()
+        updateGnssRateLabel()
+
+        gnssModelPrevButton?.setOnClickListener {
+            if (gnssModelIndex > 0) {
+                gnssModelIndex--
+                updateGnssModelLabel()
+            }
+        }
+        gnssModelNextButton?.setOnClickListener {
+            if (gnssModelIndex < Flysight2ControlPoint.GNSS_DYNAMIC_MODEL_VALUES.size - 1) {
+                gnssModelIndex++
+                updateGnssModelLabel()
+            }
+        }
+        gnssRatePrevButton?.setOnClickListener {
+            if (gnssRateIndex > 0) {
+                gnssRateIndex--
+                updateGnssRateLabel()
+            }
+        }
+        gnssRateNextButton?.setOnClickListener {
+            if (gnssRateIndex < Flysight2ControlPoint.GNSS_RATE_VALUES_MS.size - 1) {
+                gnssRateIndex++
+                updateGnssRateLabel()
+            }
+        }
+    }
+
+    private fun updateGnssModelLabel() {
+        gnssModelLabel?.text = Flysight2ControlPoint.GNSS_DYNAMIC_MODEL_LABELS.getOrElse(gnssModelIndex) { "?" }
+    }
+
+    private fun updateGnssRateLabel() {
+        gnssRateLabel?.text = Flysight2ControlPoint.GNSS_RATE_LABELS.getOrElse(gnssRateIndex) { "?" }
     }
     
     private fun setupSensorControls() {
@@ -361,12 +429,24 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
                         appendLog("ID: $id")
                     }
                 }
-                Flysight2ControlPoint.DS_CMD_SET_MODE.toInt() -> {
-                    appendLog("SET_MODE: $statusStr")
+                Flysight2ControlPoint.DS_CMD_REQUEST_SLEEP.toInt() -> {
+                    appendLog("REQUEST_SLEEP: $statusStr")
+                    if (status == Flysight2ControlPoint.CP_STATUS_SUCCESS) {
+                        Services.bluetooth?.flysightProtocol?.requestModeRead()
+                    }
+                }
+                Flysight2ControlPoint.DS_CMD_REQUEST_ACTIVE.toInt() -> {
+                    appendLog("REQUEST_ACTIVE: $statusStr")
                     // Read mode to trigger UI update
                     if (status == Flysight2ControlPoint.CP_STATUS_SUCCESS) {
                         Services.bluetooth?.flysightProtocol?.requestModeRead()
                     }
+                }
+                Flysight2ControlPoint.SD_CMD_SET_GNSS_MODEL.toInt() -> {
+                    appendLog("SET_GNSS_MODEL: $statusStr")
+                }
+                Flysight2ControlPoint.SD_CMD_SET_GNSS_RATE.toInt() -> {
+                    appendLog("SET_GNSS_RATE: $statusStr")
                 }
                 else -> {
                     appendLog("Response 0x${opcode.toString(16)}: $statusStr")
@@ -469,6 +549,36 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         val ok = Services.bluetooth?.flysightProtocol?.controlPoint?.setMode(FlysightModeEvent.MODE_ACTIVE) ?: false
         if (!ok) {
             appendLog("Set Active: not connected")
+        }
+    }
+
+    private fun onSetGnssModelClick() {
+        val model = Flysight2ControlPoint.GNSS_DYNAMIC_MODEL_VALUES.getOrElse(gnssModelIndex) { -1 }
+        val label = Flysight2ControlPoint.GNSS_DYNAMIC_MODEL_LABELS.getOrElse(gnssModelIndex) { "?" }
+        if (model < 0) {
+            appendLog("GNSS model: invalid selection")
+            return
+        }
+        val ok = Services.bluetooth?.flysightProtocol?.controlPoint?.setGnssModel(model) ?: false
+        if (ok) {
+            appendLog("Sent: GNSS model=$label")
+        } else {
+            appendLog("GNSS model: not connected")
+        }
+    }
+
+    private fun onSetGnssRateClick() {
+        val rateMs = Flysight2ControlPoint.GNSS_RATE_VALUES_MS.getOrElse(gnssRateIndex) { -1 }
+        val label = Flysight2ControlPoint.GNSS_RATE_LABELS.getOrElse(gnssRateIndex) { "?" }
+        if (rateMs < 0) {
+            appendLog("GNSS rate: invalid selection")
+            return
+        }
+        val ok = Services.bluetooth?.flysightProtocol?.controlPoint?.setGnssRateMs(rateMs) ?: false
+        if (ok) {
+            appendLog("Sent: GNSS rate=$label (${rateMs}ms)")
+        } else {
+            appendLog("GNSS rate: not connected")
         }
     }
     

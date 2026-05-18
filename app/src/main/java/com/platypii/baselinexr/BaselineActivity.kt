@@ -319,6 +319,14 @@ class BaselineActivity : AppSystemActivity() {
                     val getDividersButton = rootView?.findViewById<android.widget.Button>(R.id.get_dividers_button)
                     val getFwButton = rootView?.findViewById<android.widget.Button>(R.id.get_fw_button)
                     val getDeviceIdButton = rootView?.findViewById<android.widget.Button>(R.id.get_device_id_button)
+                    val gnssModelLabel = rootView?.findViewById<TextView>(R.id.gnss_model_label)
+                    val gnssModelPrevButton = rootView?.findViewById<android.widget.Button>(R.id.gnss_model_prev)
+                    val gnssModelNextButton = rootView?.findViewById<android.widget.Button>(R.id.gnss_model_next)
+                    val gnssModelSetButton = rootView?.findViewById<android.widget.Button>(R.id.set_gnss_model_button)
+                    val gnssRateLabel = rootView?.findViewById<TextView>(R.id.gnss_rate_label)
+                    val gnssRatePrevButton = rootView?.findViewById<android.widget.Button>(R.id.gnss_rate_prev)
+                    val gnssRateNextButton = rootView?.findViewById<android.widget.Button>(R.id.gnss_rate_next)
+                    val gnssRateSetButton = rootView?.findViewById<android.widget.Button>(R.id.set_gnss_rate_button)
                     
                     // Sensor config: ODR (TextView), Divider (TextView + dec/inc buttons), Rate, Set
                     val baroOdr = rootView?.findViewById<TextView>(R.id.sensor_baro_odr)
@@ -372,6 +380,14 @@ class BaselineActivity : AppSystemActivity() {
                         getDividersButton,
                         getFwButton,
                         getDeviceIdButton,
+                        gnssModelLabel,
+                        gnssModelPrevButton,
+                        gnssModelNextButton,
+                        gnssModelSetButton,
+                        gnssRateLabel,
+                        gnssRatePrevButton,
+                        gnssRateNextButton,
+                        gnssRateSetButton,
                         // Sensor config views: odr, divider, dec, inc, rate, set
                         baroOdr, baroDivider, baroDivDec, baroDivInc, baroRate, baroSet,
                         humOdr, humDivider, humDivDec, humDivInc, humRate, humSet,
@@ -474,11 +490,16 @@ class BaselineActivity : AppSystemActivity() {
     private fun loadGLXF(): Job {
         gltfxEntity = Entity.create()
         return activityScope.launch {
-            glXFManager.inflateGLXF(
-                "apk:///scenes/Composition.glxf".toUri(),
-                rootEntity = gltfxEntity!!,
-                keyName = GLXF_SCENE
-            )
+            try {
+                glXFManager.inflateGLXF(
+                    "apk:///scenes/Composition.glxf".toUri(),
+                    rootEntity = gltfxEntity!!,
+                    keyName = GLXF_SCENE
+                )
+                glxfLoaded = true
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to load GLXF scene: scenes/Composition.glxf. Make sure to export the scene from Meta Spatial Editor.", e)
+            }
         }
     }
 

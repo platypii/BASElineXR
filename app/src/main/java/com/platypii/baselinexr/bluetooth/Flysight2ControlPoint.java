@@ -16,6 +16,8 @@ import java.util.UUID;
  * - 0x02: GET_GNSS_BLE_MASK  
  * - 0x10: SET_BLE_DIVIDER
  * - 0x11: GET_BLE_DIVIDER
+ * - 0x12: SET_GNSS_MODEL
+ * - 0x13: SET_GNSS_RATE
  * - 0x20: SET_FUSION_MAG_HARD
  * - 0x21: SET_FUSION_MAG_SOFT
  * 
@@ -23,7 +25,8 @@ import java.util.UUID;
  * - 0x01: GET_FW_VERSION
  * - 0x02: REBOOT_DEVICE
  * - 0x03: GET_DEVICE_ID
- * - 0x04: SET_MODE (SLEEP=0, ACTIVE=1)
+ * - 0x10: REQUEST_SLEEP
+ * - 0x11: REQUEST_ACTIVE
  */
 public class Flysight2ControlPoint {
     private static final String TAG = "FlysightProtocol";  // Use same tag for easier filtering
@@ -42,6 +45,8 @@ public class Flysight2ControlPoint {
     public static final byte SD_CMD_GET_GNSS_BLE_MASK = 0x02;
     public static final byte SD_CMD_SET_BLE_DIVIDER = 0x10;
     public static final byte SD_CMD_GET_BLE_DIVIDER = 0x11;
+    public static final byte SD_CMD_SET_GNSS_MODEL = 0x12;
+    public static final byte SD_CMD_SET_GNSS_RATE = 0x13;
     public static final byte SD_CMD_SET_FUSION_MAG_HARD = 0x20;
     public static final byte SD_CMD_SET_FUSION_MAG_SOFT = 0x21;
 
@@ -49,7 +54,13 @@ public class Flysight2ControlPoint {
     public static final byte DS_CMD_GET_FW_VERSION = 0x01;
     public static final byte DS_CMD_REBOOT_DEVICE = 0x02;
     public static final byte DS_CMD_GET_DEVICE_ID = 0x03;
-    public static final byte DS_CMD_SET_MODE = 0x04;
+    public static final byte DS_CMD_INSTALL_UPLOADED_FIRMWARE = 0x04;
+    public static final byte DS_CMD_REQUEST_SLEEP = 0x10;
+    public static final byte DS_CMD_REQUEST_ACTIVE = 0x11;
+    public static final byte DS_CMD_REQUEST_START = 0x12;
+    public static final byte DS_CMD_REQUEST_CONFIG = 0x13;
+    public static final byte DS_CMD_REQUEST_PAIRING = 0x14;
+    public static final byte DS_CMD_SET_EXT_SYNC = 0x15;
 
     // Sensor IDs for SET_BLE_DIVIDER
     public static final int SENSOR_BARO = 0;
@@ -81,6 +92,15 @@ public class Flysight2ControlPoint {
     // Common divider values for dropdown selection
     public static final int[] DIVIDER_VALUES = {0, 1, 2, 4, 8, 16, 32, 64};
     public static final String[] DIVIDER_LABELS = {"Auto", "1", "2", "4", "8", "16", "32", "64"};
+
+    // GNSS runtime settings
+    public static final int[] GNSS_DYNAMIC_MODEL_VALUES = {0, 2, 3, 4, 5, 6, 7, 8};
+    public static final String[] GNSS_DYNAMIC_MODEL_LABELS = {
+            "Portable", "Stationary", "Pedestrian", "Automotive",
+            "Sea", "Airborne 1G", "Airborne 2G", "Airborne 4G"
+    };
+    public static final int[] GNSS_RATE_VALUES_MS = {200, 100, 67, 50, 40};
+    public static final String[] GNSS_RATE_LABELS = {"5 Hz", "10 Hz", "15 Hz", "20 Hz", "25 Hz"};
 
     // Response status codes
     public static final int CP_STATUS_SUCCESS = 0x01;
@@ -180,6 +200,43 @@ public class Flysight2ControlPoint {
     }
 
     /**
+     * Set the GNSS dynamic model at runtime.
+     * @param model u-blox dynamic model value (0, 2, 3, 4, 5, 6, 7, or 8)
+     */
+    public boolean setGnssModel(int model) {
+        if (peripheral == null) {
+            Log.w(TAG, "setGnssModel: no peripheral connected");
+            return false;
+        }
+        byte[] cmd = new byte[] {
+                SD_CMD_SET_GNSS_MODEL,
+                (byte) model
+        };
+        boolean ok = peripheral.writeCharacteristic(sensorDataService, sdControlPoint, cmd, WriteType.WITH_RESPONSE);
+        Log.i(TAG, "setGnssModel model=" + model + " ok=" + ok);
+        return ok;
+    }
+
+    /**
+     * Set the GNSS measurement interval at runtime.
+     * @param rateMs GNSS update interval in milliseconds
+     */
+    public boolean setGnssRateMs(int rateMs) {
+        if (peripheral == null) {
+            Log.w(TAG, "setGnssRateMs: no peripheral connected");
+            return false;
+        }
+        byte[] cmd = new byte[] {
+                SD_CMD_SET_GNSS_RATE,
+                (byte) (rateMs & 0xFF),
+                (byte) ((rateMs >> 8) & 0xFF)
+        };
+        boolean ok = peripheral.writeCharacteristic(sensorDataService, sdControlPoint, cmd, WriteType.WITH_RESPONSE);
+        Log.i(TAG, "setGnssRateMs rateMs=" + rateMs + " ok=" + ok);
+        return ok;
+    }
+
+    /**
      * Set magnetometer hard-iron calibration offsets on FlySight 2.
      * Payload: [opcode(0x20)] [x_offset (int16_t LE)] [y_offset (int16_t LE)] [z_offset (int16_t LE)]
      * Offsets are in milligauss.
@@ -242,16 +299,75 @@ public class Flysight2ControlPoint {
      * @param mode 0=SLEEP, 1=ACTIVE
      */
     public boolean setMode(int mode) {
+        switch (mode) {
+            case 0:
+                return requestSleep();
+            case 1:
+                return requestActive();
+            case 2:
+                return requestConfig();
+            case 4:
+                return requestPairing();
+            case 5:
+                return requestStart();
+            default:
+                Log.w(TAG, "setMode: unsupported mode=" + mode);
+                return false;
+        }
+    }
+
+    public boolean requestSleep() {
         if (peripheral == null) {
-            Log.w(TAG, "setMode: no peripheral connected");
+            Log.w(TAG, "requestSleep: no peripheral connected");
             return false;
         }
-        byte[] cmd = new byte[] {
-            DS_CMD_SET_MODE,
-            (byte) mode
-        };
+        byte[] cmd = new byte[] { DS_CMD_REQUEST_SLEEP };
         boolean ok = peripheral.writeCharacteristic(deviceStateService, dsControlPoint, cmd, WriteType.WITH_RESPONSE);
-        Log.i(TAG, "setMode mode=" + mode + " ok=" + ok);
+        Log.i(TAG, "requestSleep ok=" + ok);
+        return ok;
+    }
+
+    public boolean requestActive() {
+        if (peripheral == null) {
+            Log.w(TAG, "requestActive: no peripheral connected");
+            return false;
+        }
+        byte[] cmd = new byte[] { DS_CMD_REQUEST_ACTIVE };
+        boolean ok = peripheral.writeCharacteristic(deviceStateService, dsControlPoint, cmd, WriteType.WITH_RESPONSE);
+        Log.i(TAG, "requestActive ok=" + ok);
+        return ok;
+    }
+
+    public boolean requestStart() {
+        if (peripheral == null) {
+            Log.w(TAG, "requestStart: no peripheral connected");
+            return false;
+        }
+        byte[] cmd = new byte[] { DS_CMD_REQUEST_START };
+        boolean ok = peripheral.writeCharacteristic(deviceStateService, dsControlPoint, cmd, WriteType.WITH_RESPONSE);
+        Log.i(TAG, "requestStart ok=" + ok);
+        return ok;
+    }
+
+    public boolean requestConfig() {
+        if (peripheral == null) {
+            Log.w(TAG, "requestConfig: no peripheral connected");
+            return false;
+        }
+        byte[] cmd = new byte[] { DS_CMD_REQUEST_CONFIG };
+        boolean ok = peripheral.writeCharacteristic(deviceStateService, dsControlPoint, cmd, WriteType.WITH_RESPONSE);
+        Log.i(TAG, "requestConfig ok=" + ok);
+        return ok;
+    }
+
+    public boolean requestPairing() {
+        if (peripheral == null) {
+            Log.w(TAG, "requestPairing: no peripheral connected");
+            return false;
+        }
+        byte[] cmd = new byte[] { DS_CMD_REQUEST_PAIRING };
+        boolean ok = peripheral.writeCharacteristic(deviceStateService, dsControlPoint, cmd, WriteType.WITH_RESPONSE);
+        Log.i(TAG, "requestPairing ok=" + ok);
         return ok;
     }
 
