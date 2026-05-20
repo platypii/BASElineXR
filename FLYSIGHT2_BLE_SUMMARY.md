@@ -1,7 +1,7 @@
 # FlySight 2 BLE Integration Summary
 
 ## Device Info
-- **Firmware**: v2024.11.11.release_candidate
+- **Firmware**: v2026.05.11.develop
 - **MAC**: 45:81:C5:3E:80:FB
 
 ## Service UUIDs

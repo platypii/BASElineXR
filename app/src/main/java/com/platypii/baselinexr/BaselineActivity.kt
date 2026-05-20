@@ -301,6 +301,8 @@ class BaselineActivity : AppSystemActivity() {
                     themeResourceId = R.style.PanelAppThemeTransparent
                     includeGlass = false
                     enableTransparent = true
+                    layoutWidthInDp = 600f
+                    layoutHeightInDp = 1400f
                 }
                 panel {
                     // Set up control point panel references
@@ -319,6 +321,11 @@ class BaselineActivity : AppSystemActivity() {
                     val getDividersButton = rootView?.findViewById<android.widget.Button>(R.id.get_dividers_button)
                     val getFwButton = rootView?.findViewById<android.widget.Button>(R.id.get_fw_button)
                     val getDeviceIdButton = rootView?.findViewById<android.widget.Button>(R.id.get_device_id_button)
+                    val getSensorOdrsButton = rootView?.findViewById<android.widget.Button>(R.id.get_sensor_odrs_button)
+                    val getRatesButton = rootView?.findViewById<android.widget.Button>(R.id.get_rates_button)
+                    val getBleBudgetButton = rootView?.findViewById<android.widget.Button>(R.id.get_ble_budget_button)
+                    val extSyncValueInput = rootView?.findViewById<android.widget.EditText>(R.id.ext_sync_value)
+                    val setExtSyncButton = rootView?.findViewById<android.widget.Button>(R.id.set_ext_sync_button)
                     val gnssModelLabel = rootView?.findViewById<TextView>(R.id.gnss_model_label)
                     val gnssModelPrevButton = rootView?.findViewById<android.widget.Button>(R.id.gnss_model_prev)
                     val gnssModelNextButton = rootView?.findViewById<android.widget.Button>(R.id.gnss_model_next)
@@ -380,6 +387,11 @@ class BaselineActivity : AppSystemActivity() {
                         getDividersButton,
                         getFwButton,
                         getDeviceIdButton,
+                        getSensorOdrsButton,
+                        getRatesButton,
+                        getBleBudgetButton,
+                        extSyncValueInput,
+                        setExtSyncButton,
                         gnssModelLabel,
                         gnssModelPrevButton,
                         gnssModelNextButton,

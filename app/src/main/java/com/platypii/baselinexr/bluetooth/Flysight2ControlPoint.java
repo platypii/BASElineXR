@@ -49,6 +49,9 @@ public class Flysight2ControlPoint {
     public static final byte SD_CMD_SET_GNSS_RATE = 0x13;
     public static final byte SD_CMD_SET_FUSION_MAG_HARD = 0x20;
     public static final byte SD_CMD_SET_FUSION_MAG_SOFT = 0x21;
+    public static final byte SD_CMD_GET_SENSOR_ODRS = 0x31;
+    public static final byte SD_CMD_GET_RATES = 0x32;
+    public static final byte SD_CMD_GET_BLE_BUDGET = 0x33;
 
     // DS_Control_Point opcodes
     public static final byte DS_CMD_GET_FW_VERSION = 0x01;
@@ -372,6 +375,31 @@ public class Flysight2ControlPoint {
     }
 
     /**
+     * Set the external synchronization timestamp used in log headers.
+     * @param extSync Unsigned 32-bit timestamp value
+     */
+    public boolean setExtSync(long extSync) {
+        if (peripheral == null) {
+            Log.w(TAG, "setExtSync: no peripheral connected");
+            return false;
+        }
+        if (extSync < 0 || extSync > 0xFFFFFFFFL) {
+            Log.w(TAG, "setExtSync: invalid value=" + extSync);
+            return false;
+        }
+        byte[] cmd = new byte[] {
+            DS_CMD_SET_EXT_SYNC,
+            (byte) (extSync & 0xFF),
+            (byte) ((extSync >> 8) & 0xFF),
+            (byte) ((extSync >> 16) & 0xFF),
+            (byte) ((extSync >> 24) & 0xFF)
+        };
+        boolean ok = peripheral.writeCharacteristic(deviceStateService, dsControlPoint, cmd, WriteType.WITH_RESPONSE);
+        Log.i(TAG, "setExtSync extSync=" + extSync + " ok=" + ok);
+        return ok;
+    }
+
+    /**
      * Read the current device mode via the DS_Mode characteristic.
      * The result will arrive via onCharacteristicUpdate.
      */
@@ -400,8 +428,53 @@ public class Flysight2ControlPoint {
     }
 
     /**
-     * Process incoming control point response
-     * Format: [0xF0] [Request Opcode] [Status] [Optional Data...]
+     * Request ODR index + source for all 5 sensors.
+     * Response: [0xF0][0x31][status][baro_idx][baro_src][hum_idx][hum_src][accel_idx][accel_src][gyro_idx][gyro_src][mag_idx][mag_src]
+     */
+    public boolean getSensorOdrs() {
+        if (peripheral == null) {
+            Log.w(TAG, "getSensorOdrs: no peripheral connected");
+            return false;
+        }
+        byte[] cmd = new byte[]{ SD_CMD_GET_SENSOR_ODRS };
+        boolean ok = peripheral.writeCharacteristic(sensorDataService, sdControlPoint, cmd, WriteType.WITH_RESPONSE);
+        Log.i(TAG, "getSensorOdrs ok=" + ok);
+        return ok;
+    }
+
+    /**
+     * Request GNSS rate, AL rate, and AL enabled flag.
+     * Response: [0xF0][0x32][status][gnss_req×2][gnss_eff×2][gnss_src][al_req×2][al_eff×2][al_src][al_enabled]
+     */
+    public boolean getRates() {
+        if (peripheral == null) {
+            Log.w(TAG, "getRates: no peripheral connected");
+            return false;
+        }
+        byte[] cmd = new byte[]{ SD_CMD_GET_RATES };
+        boolean ok = peripheral.writeCharacteristic(sensorDataService, sdControlPoint, cmd, WriteType.WITH_RESPONSE);
+        Log.i(TAG, "getRates ok=" + ok);
+        return ok;
+    }
+
+    /**
+     * Request BLE bandwidth summary and warning flags.
+     * Response: [0xF0][0x33][status][est_bps×4][sensor_bps×4][al_bps×4][budget_ok][warn_flags×4]
+     */
+    public boolean getBleBudget() {
+        if (peripheral == null) {
+            Log.w(TAG, "getBleBudget: no peripheral connected");
+            return false;
+        }
+        byte[] cmd = new byte[]{ SD_CMD_GET_BLE_BUDGET };
+        boolean ok = peripheral.writeCharacteristic(sensorDataService, sdControlPoint, cmd, WriteType.WITH_RESPONSE);
+        Log.i(TAG, "getBleBudget ok=" + ok);
+        return ok;
+    }
+
+    /**
+     * Process incoming control point response.
+     * Standard format: [0xF0] [Request Opcode] [Status] [Optional Data...]
      */
     public void processResponse(@NonNull byte[] value) {
         // Log raw hex for debugging
@@ -409,36 +482,39 @@ public class Flysight2ControlPoint {
         for (byte b : value) {
             hex.append(String.format("%02X ", b));
         }
-        Log.d(TAG, "CP Response raw (" + value.length + " bytes): " + hex);
-        
+        Log.i(TAG, "CP Response raw (" + value.length + " bytes): " + hex);
+
         if (value.length < 3) {
             Log.w(TAG, "Control point response too short: " + value.length);
             return;
         }
-        int responseId = value[0] & 0xFF;
+
+        int frameType = value[0] & 0xFF;
+        if (frameType != 0xF0) {
+            Log.w(TAG, "CP Response: unexpected frame type 0x" + Integer.toHexString(frameType));
+            return;
+        }
+
         int opcode = value[1] & 0xFF;
         int statusCode = value[2] & 0xFF;
-        
         String statusStr = getStatusString(statusCode);
-        Log.i(TAG, "CP Response: responseId=0x" + Integer.toHexString(responseId) 
-            + " opcode=0x" + Integer.toHexString(opcode) 
-            + " status=" + statusStr);
+        Log.i(TAG, "CP Response: opcode=0x" + Integer.toHexString(opcode) + " status=" + statusStr);
 
         // Extract optional response data
         byte[] data = null;
         if (value.length > 3) {
             data = new byte[value.length - 3];
             System.arraycopy(value, 3, data, 0, data.length);
-            
+
             // Log specific response data for known opcodes
-            if (opcode == SD_CMD_GET_BLE_DIVIDER && data.length >= 3) {
+            if (opcode == (SD_CMD_GET_BLE_DIVIDER & 0xFF) && data.length >= 3) {
                 int sensorId = data[0] & 0xFF;
                 int divider = (data[1] & 0xFF) | ((data[2] & 0xFF) << 8);
                 Log.i(TAG, "  -> sensor=" + sensorId + " divider=" + divider);
-            } else if (opcode == DS_CMD_GET_FW_VERSION) {
+            } else if (opcode == (DS_CMD_GET_FW_VERSION & 0xFF)) {
                 String version = new String(data);
                 Log.i(TAG, "  -> firmware=" + version);
-            } else if (opcode == DS_CMD_GET_DEVICE_ID) {
+            } else if (opcode == (DS_CMD_GET_DEVICE_ID & 0xFF)) {
                 StringBuilder sb = new StringBuilder();
                 for (byte b : data) {
                     sb.append(String.format("%02X", b));

@@ -440,10 +440,6 @@ public class Flysight2Protocol extends BleProtocol {
      * Buffers data until matching gyro arrives (via ImuCorrelator)
      */
     private void processAccel(@NonNull byte[] value) {
-        // Log hex dump of raw packet for debugging
-        StringBuilder hex = new StringBuilder();
-        for (byte b : value) hex.append(String.format("%02X ", b));
-        Log.d(TAG, "flysight accel raw: " + hex.toString().trim());
         imuCorrelator.onAccelReceived(value);
     }
 
@@ -452,13 +448,8 @@ public class Flysight2Protocol extends BleProtocol {
      * Combines with buffered accel data to emit MImuData
      */
     private void processGyro(@NonNull byte[] value) {
-        // Log hex dump of raw packet for debugging
-        StringBuilder hex = new StringBuilder();
-        for (byte b : value) hex.append(String.format("%02X ", b));
-        Log.d(TAG, "flysight gyro raw: " + hex.toString().trim());
         MImuData imu = imuCorrelator.onGyroReceived(value, timeSync);
         if (imu != null) {
-            Log.d(TAG, "flysight -> app: " + imu);
             imuUpdates.post(imu);
         } else {
             Log.w(TAG, "flysight gyro: no matching accel found");
@@ -497,7 +488,6 @@ public class Flysight2Protocol extends BleProtocol {
         
         double sensorTimeSec = sensorTimeMs / 1000.0;
         MMagData mag = MMagData.fromSensorTime(sensorTimeSec, timeSync, magX, magY, magZ, temperature);
-        Log.d(TAG, "flysight -> app: " + mag);
         magUpdates.post(mag);
     }
 
@@ -531,7 +521,6 @@ public class Flysight2Protocol extends BleProtocol {
         
         double sensorTimeSec = sensorTimeMs / 1000.0;
         MBaroData baro = MBaroData.fromSensorTime(sensorTimeSec, timeSync, pressure, temperature);
-        Log.d(TAG, "flysight -> app: " + baro);
         baroUpdates.post(baro);
     }
 
@@ -541,41 +530,30 @@ public class Flysight2Protocol extends BleProtocol {
      */
     private void processHum(@NonNull byte[] value) {
         if (value.length < 1) return;
-        
-        // Log raw bytes for debugging
-        StringBuilder hex = new StringBuilder();
-        for (byte b : value) {
-            hex.append(String.format("%02X ", b));
-        }
-        Log.d(TAG, "HUM raw bytes (" + value.length + "): " + hex.toString().trim());
-        
+
         ByteBuffer buf = ByteBuffer.wrap(value).order(ByteOrder.LITTLE_ENDIAN);
         int mask = buf.get() & 0xFF;
-        
+
         // Parse timestamp
         long sensorTimeMs = 0;
         if ((mask & 0x80) != 0) {
             sensorTimeMs = Integer.toUnsignedLong(buf.getInt());
         }
-        
+
         // Parse humidity (0.1% RH -> %)
         float humidity = 0;
         if ((mask & 0x40) != 0) {
             short rawHum = buf.getShort();
             humidity = (rawHum & 0xFFFF) / 10f;  // uint16, 0.1% -> %
-            Log.d(TAG, "HUM: rawHum=" + rawHum + " (0x" + Integer.toHexString(rawHum & 0xFFFF) + ") -> " + humidity + "%");
         }
-        
+
         // Parse temperature
         float temperature = Float.NaN;
         if ((mask & 0x20) != 0) {
             short rawTemp = buf.getShort();
             temperature = rawTemp / 100f;  // 0.01°C -> °C
-            Log.d(TAG, "HUM: rawTemp=" + rawTemp + " -> " + temperature + "°C");
         }
-        
-        Log.d(TAG, "HUM parsed: mask=0x" + Integer.toHexString(mask) + " humidity=" + humidity + "% temp=" + temperature + "°C");
-        
+
         double sensorTimeSec = sensorTimeMs / 1000.0;
         MHumData hum = MHumData.fromSensorTime(sensorTimeSec, timeSync, humidity, temperature);
         humUpdates.post(hum);

@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:text="FlySight Control Point"
         android:textColor="#00FFFF"
-        android:textSize="24sp"
+        android:textSize="26sp"
         android:textStyle="bold"
         android:gravity="center"
         android:paddingBottom="12dp" />
@@ -31,7 +31,7 @@
             android:layout_height="wrap_content"
             android:text="Device Status"
             android:textColor="#FFFF00"
-            android:textSize="16sp"
+            android:textSize="18sp"
             android:textStyle="bold"
             android:paddingBottom="4dp" />
 
@@ -47,7 +47,7 @@
                 android:layout_weight="1"
                 android:text="Connection:"
                 android:textColor="#AAAAAA"
-                android:textSize="14sp" />
+                android:textSize="16sp" />
 
             <TextView
                 android:id="@+id/connection_status"
@@ -56,7 +56,7 @@
                 android:layout_weight="2"
                 android:text="Disconnected"
                 android:textColor="#FF8888"
-                android:textSize="14sp"
+                android:textSize="16sp"
                 android:fontFamily="monospace" />
         </LinearLayout>
 
@@ -72,7 +72,7 @@
                 android:layout_weight="1"
                 android:text="Mode:"
                 android:textColor="#AAAAAA"
-                android:textSize="14sp" />
+                android:textSize="16sp" />
 
             <TextView
                 android:id="@+id/device_mode"
@@ -81,7 +81,7 @@
                 android:layout_weight="2"
                 android:text="---"
                 android:textColor="#FFFFFF"
-                android:textSize="14sp"
+                android:textSize="16sp"
                 android:fontFamily="monospace" />
         </LinearLayout>
 
@@ -97,7 +97,7 @@
                 android:layout_weight="1"
                 android:text="Firmware:"
                 android:textColor="#AAAAAA"
-                android:textSize="14sp" />
+                android:textSize="16sp" />
 
             <TextView
                 android:id="@+id/firmware_version"
@@ -106,7 +106,7 @@
                 android:layout_weight="2"
                 android:text="---"
                 android:textColor="#FFFFFF"
-                android:textSize="14sp"
+                android:textSize="16sp"
                 android:fontFamily="monospace" />
         </LinearLayout>
 
@@ -122,7 +122,7 @@
                 android:layout_weight="1"
                 android:text="Device ID:"
                 android:textColor="#AAAAAA"
-                android:textSize="14sp" />
+                android:textSize="16sp" />
 
             <TextView
                 android:id="@+id/device_id"
@@ -131,7 +131,7 @@
                 android:layout_weight="2"
                 android:text="---"
                 android:textColor="#FFFFFF"
-                android:textSize="14sp"
+                android:textSize="16sp"
                 android:fontFamily="monospace" />
         </LinearLayout>
 
@@ -148,7 +148,7 @@
                 android:layout_weight="1"
                 android:text="Pinned:"
                 android:textColor="#AAAAAA"
-                android:textSize="14sp" />
+                android:textSize="16sp" />
 
             <TextView
                 android:id="@+id/pinned_device"
@@ -157,7 +157,7 @@
                 android:layout_weight="1.5"
                 android:text="None"
                 android:textColor="#88FF88"
-                android:textSize="12sp"
+                android:textSize="14sp"
                 android:fontFamily="monospace"
                 android:ellipsize="middle"
                 android:singleLine="true" />
@@ -168,7 +168,7 @@
                 android:layout_weight="0.5"
                 android:layout_height="28dp"
                 android:text="Unpin"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:background="#884444"
                 android:textColor="#FFFFFF" />
         </LinearLayout>
@@ -178,7 +178,7 @@
             android:layout_height="wrap_content"
             android:text="GNSS Runtime Settings"
             android:textColor="#AAAAAA"
-            android:textSize="14sp"
+            android:textSize="16sp"
             android:layout_marginTop="8dp"
             android:paddingBottom="2dp" />
 
@@ -194,7 +194,7 @@
                 android:layout_weight="1"
                 android:text="Model:"
                 android:textColor="#AAAAAA"
-                android:textSize="14sp" />
+                android:textSize="16sp" />
 
             <Button
                 android:id="@+id/gnss_model_prev"
@@ -203,7 +203,7 @@
                 android:background="#446688"
                 android:text="&lt;"
                 android:textColor="#FFFFFF"
-                android:textSize="12sp"
+                android:textSize="14sp"
                 android:padding="0dp" />
 
             <TextView
@@ -214,7 +214,7 @@
                 android:gravity="center"
                 android:text="Portable"
                 android:textColor="#FFFFFF"
-                android:textSize="12sp" />
+                android:textSize="14sp" />
 
             <Button
                 android:id="@+id/gnss_model_next"
@@ -223,7 +223,7 @@
                 android:background="#446688"
                 android:text="&gt;"
                 android:textColor="#FFFFFF"
-                android:textSize="12sp"
+                android:textSize="14sp"
                 android:padding="0dp" />
 
             <Button
@@ -235,7 +235,7 @@
                 android:background="#336644"
                 android:text="Set"
                 android:textColor="#FFFFFF"
-                android:textSize="10sp" />
+                android:textSize="12sp" />
         </LinearLayout>
 
         <LinearLayout
@@ -251,7 +251,7 @@
                 android:layout_weight="1"
                 android:text="Rate:"
                 android:textColor="#AAAAAA"
-                android:textSize="14sp" />
+                android:textSize="16sp" />
 
             <Button
                 android:id="@+id/gnss_rate_prev"
@@ -260,7 +260,7 @@
                 android:background="#446688"
                 android:text="&lt;"
                 android:textColor="#FFFFFF"
-                android:textSize="12sp"
+                android:textSize="14sp"
                 android:padding="0dp" />
 
             <TextView
@@ -271,7 +271,7 @@
                 android:gravity="center"
                 android:text="10 Hz"
                 android:textColor="#FFFFFF"
-                android:textSize="12sp" />
+                android:textSize="14sp" />
 
             <Button
                 android:id="@+id/gnss_rate_next"
@@ -280,7 +280,7 @@
                 android:background="#446688"
                 android:text="&gt;"
                 android:textColor="#FFFFFF"
-                android:textSize="12sp"
+                android:textSize="14sp"
                 android:padding="0dp" />
 
             <Button
@@ -292,7 +292,7 @@
                 android:background="#336644"
                 android:text="Set"
                 android:textColor="#FFFFFF"
-                android:textSize="10sp" />
+                android:textSize="12sp" />
         </LinearLayout>
 
         <!-- Mode Control -->
@@ -309,7 +309,7 @@
                 android:layout_weight="1"
                 android:text="Set Mode:"
                 android:textColor="#AAAAAA"
-                android:textSize="14sp" />
+                android:textSize="16sp" />
 
             <Button
                 android:id="@+id/set_sleep_button"
@@ -317,7 +317,7 @@
                 android:layout_weight="1"
                 android:layout_height="32dp"
                 android:text="Sleep"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:background="#446688"
                 android:textColor="#FFFFFF"
                 android:layout_marginEnd="2dp" />
@@ -328,7 +328,7 @@
                 android:layout_weight="1"
                 android:layout_height="32dp"
                 android:text="Active"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:background="#668844"
                 android:textColor="#FFFFFF"
                 android:layout_marginEnd="2dp" />
@@ -339,9 +339,51 @@
                 android:layout_weight="1"
                 android:layout_height="32dp"
                 android:text="Show"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:background="#664488"
                 android:textColor="#FFFFFF" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="4dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Ext Sync:"
+                android:textColor="#AAAAAA"
+                android:textSize="16sp" />
+
+            <EditText
+                android:id="@+id/ext_sync_value"
+                android:layout_width="0dp"
+                android:layout_height="32dp"
+                android:layout_weight="1.4"
+                android:layout_marginEnd="4dp"
+                android:background="#223344"
+                android:fontFamily="monospace"
+                android:hint="unix sec"
+                android:inputType="number"
+                android:paddingHorizontal="8dp"
+                android:singleLine="true"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#88AAAAAA"
+                android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/set_ext_sync_button"
+                android:layout_width="0dp"
+                android:layout_height="32dp"
+                android:layout_weight="0.8"
+                android:background="#336644"
+                android:text="Stamp"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp" />
         </LinearLayout>
     </LinearLayout>
 
@@ -359,7 +401,7 @@
             android:layout_height="wrap_content"
             android:text="BLE Divider Settings"
             android:textColor="#FFFF00"
-            android:textSize="16sp"
+            android:textSize="18sp"
             android:textStyle="bold"
             android:paddingBottom="4dp" />
 
@@ -370,7 +412,7 @@
             android:layout_height="wrap_content"
             android:text="Dividers: ---"
             android:textColor="#AAAAAA"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:fontFamily="monospace"
             android:paddingBottom="8dp" />
 
@@ -389,7 +431,7 @@
                 android:background="@drawable/button_bg"
                 android:text="Set All = 1"
                 android:textColor="#88FF88"
-                android:textSize="14sp" />
+                android:textSize="16sp" />
 
             <Button
                 android:id="@+id/get_dividers_button"
@@ -400,7 +442,7 @@
                 android:background="@drawable/button_bg"
                 android:text="Get Dividers"
                 android:textColor="#88CCFF"
-                android:textSize="14sp" />
+                android:textSize="16sp" />
         </LinearLayout>
     </LinearLayout>
 
@@ -418,7 +460,7 @@
             android:layout_height="wrap_content"
             android:text="Sensor Configuration"
             android:textColor="#FFFF00"
-            android:textSize="16sp"
+            android:textSize="18sp"
             android:textStyle="bold"
             android:paddingBottom="4dp" />
 
@@ -434,21 +476,21 @@
                 android:layout_height="wrap_content"
                 android:text="Sensor"
                 android:textColor="#AAAAAA"
-                android:textSize="10sp" />
+                android:textSize="12sp" />
 
             <TextView
                 android:layout_width="50dp"
                 android:layout_height="wrap_content"
                 android:text="ODR"
                 android:textColor="#AAAAAA"
-                android:textSize="10sp" />
+                android:textSize="12sp" />
 
             <TextView
                 android:layout_width="84dp"
                 android:layout_height="wrap_content"
                 android:text="Divider"
                 android:textColor="#AAAAAA"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:gravity="center" />
 
             <TextView
@@ -456,7 +498,7 @@
                 android:layout_height="wrap_content"
                 android:text="Rate"
                 android:textColor="#AAAAAA"
-                android:textSize="10sp" />
+                android:textSize="12sp" />
 
             <TextView
                 android:layout_width="0dp"
@@ -464,7 +506,7 @@
                 android:layout_weight="1"
                 android:text=""
                 android:textColor="#AAAAAA"
-                android:textSize="10sp" />
+                android:textSize="12sp" />
         </LinearLayout>
 
         <!-- Baro Row -->
@@ -480,7 +522,7 @@
                 android:layout_height="wrap_content"
                 android:text="Baro"
                 android:textColor="#FFFFFF"
-                android:textSize="12sp" />
+                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/sensor_baro_odr"
@@ -488,7 +530,7 @@
                 android:layout_height="wrap_content"
                 android:text="---"
                 android:textColor="#CCCCCC"
-                android:textSize="11sp"
+                android:textSize="13sp"
                 android:fontFamily="monospace" />
 
             <Button
@@ -496,7 +538,7 @@
                 android:layout_width="24dp"
                 android:layout_height="28dp"
                 android:text="−"
-                android:textSize="14sp"
+                android:textSize="16sp"
                 android:background="#444444"
                 android:textColor="#FFFFFF"
                 android:padding="0dp" />
@@ -507,7 +549,7 @@
                 android:layout_height="wrap_content"
                 android:text="1"
                 android:textColor="#FFFF88"
-                android:textSize="12sp"
+                android:textSize="14sp"
                 android:fontFamily="monospace"
                 android:gravity="center" />
 
@@ -516,7 +558,7 @@
                 android:layout_width="24dp"
                 android:layout_height="28dp"
                 android:text="+"
-                android:textSize="14sp"
+                android:textSize="16sp"
                 android:background="#444444"
                 android:textColor="#FFFFFF"
                 android:padding="0dp" />
@@ -527,7 +569,7 @@
                 android:layout_height="wrap_content"
                 android:text="---"
                 android:textColor="#88FF88"
-                android:textSize="11sp"
+                android:textSize="13sp"
                 android:fontFamily="monospace" />
 
             <Button
@@ -538,7 +580,7 @@
                 android:background="@drawable/button_bg"
                 android:text="Set"
                 android:textColor="#88FF88"
-                android:textSize="11sp" />
+                android:textSize="13sp" />
         </LinearLayout>
 
         <!-- Hum Row -->
@@ -554,7 +596,7 @@
                 android:layout_height="wrap_content"
                 android:text="Hum"
                 android:textColor="#FFFFFF"
-                android:textSize="12sp" />
+                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/sensor_hum_odr"
@@ -562,7 +604,7 @@
                 android:layout_height="wrap_content"
                 android:text="---"
                 android:textColor="#CCCCCC"
-                android:textSize="11sp"
+                android:textSize="13sp"
                 android:fontFamily="monospace" />
 
             <Button
@@ -570,7 +612,7 @@
                 android:layout_width="24dp"
                 android:layout_height="28dp"
                 android:text="−"
-                android:textSize="14sp"
+                android:textSize="16sp"
                 android:background="#444444"
                 android:textColor="#FFFFFF"
                 android:padding="0dp" />
@@ -581,7 +623,7 @@
                 android:layout_height="wrap_content"
                 android:text="1"
                 android:textColor="#FFFF88"
-                android:textSize="12sp"
+                android:textSize="14sp"
                 android:fontFamily="monospace"
                 android:gravity="center" />
 
@@ -590,7 +632,7 @@
                 android:layout_width="24dp"
                 android:layout_height="28dp"
                 android:text="+"
-                android:textSize="14sp"
+                android:textSize="16sp"
                 android:background="#444444"
                 android:textColor="#FFFFFF"
                 android:padding="0dp" />
@@ -601,7 +643,7 @@
                 android:layout_height="wrap_content"
                 android:text="---"
                 android:textColor="#88FF88"
-                android:textSize="11sp"
+                android:textSize="13sp"
                 android:fontFamily="monospace" />
 
             <Button
@@ -612,7 +654,7 @@
                 android:background="@drawable/button_bg"
                 android:text="Set"
                 android:textColor="#88FF88"
-                android:textSize="11sp" />
+                android:textSize="13sp" />
         </LinearLayout>
 
         <!-- Accel Row -->
@@ -628,7 +670,7 @@
                 android:layout_height="wrap_content"
                 android:text="Accel"
                 android:textColor="#FFFFFF"
-                android:textSize="12sp" />
+                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/sensor_accel_odr"
@@ -636,7 +678,7 @@
                 android:layout_height="wrap_content"
                 android:text="---"
                 android:textColor="#CCCCCC"
-                android:textSize="11sp"
+                android:textSize="13sp"
                 android:fontFamily="monospace" />
 
             <Button
@@ -644,7 +686,7 @@
                 android:layout_width="24dp"
                 android:layout_height="28dp"
                 android:text="−"
-                android:textSize="14sp"
+                android:textSize="16sp"
                 android:background="#444444"
                 android:textColor="#FFFFFF"
                 android:padding="0dp" />
@@ -655,7 +697,7 @@
                 android:layout_height="wrap_content"
                 android:text="1"
                 android:textColor="#FFFF88"
-                android:textSize="12sp"
+                android:textSize="14sp"
                 android:fontFamily="monospace"
                 android:gravity="center" />
 
@@ -664,7 +706,7 @@
                 android:layout_width="24dp"
                 android:layout_height="28dp"
                 android:text="+"
-                android:textSize="14sp"
+                android:textSize="16sp"
                 android:background="#444444"
                 android:textColor="#FFFFFF"
                 android:padding="0dp" />
@@ -675,7 +717,7 @@
                 android:layout_height="wrap_content"
                 android:text="---"
                 android:textColor="#88FF88"
-                android:textSize="11sp"
+                android:textSize="13sp"
                 android:fontFamily="monospace" />
 
             <Button
@@ -686,7 +728,7 @@
                 android:background="@drawable/button_bg"
                 android:text="Set"
                 android:textColor="#88FF88"
-                android:textSize="11sp" />
+                android:textSize="13sp" />
         </LinearLayout>
 
         <!-- Gyro Row -->
@@ -702,7 +744,7 @@
                 android:layout_height="wrap_content"
                 android:text="Gyro"
                 android:textColor="#FFFFFF"
-                android:textSize="12sp" />
+                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/sensor_gyro_odr"
@@ -710,7 +752,7 @@
                 android:layout_height="wrap_content"
                 android:text="---"
                 android:textColor="#CCCCCC"
-                android:textSize="11sp"
+                android:textSize="13sp"
                 android:fontFamily="monospace" />
 
             <Button
@@ -718,7 +760,7 @@
                 android:layout_width="24dp"
                 android:layout_height="28dp"
                 android:text="−"
-                android:textSize="14sp"
+                android:textSize="16sp"
                 android:background="#444444"
                 android:textColor="#FFFFFF"
                 android:padding="0dp" />
@@ -729,7 +771,7 @@
                 android:layout_height="wrap_content"
                 android:text="1"
                 android:textColor="#FFFF88"
-                android:textSize="12sp"
+                android:textSize="14sp"
                 android:fontFamily="monospace"
                 android:gravity="center" />
 
@@ -738,7 +780,7 @@
                 android:layout_width="24dp"
                 android:layout_height="28dp"
                 android:text="+"
-                android:textSize="14sp"
+                android:textSize="16sp"
                 android:background="#444444"
                 android:textColor="#FFFFFF"
                 android:padding="0dp" />
@@ -749,7 +791,7 @@
                 android:layout_height="wrap_content"
                 android:text="---"
                 android:textColor="#88FF88"
-                android:textSize="11sp"
+                android:textSize="13sp"
                 android:fontFamily="monospace" />
 
             <Button
@@ -760,7 +802,7 @@
                 android:background="@drawable/button_bg"
                 android:text="Set"
                 android:textColor="#88FF88"
-                android:textSize="11sp" />
+                android:textSize="13sp" />
         </LinearLayout>
 
         <!-- Mag Row -->
@@ -776,7 +818,7 @@
                 android:layout_height="wrap_content"
                 android:text="Mag"
                 android:textColor="#FFFFFF"
-                android:textSize="12sp" />
+                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/sensor_mag_odr"
@@ -784,7 +826,7 @@
                 android:layout_height="wrap_content"
                 android:text="---"
                 android:textColor="#CCCCCC"
-                android:textSize="11sp"
+                android:textSize="13sp"
                 android:fontFamily="monospace" />
 
             <Button
@@ -792,7 +834,7 @@
                 android:layout_width="24dp"
                 android:layout_height="28dp"
                 android:text="−"
-                android:textSize="14sp"
+                android:textSize="16sp"
                 android:background="#444444"
                 android:textColor="#FFFFFF"
                 android:padding="0dp" />
@@ -803,7 +845,7 @@
                 android:layout_height="wrap_content"
                 android:text="1"
                 android:textColor="#FFFF88"
-                android:textSize="12sp"
+                android:textSize="14sp"
                 android:fontFamily="monospace"
                 android:gravity="center" />
 
@@ -812,7 +854,7 @@
                 android:layout_width="24dp"
                 android:layout_height="28dp"
                 android:text="+"
-                android:textSize="14sp"
+                android:textSize="16sp"
                 android:background="#444444"
                 android:textColor="#FFFFFF"
                 android:padding="0dp" />
@@ -823,7 +865,7 @@
                 android:layout_height="wrap_content"
                 android:text="---"
                 android:textColor="#88FF88"
-                android:textSize="11sp"
+                android:textSize="13sp"
                 android:fontFamily="monospace" />
 
             <Button
@@ -834,7 +876,7 @@
                 android:background="@drawable/button_bg"
                 android:text="Set"
                 android:textColor="#88FF88"
-                android:textSize="11sp" />
+                android:textSize="13sp" />
         </LinearLayout>
 
         <!-- Note about ODR -->
@@ -843,7 +885,7 @@
             android:layout_height="wrap_content"
             android:text="Note: ODR is read-only (set via config.txt)"
             android:textColor="#888888"
-            android:textSize="10sp"
+            android:textSize="12sp"
             android:paddingTop="4dp" />
     </LinearLayout>
 
@@ -861,7 +903,7 @@
             android:layout_height="wrap_content"
             android:text="Device Info"
             android:textColor="#FFFF00"
-            android:textSize="16sp"
+            android:textSize="18sp"
             android:textStyle="bold"
             android:paddingBottom="8dp" />
 
@@ -880,7 +922,7 @@
                 android:background="@drawable/button_bg"
                 android:text="Get FW Ver"
                 android:textColor="#88CCFF"
-                android:textSize="14sp" />
+                android:textSize="16sp" />
 
             <Button
                 android:id="@+id/get_device_id_button"
@@ -891,7 +933,49 @@
                 android:background="@drawable/button_bg"
                 android:text="Get Device ID"
                 android:textColor="#88CCFF"
-                android:textSize="14sp" />
+                android:textSize="16sp" />
+        </LinearLayout>
+
+        <!-- Config Query Buttons Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="4dp">
+
+            <Button
+                android:id="@+id/get_sensor_odrs_button"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/button_bg"
+                android:text="Get ODRs"
+                android:textColor="#FFCC44"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/get_rates_button"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/button_bg"
+                android:text="Get Rates"
+                android:textColor="#FFCC44"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/get_ble_budget_button"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:background="@drawable/button_bg"
+                android:text="Get BLE BW"
+                android:textColor="#FFCC44"
+                android:textSize="16sp" />
         </LinearLayout>
     </LinearLayout>
 
@@ -908,7 +992,7 @@
             android:layout_height="wrap_content"
             android:text="Response Log"
             android:textColor="#FFFF00"
-            android:textSize="16sp"
+            android:textSize="18sp"
             android:textStyle="bold"
             android:paddingBottom="4dp" />
 
@@ -919,9 +1003,9 @@
             android:minHeight="60dp"
             android:text="---"
             android:textColor="#CCCCCC"
-            android:textSize="12sp"
+            android:textSize="16sp"
             android:fontFamily="monospace"
-            android:maxLines="5" />
+            android:maxLines="20" />
     </LinearLayout>
 
 </LinearLayout>

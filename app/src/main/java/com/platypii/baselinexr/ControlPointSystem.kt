@@ -2,6 +2,7 @@ package com.platypii.baselinexr
 
 import android.util.Log
 import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import com.meta.spatial.core.Entity
 import com.meta.spatial.core.SystemBase
@@ -43,6 +44,11 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
     private var getDividersButton: Button? = null
     private var getFwButton: Button? = null
     private var getDeviceIdButton: Button? = null
+    private var getSensorOdrsButton: Button? = null
+    private var getRatesButton: Button? = null
+    private var getBleBudgetButton: Button? = null
+    private var extSyncValueInput: EditText? = null
+    private var setExtSyncButton: Button? = null
     private var gnssModelLabel: TextView? = null
     private var gnssModelPrevButton: Button? = null
     private var gnssModelNextButton: Button? = null
@@ -53,6 +59,7 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
     private var gnssRateSetButton: Button? = null
 
     private var gnssModelIndex = 7
+
     private var gnssRateIndex = 1  // Default: 10 Hz
     
     // Sensor configuration UI elements
@@ -139,6 +146,11 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         getDividersButton: Button?,
         getFwButton: Button?,
         getDeviceIdButton: Button?,
+        getSensorOdrsButton: Button?,
+        getRatesButton: Button?,
+        getBleBudgetButton: Button?,
+        extSyncValueInput: EditText?,
+        setExtSyncButton: Button?,
         gnssModelLabel: TextView?,
         gnssModelPrevButton: Button?,
         gnssModelNextButton: Button?,
@@ -169,6 +181,11 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         this.getDividersButton = getDividersButton
         this.getFwButton = getFwButton
         this.getDeviceIdButton = getDeviceIdButton
+        this.getSensorOdrsButton = getSensorOdrsButton
+        this.getRatesButton = getRatesButton
+        this.getBleBudgetButton = getBleBudgetButton
+        this.extSyncValueInput = extSyncValueInput
+        this.setExtSyncButton = setExtSyncButton
         this.gnssModelLabel = gnssModelLabel
         this.gnssModelPrevButton = gnssModelPrevButton
         this.gnssModelNextButton = gnssModelNextButton
@@ -204,8 +221,16 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         getDividersButton?.setOnClickListener { onGetDividersClick() }
         getFwButton?.setOnClickListener { onGetFwClick() }
         getDeviceIdButton?.setOnClickListener { onGetDeviceIdClick() }
+        getSensorOdrsButton?.setOnClickListener { onGetSensorOdrsClick() }
+        getRatesButton?.setOnClickListener { onGetRatesClick() }
+        getBleBudgetButton?.setOnClickListener { onGetBleBudgetClick() }
+        setExtSyncButton?.setOnClickListener { onSetExtSyncClick() }
         gnssModelSetButton?.setOnClickListener { onSetGnssModelClick() }
         gnssRateSetButton?.setOnClickListener { onSetGnssRateClick() }
+
+        if (extSyncValueInput?.text.isNullOrBlank()) {
+            extSyncValueInput?.setText(defaultExtSyncValue().toString())
+        }
 
         setupGnssControls()
         // Set up sensor configuration UI
@@ -377,6 +402,52 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
             appendLog("Device ID: not connected")
         }
     }
+
+    private fun onGetSensorOdrsClick() {
+        Log.i(TAG, "Get Sensor ODRs button clicked")
+        val ok = Services.bluetooth?.flysightProtocol?.controlPoint?.getSensorOdrs() ?: false
+        if (!ok) appendLog("Get ODRs: not connected")
+    }
+
+    private fun onGetRatesClick() {
+        Log.i(TAG, "Get Rates button clicked")
+        val ok = Services.bluetooth?.flysightProtocol?.controlPoint?.getRates() ?: false
+        if (!ok) appendLog("Get Rates: not connected")
+    }
+
+    private fun onGetBleBudgetClick() {
+        Log.i(TAG, "Get BLE Budget button clicked")
+        val ok = Services.bluetooth?.flysightProtocol?.controlPoint?.getBleBudget() ?: false
+        if (!ok) appendLog("Get BLE BW: not connected")
+    }
+
+    private fun onSetExtSyncClick() {
+        Log.i(TAG, "Set Ext Sync button clicked")
+        val rawValue = extSyncValueInput?.text?.toString()?.trim().orEmpty()
+        val extSync = if (rawValue.isEmpty()) {
+            defaultExtSyncValue()
+        } else {
+            rawValue.toLongOrNull()
+        }
+
+        if (extSync == null) {
+            appendLog("EXT_SYNC: invalid value")
+            return
+        }
+
+        if (extSync < 0 || extSync > 0xFFFFFFFFL) {
+            appendLog("EXT_SYNC: out of range")
+            return
+        }
+
+        extSyncValueInput?.setText(extSync.toString())
+        val ok = Services.bluetooth?.flysightProtocol?.controlPoint?.setExtSync(extSync) ?: false
+        if (ok) {
+            appendLog("Sent: SET_EXT_SYNC=$extSync")
+        } else {
+            appendLog("EXT_SYNC: not connected")
+        }
+    }
     
     private fun registerAsListener() {
         Services.bluetooth?.flysightProtocol?.controlPoint?.setListener(this)
@@ -442,11 +513,88 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
                         Services.bluetooth?.flysightProtocol?.requestModeRead()
                     }
                 }
+                Flysight2ControlPoint.DS_CMD_SET_EXT_SYNC.toInt() -> {
+                    appendLog("SET_EXT_SYNC: $statusStr")
+                }
                 Flysight2ControlPoint.SD_CMD_SET_GNSS_MODEL.toInt() -> {
                     appendLog("SET_GNSS_MODEL: $statusStr")
                 }
                 Flysight2ControlPoint.SD_CMD_SET_GNSS_RATE.toInt() -> {
                     appendLog("SET_GNSS_RATE: $statusStr")
+                }
+                Flysight2ControlPoint.SD_CMD_GET_SENSOR_ODRS.toInt() -> {
+                    if (status == Flysight2ControlPoint.CP_STATUS_SUCCESS && data != null && data.size >= 10) {
+                        val names = arrayOf("Baro", "Hum", "Accel", "Gyro", "Mag")
+                        val odrTables = arrayOf(
+                            Flysight2ControlPoint.BARO_ODR_HZ,
+                            Flysight2ControlPoint.HUM_ODR_HZ,
+                            Flysight2ControlPoint.ACCEL_ODR_HZ,
+                            Flysight2ControlPoint.GYRO_ODR_HZ,
+                            Flysight2ControlPoint.MAG_ODR_HZ
+                        )
+                        val sb = StringBuilder("ODRs:")
+                        for (i in 0 until 5) {
+                            val idx = data[i * 2].toInt() and 0xFF
+                            val src = data[i * 2 + 1].toInt() and 0xFF
+                            val table = odrTables[i]
+                            val hz = if (idx < table.size) table[idx] else 0.0
+                            val hzStr = if (hz >= 1) "%.0fHz".format(hz) else "%.1fHz".format(hz)
+                            val srcStr = when (src) { 0 -> "DEF"; 1 -> "FILE"; 2 -> "BLE"; else -> "?" }
+                            sb.append("\n  ${names[i]}=$hzStr[$srcStr]")
+                        }
+                        appendLog(sb.toString())
+                    } else {
+                        appendLog("GET_SENSOR_ODRS: $statusStr")
+                    }
+                }
+                Flysight2ControlPoint.SD_CMD_GET_RATES.toInt() -> {
+                    if (status == Flysight2ControlPoint.CP_STATUS_SUCCESS && data != null && data.size >= 11) {
+                        fun u16le(i: Int) = (data[i].toInt() and 0xFF) or ((data[i + 1].toInt() and 0xFF) shl 8)
+                        val gnssReq = u16le(0)
+                        val gnssEff = u16le(2)
+                        val gnssSrc = data[4].toInt() and 0xFF
+                        val alReq = u16le(5)
+                        val alEff = u16le(7)
+                        val alSrc = data[9].toInt() and 0xFF
+                        val alEnabled = data[10].toInt() and 0xFF
+                        fun srcStr(s: Int) = when (s) { 0 -> "DEF"; 1 -> "FILE"; 2 -> "BLE"; else -> "?" }
+                        fun fmtRate(ms: Int): String {
+                            val hz = if (ms > 0) 1000.0 / ms else 0.0
+                            return "${ms}ms(%.0fHz)".format(hz)
+                        }
+                        val sb = StringBuilder("Rates:")
+                        sb.append("\n  GNSS=${fmtRate(gnssEff)}[${srcStr(gnssSrc)}]")
+                        if (alEnabled != 0) {
+                            sb.append("\n  AL=${fmtRate(alEff)}[${srcStr(alSrc)}]")
+                        } else {
+                            sb.append("\n  AL=disabled")
+                        }
+                        appendLog(sb.toString())
+                    } else {
+                        appendLog("GET_RATES: $statusStr")
+                    }
+                }
+                Flysight2ControlPoint.SD_CMD_GET_BLE_BUDGET.toInt() -> {
+                    if (status == Flysight2ControlPoint.CP_STATUS_SUCCESS && data != null && data.size >= 17) {
+                        fun u32le(i: Int): Long {
+                            return (data[i].toLong() and 0xFF) or
+                                ((data[i + 1].toLong() and 0xFF) shl 8) or
+                                ((data[i + 2].toLong() and 0xFF) shl 16) or
+                                ((data[i + 3].toLong() and 0xFF) shl 24)
+                        }
+                        val estBps = u32le(0)
+                        val sensorBps = u32le(4)
+                        val alBps = u32le(8)
+                        val budgetOk = data[12].toInt() and 0xFF
+                        val warnFlags = u32le(13)
+                        val budgetStr = if (budgetOk != 0) "OK" else "OVER"
+                        val sb = StringBuilder("BLE BW:")
+                        sb.append("\n  total=${estBps} sensor=${sensorBps} AL=${alBps} [$budgetStr]")
+                        if (warnFlags != 0L) sb.append("\n  WARN=0x%08X".format(warnFlags))
+                        appendLog(sb.toString())
+                    } else {
+                        appendLog("GET_BLE_BUDGET: $statusStr")
+                    }
                 }
                 else -> {
                     appendLog("Response 0x${opcode.toString(16)}: $statusStr")
@@ -454,7 +602,7 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
             }
         }
     }
-    
+
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onFlysightModeEvent(event: FlysightModeEvent) {
         val modeName = FlysightModeEvent.modeName(event.mode)
@@ -621,12 +769,16 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
             val current = log.text.toString()
             val lines = current.split("\n").toMutableList()
             lines.add(message)
-            // Keep only last 5 lines
-            while (lines.size > 5) {
+            // Keep only last 20 lines
+            while (lines.size > 20) {
                 lines.removeAt(0)
             }
             log.text = lines.joinToString("\n")
         }
+    }
+
+    private fun defaultExtSyncValue(): Long {
+        return System.currentTimeMillis() / 1000L
     }
     
     /**
