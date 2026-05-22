@@ -49,6 +49,7 @@ public class Flysight2ControlPoint {
     public static final byte SD_CMD_SET_GNSS_RATE = 0x13;
     public static final byte SD_CMD_SET_FUSION_MAG_HARD = 0x20;
     public static final byte SD_CMD_SET_FUSION_MAG_SOFT = 0x21;
+    public static final byte SD_CMD_RESET_MAG_CAL = 0x22;
     public static final byte SD_CMD_GET_SENSOR_ODRS = 0x31;
     public static final byte SD_CMD_GET_RATES = 0x32;
     public static final byte SD_CMD_GET_BLE_BUDGET = 0x33;
@@ -469,6 +470,23 @@ public class Flysight2ControlPoint {
         byte[] cmd = new byte[]{ SD_CMD_GET_BLE_BUDGET };
         boolean ok = peripheral.writeCharacteristic(sensorDataService, sdControlPoint, cmd, WriteType.WITH_RESPONSE);
         Log.i(TAG, "getBleBudget ok=" + ok);
+        return ok;
+    }
+
+    /**
+     * Reset magnetometer hard-iron calibration and restart collection from scratch.
+     * Deletes MAGCAL.BIN, zeroes fusion hard-iron correction, restarts MotionFX MagCal algorithm.
+     * Only valid in Active Mode (SD card must be mounted).
+     * Response: [0xF0][0x22][status]
+     */
+    public boolean resetMagCal() {
+        if (peripheral == null) {
+            Log.w(TAG, "resetMagCal: no peripheral connected");
+            return false;
+        }
+        byte[] cmd = new byte[]{ SD_CMD_RESET_MAG_CAL };
+        boolean ok = peripheral.writeCharacteristic(sensorDataService, sdControlPoint, cmd, WriteType.WITH_RESPONSE);
+        Log.i(TAG, "resetMagCal ok=" + ok);
         return ok;
     }
 

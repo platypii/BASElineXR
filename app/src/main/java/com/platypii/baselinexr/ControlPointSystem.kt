@@ -47,6 +47,7 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
     private var getSensorOdrsButton: Button? = null
     private var getRatesButton: Button? = null
     private var getBleBudgetButton: Button? = null
+    private var resetMagCalButton: Button? = null
     private var extSyncValueInput: EditText? = null
     private var setExtSyncButton: Button? = null
     private var gnssModelLabel: TextView? = null
@@ -149,6 +150,7 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         getSensorOdrsButton: Button?,
         getRatesButton: Button?,
         getBleBudgetButton: Button?,
+        resetMagCalButton: Button?,
         extSyncValueInput: EditText?,
         setExtSyncButton: Button?,
         gnssModelLabel: TextView?,
@@ -184,6 +186,7 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         this.getSensorOdrsButton = getSensorOdrsButton
         this.getRatesButton = getRatesButton
         this.getBleBudgetButton = getBleBudgetButton
+        this.resetMagCalButton = resetMagCalButton
         this.extSyncValueInput = extSyncValueInput
         this.setExtSyncButton = setExtSyncButton
         this.gnssModelLabel = gnssModelLabel
@@ -224,6 +227,7 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         getSensorOdrsButton?.setOnClickListener { onGetSensorOdrsClick() }
         getRatesButton?.setOnClickListener { onGetRatesClick() }
         getBleBudgetButton?.setOnClickListener { onGetBleBudgetClick() }
+        resetMagCalButton?.setOnClickListener { onResetMagCalClick() }
         setExtSyncButton?.setOnClickListener { onSetExtSyncClick() }
         gnssModelSetButton?.setOnClickListener { onSetGnssModelClick() }
         gnssRateSetButton?.setOnClickListener { onSetGnssRateClick() }
@@ -421,6 +425,12 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         if (!ok) appendLog("Get BLE BW: not connected")
     }
 
+    private fun onResetMagCalClick() {
+        Log.i(TAG, "Reset Mag Cal button clicked")
+        val ok = Services.bluetooth?.flysightProtocol?.controlPoint?.resetMagCal() ?: false
+        if (!ok) appendLog("Reset MagCal: not connected")
+    }
+
     private fun onSetExtSyncClick() {
         Log.i(TAG, "Set Ext Sync button clicked")
         val rawValue = extSyncValueInput?.text?.toString()?.trim().orEmpty()
@@ -595,6 +605,9 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
                     } else {
                         appendLog("GET_BLE_BUDGET: $statusStr")
                     }
+                }
+                Flysight2ControlPoint.SD_CMD_RESET_MAG_CAL.toInt() -> {
+                    appendLog("RESET_MAG_CAL: $statusStr")
                 }
                 else -> {
                     appendLog("Response 0x${opcode.toString(16)}: $statusStr")
