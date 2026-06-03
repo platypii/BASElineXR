@@ -51,10 +51,54 @@ public final class KalmanFilter3D implements MotionEstimator {
     private Vector3 aMeasured = new Vector3();
     private Vector3 aWSE = new Vector3();
 
+    /**
+     * Cached prediction state at exactly MAX_PREDICTION_HORIZON seconds ahead of
+     * the last GPS fix. Computed lazily the first time predictDelta() is called
+     * with dt >= MAX_PREDICTION_HORIZON, then reused for all subsequent calls
+     * until a new GPS update invalidates it. Saves hundreds of WSE iterations
+     * per frame when the headset has been idle for a long time.
+     */
+    private double[] cachedHorizonState = null;
+
+    /**
+     * Gain buffer for smooth visual output (predictDelta / charts / VR rendering).
+     *
+     * Each GPS update causes a discrete jump: x += Ky. For real-time display this
+     * is jarring. The gain buffer linearly blends the correction back out over the
+     * expected update interval so the rendered position never jumps:
+     *
+     *   alpha = clamp(1 - dt / estimatedUpdateInterval, 0, 1)
+     *   smoothed_delta = (predicted - current) - alpha * kalmanGain
+     *
+     * At dt=0: alpha=1, full correction subtracted → appears unchanged from pre-update.
+     * At dt=T: alpha=0, no subtraction → correction fully blended in.
+     * Beyond dt=T: alpha=0, normal prediction.
+     *
+     * Only affects predictDelta(). Internal filter state, covariance, and all update
+     * logic are completely unchanged.
+     */
+    private final double[] kalmanGain = new double[12];
+
+    /**
+     * Exponential moving-average of the GPS update interval (seconds).
+     * Initialised to 0.1 s (10 Hz). Updated automatically each update() call.
+     * Used by the gain buffer to determine the smoothing window width.
+     */
+    private double estimatedUpdateInterval = 0.1;
+    private static final double UPDATE_INTERVAL_EMA_ALPHA = 0.2;
+
     // Constants
     private static final double MAX_STEP = 0.1; // seconds
     private static final double accelerationLimit = 3.0; // g's
     private static final double RESET_THRESHOLD = 5000.0; // meters - reset if measurement is this far from expected
+    /**
+     * Maximum lookahead for predictDelta(). Beyond this threshold the simulation
+     * is not re-run; a cached result from exactly MAX_PREDICTION_HORIZON seconds
+     * ahead of the last GPS fix is returned instead. This prevents unbounded WSE
+     * stepping (36 000+ iterations/frame) when the headset has been idle for a
+     * long time with no new GPS data.
+     */
+    private static final double MAX_PREDICTION_HORIZON = 60.0; // seconds
     // Try to detect ground mode? Or always in flight mode?
     private static final boolean groundModeEnabled = true;
 
@@ -75,11 +119,11 @@ public final class KalmanFilter3D implements MotionEstimator {
         // Process noise
         Q = LinearAlgebra.identity(12);
         // pos
-        Q[0][0] = 0.12; Q[1][1] = 0.12; Q[2][2] = 0.12;
+        Q[0][0] = 1.4; Q[1][1] = 1.4; Q[2][2] = 1.4;
         // vel
-        Q[3][3] = 9.4226; Q[4][4] = 9.4226; Q[5][5] = 9.4226;
+        Q[3][3] = 0.4226; Q[4][4] = 0.4226; Q[5][5] = 0.4226;
         // accel (higher)
-        Q[6][6] = 470; Q[7][7] = 470; Q[8][8] = 470;
+        Q[6][6] = 68.45; Q[7][7] = 68.45; Q[8][8] = 68.45;
         // wingsuit params (slow)
         Q[9][9]   = 0.01;
         Q[10][10] = 0.01;
@@ -88,9 +132,9 @@ public final class KalmanFilter3D implements MotionEstimator {
         // Measurement noise (position+velocity)
         R = LinearAlgebra.identity(6);
         // Position (GPS)
-        R[0][0] = 8.7; R[1][1] = 8.7; R[2][2] = 8.7;
+        R[0][0] = 1.21; R[1][1] = 1.21; R[2][2] = 1.21;
         // Velocity (GPS)
-        R[3][3] = 2.25;  R[4][4] = 2.25;  R[5][5] = 2.25;
+        R[3][3] = 2.5;  R[4][4] = 2.5;  R[5][5] = 2.5;
     }
 
     /** Initialize on first fix, then run predict+update on subsequent fixes. */
@@ -167,6 +211,9 @@ public final class KalmanFilter3D implements MotionEstimator {
         final double[] Ky = LinearAlgebra.mul(K, y);
         for (int i = 0; i < 12; i++) x[i] += Ky[i];
 
+        // Save correction vector for gain buffer (visual smoothing in predictDelta)
+        System.arraycopy(Ky, 0, kalmanGain, 0, 12);
+
         // For plotting: WSE accel from measured velocity
         aWSE = calculateWingsuitAcceleration(new Vector3(vx, vy, vz), new WSEParams(x[9], x[10], x[11]));
 
@@ -178,8 +225,16 @@ public final class KalmanFilter3D implements MotionEstimator {
         // Update wingsuit parameters from current Kalman v,a (in ENU)
         updateWingsuitParameters();
 
+        // Update estimated update interval (EMA) so gain buffer window tracks real GPS rate.
+        // dt was computed above; sanity-clamp to ignore pauses / first sample.
+        if (dt > 0.0 && dt < 10.0) {
+            estimatedUpdateInterval = UPDATE_INTERVAL_EMA_ALPHA * dt
+                    + (1.0 - UPDATE_INTERVAL_EMA_ALPHA) * estimatedUpdateInterval;
+        }
+
         // Bookkeeping
         lastGps = gps;
+        cachedHorizonState = null; // invalidate prediction cache on new GPS data
 
         if (Log.isLoggable(TAG, Log.DEBUG)) {
             Log.d(TAG, "Update @ " + tNow +
@@ -227,15 +282,47 @@ public final class KalmanFilter3D implements MotionEstimator {
         // clamp if asked for the past
         if (dt <= 0) return new Vector3(x[0], x[1], x[2]);
 
-        // Clone state and step forward in small increments
-        double[] s = x.clone();
-        double remaining = dt;
-        while (remaining > 0.0) {
-            final double step = Math.min(remaining, MAX_STEP);
-            s = integrateState(s, step);
-            remaining -= step;
+        final double[] s;
+        if (dt >= MAX_PREDICTION_HORIZON) {
+            // Beyond the prediction horizon: return the cached MAX_PREDICTION_HORIZON
+            // state rather than recomputing hundreds of WSE steps every frame.
+            if (cachedHorizonState == null) {
+                // Compute and cache once; reused until the next GPS update.
+                double[] horizon = x.clone();
+                double remaining = MAX_PREDICTION_HORIZON;
+                while (remaining > 0.0) {
+                    final double step = Math.min(remaining, MAX_STEP);
+                    horizon = integrateState(horizon, step);
+                    remaining -= step;
+                }
+                cachedHorizonState = horizon;
+            }
+            s = cachedHorizonState;
+        } else {
+            // Normal path: step forward by the actual dt.
+            double[] stepped = x.clone();
+            double remaining = dt;
+            while (remaining > 0.0) {
+                final double step = Math.min(remaining, MAX_STEP);
+                stepped = integrateState(stepped, step);
+                remaining -= step;
+            }
+            // Apply gain buffer: blend out the last Kalman correction over the estimated
+            // update interval so the rendered position doesn't jump at each GPS fix.
+            final double alpha = Math.max(0.0, Math.min(1.0, 1.0 - dt / estimatedUpdateInterval));
+            return new Vector3(
+                    stepped[0] - x[0] - alpha * kalmanGain[0],
+                    stepped[1] - x[1] - alpha * kalmanGain[1],
+                    stepped[2] - x[2] - alpha * kalmanGain[2]
+            );
         }
-        return new Vector3(s[0] - x[0], s[1] - x[1], s[2] - x[2]);
+
+        // Horizon-capped path: gain buffer is irrelevant at this distance.
+        return new Vector3(
+                s[0] - x[0],
+                s[1] - x[1],
+                s[2] - x[2]
+        );
     }
 
     /** Current state snapshot. */
@@ -324,6 +411,11 @@ public final class KalmanFilter3D implements MotionEstimator {
         P[11][11] = 0.005;
 
         lastGps = gps;
+
+        // Reset gain buffer so predictDelta doesn't carry stale corrections
+        Arrays.fill(kalmanGain, 0.0);
+        estimatedUpdateInterval = 0.1;
+        cachedHorizonState = null;
     }
 
     /** Update wingsuit parameters from current Kalman v,a (skip at very low speed). */
