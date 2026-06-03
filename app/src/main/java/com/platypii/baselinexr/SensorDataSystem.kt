@@ -7,6 +7,7 @@ import com.meta.spatial.core.SystemBase
 import com.meta.spatial.core.Vector3
 import com.meta.spatial.toolkit.SpatialActivityManager
 import com.meta.spatial.toolkit.Visible
+import com.platypii.baselinexr.calibration.DeviceMagCal
 import com.platypii.baselinexr.measurements.MBaroData
 import com.platypii.baselinexr.measurements.MHumData
 import com.platypii.baselinexr.measurements.MImuData
@@ -46,6 +47,10 @@ class SensorDataSystem : SystemBase() {
     private var baroRateView: TextView? = null
     private var humRateView: TextView? = null
     private var sampleCountView: TextView? = null
+    private var magCalView: TextView? = null
+
+    // Last displayed mag cal (to avoid redundant UI updates)
+    private var lastDisplayedMagCal: DeviceMagCal? = null
     
     // Rate calculation
     private val imuRateCalc = RateCalculator()
@@ -83,6 +88,7 @@ class SensorDataSystem : SystemBase() {
         if (initialized) {
             grabbablePanel?.setupInteraction()
             grabbablePanel?.updatePosition()
+            updateMagCalDisplay()
         }
     }
     
@@ -126,7 +132,8 @@ class SensorDataSystem : SystemBase() {
         eulerRoll: TextView?, eulerPitch: TextView?, eulerYaw: TextView?,
         imuRateView: TextView?, magRateView: TextView?, 
         baroRateView: TextView?, humRateView: TextView?,
-        sampleCountView: TextView?
+        sampleCountView: TextView?,
+        magCalView: TextView?
     ) {
         this.gyroX = gyroX
         this.gyroY = gyroY
@@ -149,6 +156,21 @@ class SensorDataSystem : SystemBase() {
         this.baroRateView = baroRateView
         this.humRateView = humRateView
         this.sampleCountView = sampleCountView
+        this.magCalView = magCalView
+    }
+
+    private fun updateMagCalDisplay() {
+        val cal = Services.deviceMagCal
+        if (cal == lastDisplayedMagCal) return
+        lastDisplayedMagCal = cal
+        val view = magCalView ?: return
+        if (cal == null) {
+            view.text = "---"
+            view.setTextColor(0xFF888888.toInt())
+        } else {
+            view.text = "${cal.qualityLabel}  ${cal.hardIronMgString()}"
+            view.setTextColor(cal.qualityColor)
+        }
     }
     
     private fun subscribeToSensorUpdates() {

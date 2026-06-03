@@ -284,6 +284,7 @@ class BaselineActivity : AppSystemActivity() {
                     val baroRateView = rootView?.findViewById<TextView>(R.id.baro_rate)
                     val humRateView = rootView?.findViewById<TextView>(R.id.hum_rate)
                     val sampleCountView = rootView?.findViewById<TextView>(R.id.sample_count)
+                    val magCalView = rootView?.findViewById<TextView>(R.id.mag_cal_status)
                     sensorDataSystem?.setViews(
                         gyroX, gyroY, gyroZ,
                         accelX, accelY, accelZ,
@@ -292,7 +293,8 @@ class BaselineActivity : AppSystemActivity() {
                         humHumidity, humTemp,
                         eulerRoll, eulerPitch, eulerYaw,
                         imuRateView, magRateView, baroRateView, humRateView,
-                        sampleCountView
+                        sampleCountView,
+                        magCalView
                     )
                 }
             },
@@ -324,6 +326,7 @@ class BaselineActivity : AppSystemActivity() {
                     val getSensorOdrsButton = rootView?.findViewById<android.widget.Button>(R.id.get_sensor_odrs_button)
                     val getRatesButton = rootView?.findViewById<android.widget.Button>(R.id.get_rates_button)
                     val getBleBudgetButton = rootView?.findViewById<android.widget.Button>(R.id.get_ble_budget_button)
+                    val getMagCalButton = rootView?.findViewById<android.widget.Button>(R.id.get_mag_cal_button)
                     val resetMagCalButton = rootView?.findViewById<android.widget.Button>(R.id.reset_mag_cal_button)
                     val extSyncValueInput = rootView?.findViewById<android.widget.EditText>(R.id.ext_sync_value)
                     val setExtSyncButton = rootView?.findViewById<android.widget.Button>(R.id.set_ext_sync_button)
@@ -391,6 +394,7 @@ class BaselineActivity : AppSystemActivity() {
                         getSensorOdrsButton,
                         getRatesButton,
                         getBleBudgetButton,
+                        getMagCalButton,
                         resetMagCalButton,
                         extSyncValueInput,
                         setExtSyncButton,

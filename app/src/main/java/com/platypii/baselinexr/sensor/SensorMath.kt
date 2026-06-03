@@ -202,33 +202,34 @@ object SensorMath {
     }
     
     /**
-     * Calculate rotation quaternion to point an arrow (default pointing +Y) toward a direction.
-     * 
+     * Calculate rotation quaternion to point an arrow (default pointing +Z) toward a direction.
+     * Arrow models (sensor_arrow_accel.glb, sensor_arrow_mag.glb) point along +Z at identity rotation.
+     *
      * @param direction Target direction vector (should be normalized)
-     * @return Quaternion that rotates +Y to point along direction
+     * @return Quaternion that rotates +Z to point along direction
      */
     fun arrowRotationFromDirection(direction: Vector3): Quaternion {
-        // Arrow model points along +Y by default
-        // We need to rotate +Y to align with direction
-        val up = Vector3(0f, 1f, 0f)
-        
+        // Arrow model points along +Z by default
+        // We need to rotate +Z to align with direction
+        val forward = Vector3(0f, 0f, 1f)
+
         // Handle edge cases
-        val dot = up.x * direction.x + up.y * direction.y + up.z * direction.z
-        
+        val dot = forward.x * direction.x + forward.y * direction.y + forward.z * direction.z
+
         if (dot > 0.9999f) {
-            // Already aligned
+            // Already aligned with +Z
             return Quaternion(0f, 0f, 0f, 1f)
         }
         if (dot < -0.9999f) {
-            // Opposite direction - rotate 180° around X axis
-            return Quaternion(1f, 0f, 0f, 0f)
+            // Opposite direction - rotate 180° around Y axis
+            return Quaternion(0f, 1f, 0f, 0f)
         }
         
         // Cross product gives rotation axis
         val axis = Vector3(
-            up.y * direction.z - up.z * direction.y,
-            up.z * direction.x - up.x * direction.z,
-            up.x * direction.y - up.y * direction.x
+            forward.y * direction.z - forward.z * direction.y,
+            forward.z * direction.x - forward.x * direction.z,
+            forward.x * direction.y - forward.y * direction.x
         )
         val axisNorm = normalize(axis)
         

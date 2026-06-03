@@ -9,7 +9,7 @@ import com.platypii.baselinexr.measurements.LatLngAlt;
 public class VROptions {
 
     // Current active configuration
-    public static VROptions current = VROptionsList.SQUAW_PEAK;
+    public static VROptions current = VROptionsList.EIGER;
 
     public enum ShaderType {
         DEFAULT_SHADER,
@@ -23,6 +23,8 @@ public class VROptions {
     public final String sourceModel;
     // Place the source point-of-interest (summit) at the destination location
     private final LatLngAlt destination;
+    // Additional altitude offset applied on top of the destination altitude (meters, positive = higher)
+    public final float destinationAltOffset;
     // If true, walking around the room moves in the map
     public final boolean roomMovement;
     // Show direction arrow below for alignment?
@@ -35,9 +37,16 @@ public class VROptions {
 
     public VROptions(String name, String sourceModel, LatLngAlt destination, ShaderType shader,
                      boolean roomMovement, boolean showDirectionArrow, boolean showTarget, LatLngAlt portalLocation) {
+        this(name, sourceModel, destination, shader, roomMovement, showDirectionArrow, showTarget, portalLocation, 0f);
+    }
+
+    public VROptions(String name, String sourceModel, LatLngAlt destination, ShaderType shader,
+                     boolean roomMovement, boolean showDirectionArrow, boolean showTarget, LatLngAlt portalLocation,
+                     float destinationAltOffset) {
         this.name = name;
         this.sourceModel = sourceModel;
         this.destination = destination;
+        this.destinationAltOffset = destinationAltOffset;
         this.roomMovement = roomMovement;
         this.showDirectionArrow = showDirectionArrow;
         this.showTarget = showTarget;
@@ -72,9 +81,9 @@ public class VROptions {
         if (dest == null) {
             return null;
         }
-        // Apply north/east adjustments
+        // Apply north/east adjustments and per-config altitude offset
         return GeoUtils.applyOffset(dest,
-                new Vector3(Adjustments.eastAdjustment, 0, Adjustments.northAdjustment));
+                new Vector3(Adjustments.eastAdjustment, destinationAltOffset, Adjustments.northAdjustment));
     }
 
     // Load saved mode from SharedPreferences

@@ -53,6 +53,7 @@ public class Flysight2ControlPoint {
     public static final byte SD_CMD_GET_SENSOR_ODRS = 0x31;
     public static final byte SD_CMD_GET_RATES = 0x32;
     public static final byte SD_CMD_GET_BLE_BUDGET = 0x33;
+    public static final byte SD_CMD_GET_MAG_CAL = 0x34;
 
     // DS_Control_Point opcodes
     public static final byte DS_CMD_GET_FW_VERSION = 0x01;
@@ -487,6 +488,23 @@ public class Flysight2ControlPoint {
         byte[] cmd = new byte[]{ SD_CMD_RESET_MAG_CAL };
         boolean ok = peripheral.writeCharacteristic(sensorDataService, sdControlPoint, cmd, WriteType.WITH_RESPONSE);
         Log.i(TAG, "resetMagCal ok=" + ok);
+        return ok;
+    }
+
+    /**
+     * Request current magnetometer calibration from FlySight 2 via SD_CMD_GET_MAG_CAL (0x34).
+     * Works in any connected mode.
+     * Response: [0xF0][0x34][0x01][hx i16 LE][hy i16 LE][hz i16 LE][quality u8]  (10 bytes total)
+     * Hard iron offsets in milligauss, ENU device frame. Quality: 0=UNKNOWN 1=POOR 2=OK 3=GOOD.
+     */
+    public boolean getMagCal() {
+        if (peripheral == null) {
+            Log.w(TAG, "getMagCal: no peripheral connected");
+            return false;
+        }
+        byte[] cmd = new byte[]{ SD_CMD_GET_MAG_CAL };
+        boolean ok = peripheral.writeCharacteristic(sensorDataService, sdControlPoint, cmd, WriteType.WITH_RESPONSE);
+        Log.i(TAG, "getMagCal ok=" + ok);
         return ok;
     }
 

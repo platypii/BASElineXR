@@ -320,6 +320,32 @@
                 android:textSize="14sp"
                 android:fontFamily="monospace" />
         </LinearLayout>
+
+        <!-- MagCal quality (from SD_CMD_GET_MAG_CAL 0x34) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingTop="4dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="MagCal:"
+                android:textColor="#AAAAAA"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/mag_cal_status"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:text="---"
+                android:textColor="#888888"
+                android:textSize="14sp"
+                android:fontFamily="monospace" />
+        </LinearLayout>
     </LinearLayout>
 
     <!-- Barometer Section -->

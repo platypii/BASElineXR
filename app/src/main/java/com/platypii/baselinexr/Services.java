@@ -10,6 +10,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import com.platypii.baselinexr.bluetooth.BluetoothService;
+import com.platypii.baselinexr.calibration.DeviceMagCal;
 import com.platypii.baselinexr.cloud.AuthState;
 import com.platypii.baselinexr.cloud.tasks.Tasks;
 import com.platypii.baselinexr.jarvis.FlightComputer;
@@ -47,6 +48,10 @@ public class Services {
     public static final Tasks tasks = new Tasks();
     public static final Places places = new Places();
     public static final TrackLogger trackLogger = new TrackLogger();
+
+    /** Latest magnetometer calibration fetched from the FlySight 2 device (null if not yet received). */
+    @androidx.annotation.Nullable
+    public static volatile DeviceMagCal deviceMagCal = null;
 
     /**
      * We want preferences to be available as early as possible.

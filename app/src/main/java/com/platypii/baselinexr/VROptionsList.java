@@ -13,7 +13,8 @@ public class VROptionsList {
             false,
             true,
             true,
-            new LatLngAlt(46.5785, 7.99, 3040.0)
+            new LatLngAlt(46.5785, 7.99, 5040.0),
+            4000f  // raise Eiger summit ~4000m above the DZ landing altitude
     );
 
     public static final VROptions ZILLA = new VROptions(

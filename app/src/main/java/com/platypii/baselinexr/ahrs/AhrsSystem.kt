@@ -27,7 +27,14 @@ import com.platypii.baselinexr.util.PubSub
 
 /**
  * System for AHRS (Attitude and Heading Reference System).
- * 
+ *
+ * *** DISABLED — DOUBLE SECRET PROBATION ***
+ * This system runs a full Mahony/Madgwick fusion pipeline on the Quest headset,
+ * duplicating work already done by the FlySight's MotionFX chip. It is no longer
+ * registered in BaselineActivity and consumes no CPU. Scheduled for complete
+ * removal in Phase 3 along with FusionAhrsAdapter, AhrsVisualizationSystem,
+ * ahrs_panel.xml, and the old app-side MagCalibration system.
+ *
  * Subscribes to sensor updates, runs the FusionAhrs algorithm,
  * updates the UI panel, and implements RotationEstimator interface
  * for HeadModelSystem integration.

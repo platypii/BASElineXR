@@ -421,9 +421,6 @@ class MagCalibrationSystem : SystemBase() {
         CalibrationStorage.saveCalibration(activity!!, result, false)
         updateCalibrationStatus("Hard Iron Applied", "#88FF88")
         
-        // Send hard iron calibration to FlySight via BLE
-        sendHardIronToFlySight(result)
-        
         Log.i(TAG, "Applied hard iron calibration: offset=(${result.offsetX}, ${result.offsetY}, ${result.offsetZ})")
     }
     

@@ -21,18 +21,21 @@ import com.platypii.baselinexr.util.PubSub
 
 /**
  * Raw Sensor Visualization System
- * 
- * Displays FlySight 2 sensor data directly using the hardware fusion quaternion,
- * bypassing the AHRS filter. This provides a "ground truth" view of raw sensor output.
- * 
- * Displays:
- * - Device model oriented by raw fusion quaternion
- * - Acceleration vector (orange arrow)
- * - Magnetometer vector (purple arrow)
- * 
- * Coordinate Conversions (using SensorMath):
- * - Accel: Device body -> NWU world (via quaternion) -> Meta world
- * - Mag: Sensor body (X,Z negated) -> Device body -> NWU world -> Meta world
+ *
+ * Displays FlySight 2 sensor data in two side-by-side systems:
+ *
+ * System A — Device-centric (FlySight fusion quaternion, ENU body → ENU world → Meta):
+ *   - Device model oriented by fusion quaternion (empirical model correction baked in)
+ *   - Accel arrow: chip = ENU body frame, no remap
+ *   - Mag arrow:   chip bottom of PCB, negate X and Z to get ENU body
+ *
+ * System B — Head-centric (Quest headset pose + mounting offset):
+ *   - Head model driven by headPose.q directly (already in Meta space)
+ *   - Mounting offset: Quaternion(0,1,0,0) = 180° around Meta Y (device on back of helmet)
+ *   - Accel arrow: chip = sensor body frame in mounted orientation, no remap
+ *   - Mag arrow:   negate X and Z (chip East,Up,South → sensor body West,Up,North)
+ *
+ * See docs/Coordinate-Systems.md § Rendering Strategy for full derivation.
  */
 class RawSensorVisualizationSystem : SystemBase() {
 
@@ -68,20 +71,9 @@ class RawSensorVisualizationSystem : SystemBase() {
     private var headMagArrowEntity: Entity? = null
     
     // Mounting offset: sensor body frame → headset frame
-    // Manually tuned to match physical helmet mounting geometry.
-    // Adjust yaw/pitch/roll in degrees until vectors emerge correctly.
-    private val MOUNT_YAW_DEG = 0f      // rotation around Y (up)
-    private val MOUNT_PITCH_DEG = 180f   // rotation around X (right)
-    private val MOUNT_ROLL_DEG = 0f      // rotation around Z (forward)
-    private var mountingOffset = SensorMath.eulerToQuaternion(MOUNT_YAW_DEG, MOUNT_PITCH_DEG, MOUNT_ROLL_DEG)
-    
-    // Axis remap for raw sensor vectors before rotation.
-    // Each value is a signed axis index: 1=X, 2=Y, 3=Z, negative=negate.
-    // Example: (1, 2, 3) = identity, (-1, 3, 2) = negate X, swap Y↔Z
-    // Applied to both accel and mag vectors before mountingOffset rotation.
-    private val REMAP_X = 2   // which raw axis maps to output X
-    private val REMAP_Y = 3   // which raw axis maps to output Y
-    private val REMAP_Z = -1   // which raw axis maps to output Z
+    // Device on back of helmet = 180° around Meta Y (Up): flips X (East→West) and Z (South→North)
+    // See docs/Coordinate-Systems.md § Rendering Strategy, System B
+    private val mountingOffset = Quaternion(0f, 1f, 0f, 0f)
     
     // Latest sensor data
     private var latestImu: MImuData? = null
@@ -222,12 +214,12 @@ class RawSensorVisualizationSystem : SystemBase() {
         ))
         
         // Update acceleration vector
-        updateAccelArrow(imu, adjustedQuat)
+        updateAccelArrow(imu)//, adjustedQuat)
         
         // Update magnetometer vector
         val mag = latestMag
         if (mag != null) {
-            updateMagArrow(mag, adjustedQuat)
+            updateMagArrow(mag, imu)
         } else {
             magArrowEntity?.setComponent(Visible(false))
         }
@@ -249,22 +241,37 @@ class RawSensorVisualizationSystem : SystemBase() {
             // using the headset's tracking instead of FlySight's AHRS
             val sensorToWorld = SensorMath.multiplyQuaternions(headPose.q, mountingOffset)
             
-            // Headset-anchored accel arrow
-            val accelVec = remapAxes(Vector3(imu.accelX, imu.accelY, imu.accelZ))
+            // Head-anchored accel: chip = sensor body frame in mounted orientation—no remap
+            val accelVec = Vector3(imu.accelX, imu.accelY, imu.accelZ)
             val worldAccel = SensorMath.rotateVectorByQuaternion(accelVec, sensorToWorld)
-            val accelDir = SensorMath.normalize(worldAccel)
-            val accelRot = SensorMath.arrowRotationFromDirection(accelDir)
-            val accelMag = SensorMath.magnitude(worldAccel) * HEAD_ACCEL_SCALE
+            val accelMag = SensorMath.magnitude(worldAccel)
+            // Negate direction and use -X forward (same convention as device accel arrow)
+            val adx = -worldAccel.x / accelMag; val ady = -worldAccel.y / accelMag; val adz = -worldAccel.z / accelMag
+            val adot = -adx
+            val accelRot: Quaternion
+            if (adot > 0.9999f) {
+                accelRot = Quaternion(0f, 0f, 0f, 1f)
+            } else if (adot < -0.9999f) {
+                accelRot = Quaternion(0f, 1f, 0f, 0f)
+            } else {
+                val axisY = adz; val axisZ = -ady
+                val axisLen = kotlin.math.sqrt((axisY * axisY + axisZ * axisZ).toDouble()).toFloat()
+                val angle = kotlin.math.acos(adot.coerceIn(-1f, 1f).toDouble()).toFloat()
+                val half = angle / 2f; val s = kotlin.math.sin(half.toDouble()).toFloat()
+                accelRot = Quaternion(0f, axisY / axisLen * s, axisZ / axisLen * s,
+                    kotlin.math.cos(half.toDouble()).toFloat())
+            }
             headAccelArrowEntity?.setComponents(listOf(
                 Transform(Pose(headPosition, accelRot)),
-                Scale(Vector3(accelMag)),
+                Scale(Vector3(accelMag * HEAD_ACCEL_SCALE)),
                 Visible(true)
             ))
             
             // Headset-anchored mag arrow
             val mag = latestMag
             if (mag != null) {
-                val magVec = remapAxes(Vector3(mag.magX, mag.magY, mag.magZ))
+                // Head-anchored mag: chip (X=East, Y=Up, Z=South in mounted) → sensor body (W, Up, N): negate X and Z
+                val magVec = Vector3(-mag.magX, mag.magY, -mag.magZ)
                 val worldMag = SensorMath.rotateVectorByQuaternion(magVec, sensorToWorld)
                 val magDir = SensorMath.normalize(worldMag)
                 val magRot = SensorMath.arrowRotationFromDirection(magDir)
@@ -284,20 +291,67 @@ class RawSensorVisualizationSystem : SystemBase() {
         }
     }
     
-    private fun updateAccelArrow(imu: MImuData, quat: Quaternion) {
-        val accel = Vector3(imu.accelX, imu.accelY, imu.accelZ)
-        
-        // Rotate by the same quaternion used for the device model
-        val worldAccel = SensorMath.rotateVectorByQuaternion(accel, quat)
-        
-        // Calculate arrow rotation to point in direction of acceleration
-        val direction = SensorMath.normalize(worldAccel)
-        val arrowRotation = SensorMath.arrowRotationFromDirection(direction)
-        
-        // Scale based on magnitude
-        val magnitude = SensorMath.magnitude(worldAccel)
-        val scale = magnitude * ACCEL_SCALE
-        
+    private fun updateAccelArrow(imu: MImuData) {
+        // All math is inline — no SDK quaternion wrapper used for calculations.
+        // Accel chip: X=East, Y=North, Z=Up (ENU body frame). accelZ ≈ 1g when flat.
+        val ax = imu.accelX
+        val ay = imu.accelY
+        val az = imu.accelZ
+
+        // Rotate ENU body → ENU world: v' = q * v * q^-1
+        // Using raw floats directly to avoid any SDK Quaternion constructor ambiguity.
+        val qx = imu.qx; val qy = imu.qy; val qz = imu.qz; val qw = imu.qw
+        val tx = 2f * (qy * az - qz * ay)
+        val ty = 2f * (qz * ax - qx * az)
+        val tz = 2f * (qx * ay - qy * ax)
+        val wx = ax + qw * tx + qy * tz - qz * ty  // East in ENU world
+        val wy = ay + qw * ty + qz * tx - qx * tz  // North in ENU world
+        val wz = az + qw * tz + qx * ty - qy * tx  // Up in ENU world
+
+        // ENU world → Meta world: (E, N, U) → (E, U, -N)
+        // Meta: X=East, Y=Up, Z=South
+        var mx = wx
+        var my = wz
+        var mz = -wy
+
+        // Apply yaw adjustment (rotation around Meta Y=Up axis)
+        val yaw = Adjustments.yawAdjustment
+        val cosY = kotlin.math.cos(yaw.toDouble()).toFloat()
+        val sinY = kotlin.math.sin(yaw.toDouble()).toFloat()
+        val mx2 = mx * cosY + mz * sinY
+        val mz2 = -mx * sinY + mz * cosY
+        mx = mx2; mz = mz2
+
+        // Normalize
+        val mag = kotlin.math.sqrt((mx * mx + my * my + mz * mz).toDouble()).toFloat()
+        if (mag < 0.001f) return
+        val dx = -mx / mag; val dy = -my / mag; val dz = -mz / mag
+
+        // Compute rotation quaternion: rotate arrow's default -X axis to point at (dx, dy, dz)
+        // Arrow model points along -X (West) at identity — confirmed from Meta Spatial editor screenshot.
+        // forward = (-1, 0, 0)
+        val dot = -dx  // dot(forward=(-1,0,0), direction=(dx,dy,dz))
+        val arrowRotation: Quaternion
+        if (dot > 0.9999f) {
+            arrowRotation = Quaternion(0f, 0f, 0f, 1f)
+        } else if (dot < -0.9999f) {
+            arrowRotation = Quaternion(0f, 1f, 0f, 0f)  // 180° around Y
+        } else {
+            // axis = (-1,0,0) × (dx,dy,dz) = (0*dz-0*dy, 0*dx-(-1)*dz, (-1)*dy-0*dx) = (0, dz, -dy)
+            val axisY = dz; val axisZ = -dy
+            val axisLen = kotlin.math.sqrt((axisY * axisY + axisZ * axisZ).toDouble()).toFloat()
+            val angle = kotlin.math.acos(dot.coerceIn(-1f, 1f).toDouble()).toFloat()
+            val half = angle / 2f
+            val s = kotlin.math.sin(half.toDouble()).toFloat()
+            arrowRotation = Quaternion(
+                0f,
+                axisY / axisLen * s,
+                axisZ / axisLen * s,
+                kotlin.math.cos(half.toDouble()).toFloat()
+            )
+        }
+
+        val scale = kotlin.math.sqrt((ax * ax + ay * ay + az * az).toDouble()).toFloat() * ACCEL_SCALE
         accelArrowEntity?.setComponents(listOf(
             Transform(Pose(vizPosition, arrowRotation)),
             Scale(Vector3(scale)),
@@ -305,42 +359,41 @@ class RawSensorVisualizationSystem : SystemBase() {
         ))
     }
     
-    private fun updateMagArrow(mag: MMagData, quat: Quaternion) {
-        val magVec = Vector3(mag.magX, mag.magY, mag.magZ)
-        
-        // Rotate by the same quaternion used for the device model
-        val worldMag = SensorMath.rotateVectorByQuaternion(magVec, quat)
-        
-        // Calculate arrow rotation to point in direction of mag field
+    private fun updateMagArrow(mag: MMagData, imu: MImuData) {
+        // Mag chip is on bottom of PCB: X and Z negated vs accel chip
+        // chip (X=West, Y=North, Z=Down) → ENU body (X=East, Y=North, Z=Up): negate X and Z
+        val enuBodyMag = Vector3(-mag.magX, mag.magY, -mag.magZ)
+
+        // Step 2: Apply hard iron calibration (values in ENU body frame)
+        val cal = Services.deviceMagCal
+        val calibratedMag = if (cal != null) {
+            Vector3(
+                enuBodyMag.x - cal.hardIronX,
+                enuBodyMag.y - cal.hardIronY,
+                enuBodyMag.z - cal.hardIronZ
+            )
+        } else enuBodyMag
+
+        // Step 3: Rotate ENU body → ENU world using empirical quaternion (same as device model)
+        val empiricalQuat = Quaternion(-imu.qx, imu.qz, imu.qy, imu.qw)
+        val enuMag = SensorMath.rotateVectorByQuaternion(calibratedMag, empiricalQuat)
+
+        // Step 4: ENU world → Meta Spatial world: (E, N, U) → (E, U, -N)
+        val metaMag = Vector3(enuMag.x, enuMag.z, -enuMag.y)
+
+        // Step 5: Apply heading adjustment
+        val yawQuat = SensorMath.yawQuaternion(Adjustments.yawAdjustment)
+        val worldMag = SensorMath.rotateVectorByQuaternion(metaMag, yawQuat)
+
         val direction = SensorMath.normalize(worldMag)
         val arrowRotation = SensorMath.arrowRotationFromDirection(direction)
-        
-        // Scale based on magnitude
-        val magnitude = SensorMath.magnitude(worldMag)
-        val scale = magnitude * MAG_SCALE
-        
+        val scale = SensorMath.magnitude(enuBodyMag) * MAG_SCALE
+
         magArrowEntity?.setComponents(listOf(
             Transform(Pose(vizPosition, arrowRotation)),
             Scale(Vector3(scale)),
             Visible(true)
         ))
-    }
-    
-    /**
-     * Remap raw sensor vector axes using REMAP_X/Y/Z config.
-     * Signed axis index: 1=X, 2=Y, 3=Z, negative=negate.
-     */
-    private fun remapAxes(v: Vector3): Vector3 {
-        fun pick(axis: Int): Float {
-            val value = when (kotlin.math.abs(axis)) {
-                1 -> v.x
-                2 -> v.y
-                3 -> v.z
-                else -> 0f
-            }
-            return if (axis < 0) -value else value
-        }
-        return Vector3(pick(REMAP_X), pick(REMAP_Y), pick(REMAP_Z))
     }
     
     fun cleanup() {
@@ -369,12 +422,4 @@ class RawSensorVisualizationSystem : SystemBase() {
         initialized = false
     }
     
-    /**
-     * Set mounting offset quaternion: sensor body frame → headset frame.
-     * Manually tuned to match the physical mounting on the helmet.
-     */
-    fun setMountingOffset(offset: Quaternion) {
-        mountingOffset = offset
-        Log.i(TAG, "Mounting offset set: (${offset.x}, ${offset.y}, ${offset.z}, ${offset.w})")
-    }
 }

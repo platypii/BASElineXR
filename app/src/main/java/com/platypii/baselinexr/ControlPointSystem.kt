@@ -10,6 +10,7 @@ import com.meta.spatial.core.Vector3
 import com.meta.spatial.toolkit.SpatialActivityManager
 import com.meta.spatial.toolkit.Visible
 import com.platypii.baselinexr.bluetooth.Flysight2ControlPoint
+import com.platypii.baselinexr.calibration.DeviceMagCal
 import com.platypii.baselinexr.events.BluetoothEvent
 import com.platypii.baselinexr.events.FlysightModeEvent
 import org.greenrobot.eventbus.EventBus
@@ -47,6 +48,7 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
     private var getSensorOdrsButton: Button? = null
     private var getRatesButton: Button? = null
     private var getBleBudgetButton: Button? = null
+    private var getMagCalButton: Button? = null
     private var resetMagCalButton: Button? = null
     private var extSyncValueInput: EditText? = null
     private var setExtSyncButton: Button? = null
@@ -150,6 +152,7 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         getSensorOdrsButton: Button?,
         getRatesButton: Button?,
         getBleBudgetButton: Button?,
+        getMagCalButton: Button?,
         resetMagCalButton: Button?,
         extSyncValueInput: EditText?,
         setExtSyncButton: Button?,
@@ -186,6 +189,7 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         this.getSensorOdrsButton = getSensorOdrsButton
         this.getRatesButton = getRatesButton
         this.getBleBudgetButton = getBleBudgetButton
+        this.getMagCalButton = getMagCalButton
         this.resetMagCalButton = resetMagCalButton
         this.extSyncValueInput = extSyncValueInput
         this.setExtSyncButton = setExtSyncButton
@@ -227,6 +231,7 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         getSensorOdrsButton?.setOnClickListener { onGetSensorOdrsClick() }
         getRatesButton?.setOnClickListener { onGetRatesClick() }
         getBleBudgetButton?.setOnClickListener { onGetBleBudgetClick() }
+        getMagCalButton?.setOnClickListener { onGetMagCalClick() }
         resetMagCalButton?.setOnClickListener { onResetMagCalClick() }
         setExtSyncButton?.setOnClickListener { onSetExtSyncClick() }
         gnssModelSetButton?.setOnClickListener { onSetGnssModelClick() }
@@ -425,6 +430,12 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
         if (!ok) appendLog("Get BLE BW: not connected")
     }
 
+    private fun onGetMagCalClick() {
+        Log.i(TAG, "Get Mag Cal button clicked")
+        val ok = Services.bluetooth?.flysightProtocol?.controlPoint?.getMagCal() ?: false
+        if (!ok) appendLog("Get MagCal: not connected")
+    }
+
     private fun onResetMagCalClick() {
         Log.i(TAG, "Reset Mag Cal button clicked")
         val ok = Services.bluetooth?.flysightProtocol?.controlPoint?.resetMagCal() ?: false
@@ -608,6 +619,20 @@ class ControlPointSystem : SystemBase(), Flysight2ControlPoint.ControlPointListe
                 }
                 Flysight2ControlPoint.SD_CMD_RESET_MAG_CAL.toInt() -> {
                     appendLog("RESET_MAG_CAL: $statusStr")
+                }
+                Flysight2ControlPoint.SD_CMD_GET_MAG_CAL.toInt() -> {
+                    if (status == Flysight2ControlPoint.CP_STATUS_SUCCESS && data != null && data.size >= 7) {
+                        fun i16le(i: Int) = ((data[i].toInt() and 0xFF) or ((data[i + 1].toInt() and 0xFF) shl 8)).toShort().toInt()
+                        val hxMg = i16le(0)
+                        val hyMg = i16le(2)
+                        val hzMg = i16le(4)
+                        val quality = data[6].toInt() and 0xFF
+                        val cal = DeviceMagCal(hxMg / 1000f, hyMg / 1000f, hzMg / 1000f, quality)
+                        Services.deviceMagCal = cal
+                        appendLog("MagCal: ${cal.qualityLabel}  hi=($hxMg,$hyMg,$hzMg)mG")
+                    } else {
+                        appendLog("GET_MAG_CAL: $statusStr")
+                    }
                 }
                 else -> {
                     appendLog("Response 0x${opcode.toString(16)}: $statusStr")
